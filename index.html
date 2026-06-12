@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Estimativa Pipefy — Pesos & Cronograma</title>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green:  #16a34a; --green-light: #dcfce7; --green-mid: #bbf7d0;
+    --yellow: #ca8a04; --yellow-light: #fef9c3; --yellow-mid: #fde68a;
+    --red:    #dc2626; --red-light:   #fee2e2; --red-mid:   #fecaca;
+    --blue:   #2563eb; --blue-light:  #eff6ff;
+    --gray:   #6b7280; --gray-light:  #f3f4f6; --gray-mid: #e5e7eb;
+    --dark:   #111827;
+    --radius: 10px;
+    --shadow: 0 2px 8px rgba(0,0,0,.08);
+  }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #f8fafc;
+    color: var(--dark);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── Layout ── */
+  .app { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: var(--gray); margin-bottom: 32px; font-size: 13px; }
+
+  /* ── Steps ── */
+  .steps { display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; }
+  .step {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    background: var(--gray-light); color: var(--gray);
+    border: 1.5px solid var(--gray-mid);
+    cursor: default; transition: all .2s;
+  }
+  .step.active   { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .step.done     { background: var(--green-light); color: var(--green); border-color: var(--green-mid); }
+  .step-num { font-weight: 700; }
+
+  /* ── Cards ── */
+  .card {
+    background: #fff; border-radius: var(--radius);
+    box-shadow: var(--shadow); border: 1px solid var(--gray-mid);
+    padding: 24px; margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 15px; font-weight: 700; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .badge {
+    font-size: 11px; font-weight: 600; padding: 2px 8px;
+    border-radius: 999px; background: var(--blue-light);
+    color: var(--blue);
+  }
+
+  /* ── Sections visíveis/ocultas ── */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── Configuração de Projeto ── */
+  .project-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media(max-width:640px){ .project-grid { grid-template-columns: 1fr; } }
+
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--gray); margin-bottom: 4px; }
+  input[type=text], input[type=number], input[type=date], select, textarea {
+    width: 100%; padding: 8px 10px; border-radius: 6px;
+    border: 1.5px solid var(--gray-mid); font-size: 13px;
+    background: #fff; color: var(--dark); outline: none;
+    transition: border-color .2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--blue); }
+
+  /* ── Tabela de pesos ── */
+  .weights-header {
+    display: grid; gap: 8px;
+    grid-template-columns: 200px 1fr 1fr 1fr 120px;
+    font-size: 11px; font-weight: 700; color: var(--gray);
+    text-transform: uppercase; letter-spacing: .05em;
+    padding: 0 8px 8px; border-bottom: 1px solid var(--gray-mid);
+    margin-bottom: 8px;
+  }
+  .weight-row {
+    display: grid; gap: 8px;
+    grid-template-columns: 200px 1fr 1fr 1fr 120px;
+    align-items: center; padding: 8px;
+    border-radius: 6px; transition: background .15s;
+  }
+  .weight-row:hover { background: var(--gray-light); }
+  .weight-label { font-size: 13px; font-weight: 500; }
+  .weight-unit  { font-size: 11px; color: var(--gray); margin-top: 2px; }
+  .col-simple input { border-color: var(--green-mid); }
+  .col-medio  input { border-color: var(--yellow-mid); }
+  .col-complexo input { border-color: var(--red-mid); }
+  @media(max-width:760px){
+    .weights-header, .weight-row { grid-template-columns: 1fr 1fr 1fr; }
+    .weights-header > :first-child,
+    .weights-header > :last-child,
+    .weight-row > .weight-label-cell,
+    .weight-row > .col-unit { display: none; }
+  }
+
+  /* Fases do projeto */
+  .phase-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px; margin-top: 8px;
+  }
+  @media(max-width:640px){ .phase-grid { grid-template-columns: 1fr; } }
+  .phase-item {
+    background: var(--gray-light); border-radius: 8px;
+    padding: 12px; border: 1px solid var(--gray-mid);
+  }
+  .phase-name { font-weight: 600; font-size: 13px; margin-bottom: 8px; }
+  .phase-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .phase-col-label {
+    font-size: 10px; font-weight: 700; text-align: center;
+    padding: 2px 0 4px;
+  }
+  .c-s { color: var(--green); }
+  .c-m { color: var(--yellow); }
+  .c-c { color: var(--red); }
+
+  /* ── Estimativa Input ── */
+  .estimate-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px; margin-top: 4px;
+  }
+  @media(max-width:640px){ .estimate-grid { grid-template-columns: 1fr; } }
+  .level-card {
+    border-radius: 8px; padding: 16px;
+    border: 1.5px solid;
+  }
+  .level-card.simples   { border-color: var(--green); background: var(--green-light); }
+  .level-card.medio     { border-color: var(--yellow); background: var(--yellow-light); }
+  .level-card.complexo  { border-color: var(--red); background: var(--red-light); }
+  .level-title {
+    font-size: 13px; font-weight: 700; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .level-field { margin-bottom: 10px; }
+  .level-field label { color: inherit; opacity: .7; }
+
+  /* ── Painel de Revisão ── */
+  .review-table { width: 100%; border-collapse: collapse; }
+  .review-table th, .review-table td {
+    padding: 10px 12px; text-align: left;
+    border-bottom: 1px solid var(--gray-mid); font-size: 13px;
+  }
+  .review-table th {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    color: var(--gray); letter-spacing: .05em; background: var(--gray-light);
+  }
+  .review-table tr:last-child td { border-bottom: none; }
+  .pill {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+  }
+  .pill.s { background: var(--green-light);  color: var(--green); }
+  .pill.m { background: var(--yellow-light); color: var(--yellow); }
+  .pill.c { background: var(--red-light);    color: var(--red); }
+
+  .review-section-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--gray);
+    padding: 8px 12px; background: var(--gray-light);
+    border-bottom: 1px solid var(--gray-mid);
+  }
+
+  .totals-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .total-box {
+    border-radius: 8px; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .total-box.s { background: var(--green-light); border: 1px solid var(--green-mid); }
+  .total-box.m { background: var(--yellow-light); border: 1px solid var(--yellow-mid); }
+  .total-box.c { background: var(--red-light);    border: 1px solid var(--red-mid); }
+  .total-label { font-size: 11px; font-weight: 700; text-transform: uppercase; opacity: .6; }
+  .total-hours { font-size: 24px; font-weight: 800; }
+  .total-days  { font-size: 13px; opacity: .7; }
+
+  .confidence-banner {
+    border-radius: 8px; padding: 14px 16px; margin-top: 16px;
+    border-left: 4px solid;
+  }
+  .confidence-banner.alta    { background: var(--green-light);  border-color: var(--green); }
+  .confidence-banner.media   { background: var(--yellow-light); border-color: var(--yellow); }
+  .confidence-banner.baixa   { background: var(--red-light);    border-color: var(--red); }
+  .confidence-banner .cb-title { font-weight: 700; font-size: 13px; }
+  .confidence-banner .cb-text  { font-size: 12px; margin-top: 4px; opacity: .8; }
+
+  /* ── Botões ── */
+  .btn {
+    padding: 10px 20px; border-radius: 7px; border: none;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all .2s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-secondary {
+    background: var(--gray-light); color: var(--dark);
+    border: 1.5px solid var(--gray-mid);
+  }
+  .btn-secondary:hover { background: var(--gray-mid); }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-success:hover { background: #15803d; }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+
+  /* ── Gantt ── */
+  .gantt-wrapper { overflow-x: auto; margin-top: 8px; }
+  #ganttChart { min-width: 800px; }
+  .gantt-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+
+  /* ── Info box ── */
+  .info-box {
+    background: var(--blue-light); border: 1px solid #bfdbfe;
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
+    font-size: 13px; color: #1e40af;
+  }
+  .info-box strong { font-weight: 700; }
+
+  /* ── Gorduura visual ── */
+  .fat-badge {
+    display: inline-block; background: #fef3c7; border: 1px solid #fde68a;
+    color: #92400e; border-radius: 999px; padding: 1px 8px;
+    font-size: 11px; font-weight: 600;
+  }
+
+  /* ── Gantt SVG styles ── */
+  .gantt-bar { cursor: grab; transition: filter .15s; }
+  .gantt-bar:hover { filter: brightness(1.08); }
+  .gantt-bar:active { cursor: grabbing; }
+  text { font-family: 'Inter', system-ui, sans-serif; }
+
+  /* Tooltip */
+  #tooltip {
+    position: fixed; background: #1e293b; color: #fff;
+    padding: 8px 12px; border-radius: 7px; font-size: 12px;
+    pointer-events: none; display: none; z-index: 9999;
+    max-width: 240px; line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>🧠 Estimativa & Cronograma Pipefy</h1>
+  <p class="subtitle">Defina os pesos → insira as dimensões → revise → gere o Gantt</p>
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step active" id="step1"><span class="step-num">1</span> Configuração & Pesos</div>
+    <div class="step" id="step2"><span class="step-num">2</span> Dimensões do Processo</div>
+    <div class="step" id="step3"><span class="step-num">3</span> Revisar Estimativa</div>
+    <div class="step" id="step4"><span class="step-num">4</span> Gantt</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SEÇÃO 1 — CONFIGURAÇÃO & PESOS
+  ═══════════════════════════════════════════════ -->
+  <div class="section active" id="sec1">
+
+    <!-- Projeto -->
+    <div class="card">
+      <div class="card-title">⚙️ Projeto</div>
+      <div class="project-grid">
+        <div>
+          <label>Nome do Projeto</label>
+          <input type="text" id="projectName" placeholder="Ex: Automatização de Reembolso" />
+        </div>
+        <div>
+          <label>Data de Início (Kick-off)</label>
+          <input type="date" id="startDate" />
+        </div>
+        <div>
+          <label>Gordura por Etapa (%)</label>
+          <input type="number" id="fatPct" value="20" min="0" max="100" />
+        </div>
+        <div>
+          <label>Horas por Dia Útil</label>
+          <input type="number" id="hoursPerDay" value="6" min="1" max="12" />
+        </div>
+        <div>
+          <label>Nível de Complexidade do Processo</label>
+          <select id="complexity">
+            <option value="simples">🟢 Simples</option>
+            <option value="medio">🟡 Médio</option>
+            <option value="complexo">🔴 Complexo</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pesos de desenvolvimento -->
+    <div class="card">
+      <div class="card-title">
+        ⚖️ Pesos de Desenvolvimento
+        <span class="badge">editável</span>
+      </div>
+      <div class="info-box">
+        <strong>Como funciona:</strong> cada item abaixo define quantas horas de trabalho são necessárias
+        por unidade, separado por nível de complexidade. Ajuste conforme sua experiência real.
+      </div>
+
+      <div class="weights-header">
+        <div>Dimensão</div>
+        <div>🟢 Simples (h/un)</div>
+        <div>🟡 Médio (h/un)</div>
+        <div>🔴 Complexo (h/un)</div>
+        <div>Unidade</div>
+      </div>
+
+      <!-- Fases -->
+      <div class="weight-row">
+        <div class="weight-label-cell">
+          <div class="weight-label">Fases</div>
+          <div class="weight-unit">por fase</div>
+        </div>
+        <div class="col-simple"><input type="number" id="w_fase_s" value="0.5" step="0.25" min="0" /></div>
+        <div class="col-medio"><input type="number" id="w_fase_m" value="1" step="0.25" min="0" /></div>
+        <div class="col-complexo"><input type="number" id="w_fase_c" value="2" step="0.25" min="0" /></div>
+        <div><span class="fat-badge">h / fase</span></div>
+      </div>
+      <!-- Automações if/then -->
+      <div class="weight-row">
+        <div class="weight-label-cell">
+          <div class="weight-label">Automações if/then</div>
+          <div class="weight-unit">por automação</div>
+        </div>
+        <div class="col-simple"><input type="number" id="w_auto_s" value="0.5" step="0.25" min="0" /></div>
+        <div class="col-medio"><input type="number" id="w_auto_m" value="1" step="0.25" min="0" /></div>
+        <div class="col-complexo"><input type="number" id="w_auto_c" value="2" step="0.25" min="0" /></div>
+        <div><span class="fat-badge">h / auto</span></div>
+      </div>
+      <!-- AI Automações -->
+      <div class="weight-row">
+        <div class="weight-label-cell">
+          <div class="weight-label">AI Automações</div>
+          <div class="weight-unit">por automação IA</div>
+        </div>
+        <div class="col-simple"><input type="number" id="w_ai_s" value="2" step="0.5" min="0" /></div>
+        <div class="col-medio"><input type="number" id="w_ai_m" value="4" step="0.5" min="0" /></div>
+        <div class="col-complexo"><input type="number" id="w_ai_c" value="8" step="0.5" min="0" /></div>
+        <div><span class="fat-badge">h / ai</span></div>
+      </div>
+      <!-- Templates -->
+      <div class="weight-row">
+        <div class="weight-label-cell">
+          <div class="weight-label">Templates de E-mail</div>
+          <div class="weight-unit">por template</div>
+        </div>
+        <div class="col-simple"><input type="number" id="w_tpl_s" value="0.5" step="0.25" min="0" /></div>
+        <div class="col-medio"><input type="number" id="w_tpl_m" value="1" step="0.25" min="0" /></div>
+        <div class="col-complexo"><input type="number" id="w_tpl_c" value="1.5" step="0.25" min="0" /></div>
+        <div><span class="fat-badge">h / tpl</span></div>
+      </div>
+      <!-- Integrações -->
+      <div class="weight-row">
+        <div class="weight-label-cell">
+          <div class="weight-label">Integrações</div>
+          <div class="weight-unit">por integração</div>
+        </div>
+        <div class="col-simple"><input type="number" id="w_int_s" value="4" step="1" min="0" /></div>
+        <div class="col-medio"><input type="number" id="w_int_m" value="8" step="1" min="0" /></div>
+        <div class="col-complexo"><input type="number" id="w_int_c" value="16" step="1" min="0" /></div>
+        <div><span class="fat-badge">h / integ</span></div>
+      </div>
+      <!-- Relações -->
+      <div class="weight-row">
+        <div class="weight-label-cell">
+          <div class="weight-label">Relações entre Pipes</div>
+          <div class="weight-unit">por relação</div>
+        </div>
+        <div class="col-simple"><input type="number" id="w_rel_s" value="1" step="0.25" min="0" /></div>
+        <div class="col-medio"><input type="number" id="w_rel_m" value="2" step="0.25" min="0" /></div>
+        <div class="col-complexo"><input type="number" id="w_rel_c" value="4" step="0.25" min="0" /></div>
+        <div><span class="fat-badge">h / relação</span></div>
+      </div>
+    </div>
+
+    <!-- Pesos das fases do projeto -->
+    <div class="card">
+      <div class="card-title">
+        📅 Pesos das Fases do Projeto
+        <span class="badge">editável</span>
+      </div>
+      <div class="info-box">
+        Horas fixas por fase do projeto (não por unidade). Ajuste por nível de complexidade.
+      </div>
+
+      <div class="phase-grid">
+        <!-- Mapeamento -->
+        <div class="phase-item">
+          <div class="phase-name">🗺️ Mapeamento AS-IS/TO-BE</div>
+          <div class="phase-col-label" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:4px">
+            <span class="c-s">Simples</span><span class="c-m">Médio</span><span class="c-c">Complexo</span>
+          </div>
+          <div class="phase-inputs">
+            <input type="number" id="ph_map_s" value="4"  min="0" step="0.5" />
+            <input type="number" id="ph_map_m" value="8"  min="0" step="0.5" />
+            <input type="number" id="ph_map_c" value="16" min="0" step="0.5" />
+          </div>
+        </div>
+        <!-- Teste Dev -->
+        <div class="phase-item">
+          <div class="phase-name">🧪 Teste Interno (Dev)</div>
+          <div class="info-box" style="font-size:11px;padding:6px 10px;margin:4px 0 8px">% do tempo de dev</div>
+          <div class="phase-inputs">
+            <input type="number" id="ph_testdev_s" value="20" min="0" step="5" />
+            <input type="number" id="ph_testdev_m" value="20" min="0" step="5" />
+            <input type="number" id="ph_testdev_c" value="25" min="0" step="5" />
+          </div>
+        </div>
+        <!-- Teste Cliente -->
+        <div class="phase-item">
+          <div class="phase-name">👤 Teste do Cliente (UAT)</div>
+          <div class="phase-col-label" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:4px">
+            <span class="c-s">Simples</span><span class="c-m">Médio</span><span class="c-c">Complexo</span>
+          </div>
+          <div class="phase-inputs">
+            <input type="number" id="ph_uat_s" value="4"  min="0" step="0.5" />
+            <input type="number" id="ph_uat_m" value="8"  min="0" step="0.5" />
+            <input type="number" id="ph_uat_c" value="16" min="0" step="0.5" />
+          </div>
+        </div>
+        <!-- Ajustes -->
+        <div class="phase-item">
+          <div class="phase-name">🔧 Ajustes Pós-Teste</div>
+          <div class="info-box" style="font-size:11px;padding:6px 10px;margin:4px 0 8px">% do tempo de dev</div>
+          <div class="phase-inputs">
+            <input type="number" id="ph_ajustes_s" value="15" min="0" step="5" />
+            <input type="number" id="ph_ajustes_m" value="15" min="0" step="5" />
+            <input type="number" id="ph_ajustes_c" value="20" min="0" step="5" />
+          </div>
+        </div>
+        <!-- Validação -->
+        <div class="phase-item">
+          <div class="phase-name">✅ Validação Formal</div>
+          <div class="phase-col-label" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:4px">
+            <span class="c-s">Simples</span><span class="c-m">Médio</span><span class="c-c">Complexo</span>
+          </div>
+          <div class="phase-inputs">
+            <input type="number" id="ph_val_s" value="2" min="0" step="0.5" />
+            <input type="number" id="ph_val_m" value="2" min="0" step="0.5" />
+            <input type="number" id="ph_val_c" value="4" min="0" step="0.5" />
+          </div>
+        </div>
+        <!-- Treinamento -->
+        <div class="phase-item">
+          <div class="phase-name">🎓 Treinamento</div>
+          <div class="phase-col-label" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:4px">
+            <span class="c-s">Simples</span><span class="c-m">Médio</span><span class="c-c">Complexo</span>
+          </div>
+          <div class="phase-inputs">
+            <input type="number" id="ph_train_s" value="2" min="0" step="0.5" />
+            <input type="number" id="ph_train_m" value="4" min="0" step="0.5" />
+            <input type="number" id="ph_train_c" value="8" min="0" step="0.5" />
+          </div>
+        </div>
+        <!-- Hypercare -->
+        <div class="phase-item">
+          <div class="phase-name">🛡️ Hypercare (semanas)</div>
+          <div class="phase-col-label" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:4px">
+            <span class="c-s">Simples</span><span class="c-m">Médio</span><span class="c-c">Complexo</span>
+          </div>
+          <div class="phase-inputs">
+            <input type="number" id="ph_hyper_s" value="1" min="0" step="1" />
+            <input type="number" id="ph_hyper_m" value="2" min="0" step="1" />
+            <input type="number" id="ph_hyper_c" value="4" min="0" step="1" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goToStep(2)">Próximo → Dimensões do Processo</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SEÇÃO 2 — DIMENSÕES DO PROCESSO
+  ═══════════════════════════════════════════════ -->
+  <div class="section" id="sec2">
+    <div class="card">
+      <div class="card-title">📊 Dimensões do Processo</div>
+      <div class="info-box">
+        Insira as quantidades mapeadas. O nível de complexidade selecionado
+        (<strong id="complexityLabel">—</strong>) será usado para aplicar os pesos.
+      </div>
+
+      <div class="estimate-grid">
+        <!-- Pipes -->
+        <div class="level-field">
+          <label>Quantidade de Pipes</label>
+          <input type="number" id="d_pipes" value="1" min="0" step="1" />
+        </div>
+        <!-- Fases -->
+        <div class="level-field">
+          <label>Total de Fases (todos os pipes)</label>
+          <input type="number" id="d_fases" value="5" min="0" step="1" />
+        </div>
+        <!-- Automações -->
+        <div class="level-field">
+          <label>Automações if/then</label>
+          <input type="number" id="d_autos" value="4" min="0" step="1" />
+        </div>
+        <!-- AI -->
+        <div class="level-field">
+          <label>AI Automações</label>
+          <input type="number" id="d_ai" value="0" min="0" step="1" />
+        </div>
+        <!-- Templates -->
+        <div class="level-field">
+          <label>Templates de E-mail</label>
+          <input type="number" id="d_tpl" value="3" min="0" step="1" />
+        </div>
+        <!-- Integrações -->
+        <div class="level-field">
+          <label>Integrações</label>
+          <input type="number" id="d_int" value="0" min="0" step="1" />
+        </div>
+        <!-- Relações -->
+        <div class="level-field">
+          <label>Relações entre Pipes</label>
+          <input type="number" id="d_rel" value="0" min="0" step="1" />
+        </div>
+        <!-- Confiança -->
+        <div class="level-field">
+          <label>Confiança da Estimativa</label>
+          <select id="d_conf">
+            <option value="alta">🟢 Alta — AS-IS claro</option>
+            <option value="media">🟡 Média — lacunas pontuais</option>
+            <option value="baixa">🔴 Baixa — muitas incógnitas</option>
+          </select>
+        </div>
+        <!-- Observações -->
+        <div class="level-field" style="grid-column:1/-1">
+          <label>Observações / Riscos (opcional)</label>
+          <textarea id="d_obs" rows="2" placeholder="Ex: Totvs com API incerta, CEO com aprovação ad hoc..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goToStep(1)">← Voltar</button>
+      <button class="btn btn-primary" onclick="calcAndReview()">Calcular & Revisar →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SEÇÃO 3 — REVISÃO
+  ═══════════════════════════════════════════════ -->
+  <div class="section" id="sec3">
+    <div class="card">
+      <div class="card-title">🔍 Revisão da Estimativa — <span id="reviewProjectName">—</span></div>
+
+      <!-- Tabela de breakdown -->
+      <table class="review-table" id="reviewTable">
+        <thead>
+          <tr>
+            <th>Dimensão</th>
+            <th>Qtd</th>
+            <th>Peso (h/un)</th>
+            <th>Subtotal (h)</th>
+            <th>Com gordura (h)</th>
+          </tr>
+        </thead>
+        <tbody id="reviewBody"></tbody>
+        <tfoot>
+          <tr style="font-weight:700;background:#f8fafc">
+            <td colspan="3">Total de Desenvolvimento</td>
+            <td id="totalDevH">—</td>
+            <td id="totalDevFat">—</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- Fases do projeto -->
+      <div style="margin-top:20px">
+        <div class="review-section-title">📅 Fases do Projeto</div>
+        <table class="review-table" id="phasesTable">
+          <thead>
+            <tr>
+              <th>Fase</th>
+              <th>Horas</th>
+              <th>Dias Úteis</th>
+            </tr>
+          </thead>
+          <tbody id="phasesBody"></tbody>
+          <tfoot>
+            <tr style="font-weight:700;background:#f8fafc">
+              <td>Total Geral</td>
+              <td id="totalAllH">—</td>
+              <td id="totalAllD">—</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Totais visuais -->
+      <div class="totals-row" id="totalsVisual"></div>
+
+      <!-- Confiança -->
+      <div id="confidenceBanner"></div>
+
+      <!-- Obs -->
+      <div id="obsBox"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goToStep(2)">← Ajustar Dimensões</button>
+      <button class="btn btn-secondary" onclick="goToStep(1)">⚙️ Ajustar Pesos</button>
+      <button class="btn btn-success" onclick="generateGantt()">✅ Confirmar & Gerar Gantt →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       SEÇÃO 4 — GANTT
+  ═══════════════════════════════════════════════ -->
+  <div class="section" id="sec4">
+    <div class="card">
+      <div class="card-title">📊 Cronograma Gantt — <span id="ganttProjectName">—</span></div>
+      <div class="gantt-controls">
+        <button class="btn btn-secondary" onclick="goToStep(3)">← Revisar</button>
+        <button class="btn btn-secondary" onclick="exportSVG()">⬇️ Exportar SVG</button>
+      </div>
+      <div class="gantt-wrapper">
+        <svg id="ganttChart"></svg>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Tooltip -->
+<div id="tooltip"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  NAVEGAÇÃO
+// ═══════════════════════════════════════════════════════
+function goToStep(n) {
+  document.querySelectorAll('.section').forEach((s,i) => {
+    s.classList.toggle('active', i+1 === n);
+  });
+  document.querySelectorAll('.step').forEach((s,i) => {
+    s.classList.remove('active','done');
+    if (i+1 < n)  s.classList.add('done');
+    if (i+1 === n) s.classList.add('active');
+  });
+  if (n === 2) updateComplexityLabel();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function updateComplexityLabel() {
+  const map = { simples:'🟢 Simples', medio:'🟡 Médio', complexo:'🔴 Complexo' };
+  const el = document.getElementById('complexityLabel');
+  if (el) el.textContent = map[getComplexity()] || '—';
+}
+
+// ═══════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════
+function getComplexity() { return document.getElementById('complexity').value; }
+function v(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function vi(id) { return parseInt(document.getElementById(id).value) || 0; }
+function vs(id) { return document.getElementById(id).value.trim(); }
+
+function getSuffix() {
+  const c = getComplexity();
+  return c === 'simples' ? 's' : c === 'medio' ? 'm' : 'c';
+}
+
+function withFat(h) { return h * (1 + v('fatPct')/100); }
+
+function hToDays(h) {
+  const hpd = v('hoursPerDay') || 6;
+  return Math.ceil(h / hpd * 10) / 10;
+}
+
+function addWorkDays(date, days) {
+  let d = new Date(date);
+  let added = 0;
+  while (added < Math.ceil(days)) {
+    d.setDate(d.getDate() + 1);
+    if (d.getDay() !== 0 && d.getDay() !== 6) added++;
+  }
+  return d;
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
+}
+
+// ═══════════════════════════════════════════════════════
+//  CÁLCULO
+// ═══════════════════════════════════════════════════════
+let ESTIMATE = {};
+
+function calcAndReview() {
+  const suf = getSuffix();
+  const fat = v('fatPct') / 100;
+  const hpd = v('hoursPerDay') || 6;
+
+  // Pesos por unidade
+  const weights = {
+    fases: v(`w_fase_${suf}`),
+    autos: v(`w_auto_${suf}`),
+    ai:    v(`w_ai_${suf}`),
+    tpl:   v(`w_tpl_${suf}`),
+    int:   v(`w_int_${suf}`),
+    rel:   v(`w_rel_${suf}`),
+  };
+
+  // Quantidades
+  const qty = {
+    fases: vi('d_fases'),
+    autos: vi('d_autos'),
+    ai:    vi('d_ai'),
+    tpl:   vi('d_tpl'),
+    int:   vi('d_int'),
+    rel:   vi('d_rel'),
+  };
+
+  // Subtotais de dev
+  const rows = [
+    { label:'Fases',              qty: qty.fases, peso: weights.fases },
+    { label:'Automações if/then', qty: qty.autos, peso: weights.autos },
+    { label:'AI Automações',      qty: qty.ai,    peso: weights.ai },
+    { label:'Templates de E-mail',qty: qty.tpl,   peso: weights.tpl },
+    { label:'Integrações',        qty: qty.int,   peso: weights.int },
+    { label:'Relações entre Pipes',qty: qty.rel,  peso: weights.rel },
+  ];
+
+  let totalDevH = 0;
+  rows.forEach(r => { r.sub = r.qty * r.peso; r.fat = withFat(r.sub); totalDevH += r.sub; });
+  const totalDevFat = withFat(totalDevH);
+
+  // Fases do projeto
+  const testDevPct   = v(`ph_testdev_${suf}`) / 100;
+  const ajustesPct   = v(`ph_ajustes_${suf}`) / 100;
+
+  const phases = [
+    { label:'🗺️ Mapeamento AS-IS/TO-BE', hours: v(`ph_map_${suf}`) },
+    { label:'🔨 Desenvolvimento',         hours: totalDevFat },
+    { label:'🧪 Teste Interno (Dev)',      hours: totalDevFat * testDevPct },
+    { label:'👤 Teste do Cliente (UAT)',   hours: v(`ph_uat_${suf}`) },
+    { label:'🔧 Ajustes Pós-Teste',        hours: totalDevFat * ajustesPct },
+    { label:'✅ Validação Formal',          hours: v(`ph_val_${suf}`) },
+    { label:'🎓 Treinamento',              hours: v(`ph_train_${suf}`) },
+    { label:'🛡️ Hypercare',               hours: v(`ph_hyper_${suf}`) * 5 * hpd, isWeeks: true, weeks: v(`ph_hyper_${suf}`) },
+  ];
+
+  let totalAllH = phases.reduce((a,p) => a + p.hours, 0);
+  let totalAllD = hToDays(totalAllH);
+
+  // Salva globalmente
+  ESTIMATE = {
+    projectName: vs('projectName') || 'Projeto Pipefy',
+    startDate:   vs('startDate') || new Date().toISOString().split('T')[0],
+    complexity:  getComplexity(),
+    fat: v('fatPct'),
+    hpd,
+    rows, totalDevH, totalDevFat,
+    phases, totalAllH, totalAllD,
+    conf: vs('d_conf'),
+    obs:  vs('d_obs'),
+    pipes: vi('d_pipes'),
+  };
+
+  renderReview();
+  goToStep(3);
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDERIZA REVISÃO
+// ═══════════════════════════════════════════════════════
+function renderReview() {
+  const E = ESTIMATE;
+  document.getElementById('reviewProjectName').textContent = E.projectName;
+
+  // Tabela de dev
+  const body = document.getElementById('reviewBody');
+  body.innerHTML = '';
+  E.rows.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r.label}</td>
+      <td>${r.qty}</td>
+      <td>${r.peso}h</td>
+      <td>${r.sub.toFixed(1)}h</td>
+      <td><strong>${r.fat.toFixed(1)}h</strong></td>
+    `;
+    body.appendChild(tr);
+  });
+  document.getElementById('totalDevH').textContent   = E.totalDevH.toFixed(1) + 'h';
+  document.getElementById('totalDevFat').textContent = E.totalDevFat.toFixed(1) + 'h';
+
+  // Fases
+  const pb = document.getElementById('phasesBody');
+  pb.innerHTML = '';
+  E.phases.forEach(p => {
+    const tr = document.createElement('tr');
+    const d = hToDays(p.hours);
+    tr.innerHTML = `
+      <td>${p.label}${p.isWeeks ? ` <span class="fat-badge">${p.weeks} sem.</span>` : ''}</td>
+      <td>${p.hours.toFixed(1)}h</td>
+      <td>${d}d</td>
+    `;
+    pb.appendChild(tr);
+  });
+  document.getElementById('totalAllH').textContent = E.totalAllH.toFixed(1) + 'h';
+  document.getElementById('totalAllD').textContent = E.totalAllD + 'd';
+
+  // Totais visuais
+  const tv = document.getElementById('totalsVisual');
+  const cls = E.complexity === 'simples' ? 's' : E.complexity === 'medio' ? 'm' : 'c';
+  const label = E.complexity === 'simples' ? '🟢 Simples' : E.complexity === 'medio' ? '🟡 Médio' : '🔴 Complexo';
+  tv.innerHTML = `
+    <div class="total-box ${cls}">
+      <div class="total-label">${label}</div>
+      <div class="total-hours">${E.totalDevFat.toFixed(0)}h</div>
+      <div class="total-days">Desenvolvimento (com ${E.fat}% gordura)</div>
+    </div>
+    <div class="total-box ${cls}">
+      <div class="total-label">Total Projeto</div>
+      <div class="total-hours">${E.totalAllH.toFixed(0)}h</div>
+      <div class="total-days">${E.totalAllD} dias úteis</div>
+    </div>
+    <div class="total-box ${cls}">
+      <div class="total-label">Pipes</div>
+      <div class="total-hours">${E.pipes}</div>
+      <div class="total-days">${E.hpd}h / dia útil</div>
+    </div>
+  `;
+
+  // Confiança
+  const confMap = {
+    alta:  { cls:'alta',  icon:'🟢', label:'Alta Confiança', text:'AS-IS claro e regras bem definidas. A estimativa é sólida.' },
+    media: { cls:'media', icon:'🟡', label:'Média Confiança', text:'Existem lacunas pontuais que podem causar variação de ±20%. Alinhe antes do kickoff.' },
+    baixa: { cls:'baixa', icon:'🔴', label:'Baixa Confiança', text:'Muitas incógnitas não resolvidas. Congele a estimativa até o AS-IS estar validado.' },
+  };
+  const ci = confMap[E.conf] || confMap.media;
+  document.getElementById('confidenceBanner').innerHTML = `
+    <div class="confidence-banner ${ci.cls}">
+      <div class="cb-title">${ci.icon} ${ci.label}</div>
+      <div class="cb-text">${ci.text}</div>
+    </div>
+  `;
+
+  // Obs
+  const ob = document.getElementById('obsBox');
+  ob.innerHTML = E.obs ? `
+    <div class="info-box" style="margin-top:12px">
+      <strong>⚠️ Observações / Riscos:</strong><br>${E.obs}
+    </div>
+  ` : '';
+}
+
+// ═══════════════════════════════════════════════════════
+//  GANTT
+// ═══════════════════════════════════════════════════════
+function generateGantt() {
+  const E = ESTIMATE;
+  document.getElementById('ganttProjectName').textContent = E.projectName;
+  goToStep(4);
+
+  const hpd = E.hpd;
+  const start = new Date(E.startDate + 'T12:00:00');
+
+  // Monta tarefas com datas
+  let cursor = new Date(start);
+  const tasks = [];
+
+  E.phases.forEach(p => {
+    const days = Math.ceil(p.hours / hpd);
+    const end = addWorkDays(cursor, days);
+    tasks.push({ label: p.label, start: new Date(cursor), end: new Date(end), hours: p.hours, days });
+    cursor = new Date(end);
+  });
+
+  drawGantt(tasks);
+}
+
+function drawGantt(tasks) {
+  const svg = document.getElementById('ganttChart');
+  svg.innerHTML = '';
+
+  const ROW_H    = 44;
+  const LABEL_W  = 220;
+  const PAD      = 20;
+  const HEADER_H = 50;
+  const MIN_DATE = tasks[0].start;
+  const MAX_DATE = tasks[tasks.length-1].end;
+  const totalMs  = MAX_DATE - MIN_DATE || 1;
+
+  const CHART_W  = Math.max(700, tasks.length * 120);
+  const SVG_W    = LABEL_W + CHART_W + PAD*2;
+  const SVG_H    = HEADER_H + tasks.length * ROW_H + PAD;
+
+  svg.setAttribute('width',  SVG_W);
+  svg.setAttribute('height', SVG_H);
+  svg.setAttribute('viewBox', `0 0 ${SVG_W} ${SVG_H}`);
+
+  const colors = [
+    '#3b82f6','#8b5cf6','#10b981','#f59e0b',
+    '#ef4444','#06b6d4','#84cc16','#f97316',
+  ];
+
+  // Fundo
+  rect(svg, 0, 0, SVG_W, SVG_H, '#f8fafc');
+
+  // Header datas
+  const monthMs = 30 * 24 * 3600 * 1000;
+  let d = new Date(MIN_DATE);
+  d.setDate(1);
+  while (d <= MAX_DATE) {
+    const x = LABEL_W + PAD + ((d - MIN_DATE) / totalMs) * CHART_W;
+    if (x >= LABEL_W + PAD) {
+      line(svg, x, 0, x, SVG_H, '#e5e7eb');
+      text(svg, x+4, 16,
+        d.toLocaleDateString('pt-BR',{month:'short', year:'2-digit'}),
+        '#6b7280', 10, 'start');
+    }
+    d = new Date(d.getFullYear(), d.getMonth()+1, 1);
+  }
+
+  // Linhas de grade horizontais
+  tasks.forEach((_,i) => {
+    const y = HEADER_H + i * ROW_H;
+    rect(svg, 0, y, SVG_W, ROW_H, i%2===0 ? '#fff' : '#f9fafb');
+    line(svg, 0, y, SVG_W, y, '#f1f5f9');
+  });
+
+  // Hoje
+  const today = new Date();
+  if (today >= MIN_DATE && today <= MAX_DATE) {
+    const tx = LABEL_W + PAD + ((today - MIN_DATE) / totalMs) * CHART_W;
+    line(svg, tx, 0, tx, SVG_H, '#ef4444', 1.5, '4,3');
+    text(svg, tx+3, 26, 'hoje', '#ef4444', 10);
+  }
+
+  // Barras
+  tasks.forEach((t, i) => {
+    const y   = HEADER_H + i * ROW_H;
+    const x0  = LABEL_W + PAD + ((t.start - MIN_DATE) / totalMs) * CHART_W;
+    const x1  = LABEL_W + PAD + ((t.end   - MIN_DATE) / totalMs) * CHART_W;
+    const bw  = Math.max(x1 - x0, 6);
+    const bh  = ROW_H - 12;
+    const by  = y + 6;
+    const col = colors[i % colors.length];
+
+    // Label esquerda
+    text(svg, LABEL_W - 8, y + ROW_H/2 + 4, t.label, '#374151', 12, 'end');
+
+    // Barra
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','gantt-bar');
+    g.dataset.idx = i;
+
+    const bar = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    bar.setAttribute('x', x0); bar.setAttribute('y', by);
+    bar.setAttribute('width', bw); bar.setAttribute('height', bh);
+    bar.setAttribute('rx', 5);
+    bar.setAttribute('fill', col);
+    bar.setAttribute('opacity','0.85');
+    g.appendChild(bar);
+
+    // Texto dentro da barra
+    if (bw > 50) {
+      const bt = document.createElementNS('http://www.w3.org/2000/svg','text');
+      bt.setAttribute('x', x0 + bw/2);
+      bt.setAttribute('y', by + bh/2 + 4);
+      bt.setAttribute('text-anchor','middle');
+      bt.setAttribute('fill','#fff');
+      bt.setAttribute('font-size','11');
+      bt.setAttribute('font-weight','600');
+      bt.textContent = `${t.days}d`;
+      g.appendChild(bt);
+    }
+
+    // Tooltip
+    g.addEventListener('mouseenter', e => showTip(e, t));
+    g.addEventListener('mousemove',  e => moveTip(e));
+    g.addEventListener('mouseleave', hideTip);
+
+    svg.appendChild(g);
+
+    // Datas nas pontas
+    text(svg, x0, by - 2, formatDate(t.start), '#6b7280', 9, 'start');
+    text(svg, x0+bw, by - 2, formatDate(t.end), '#6b7280', 9, 'end');
+  });
+
+  // Linha divisória label/chart
+  line(svg, LABEL_W, 0, LABEL_W, SVG_H, '#e5e7eb', 1.5);
+}
+
+// SVG helpers
+function rect(parent, x, y, w, h, fill) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  el.setAttribute('x',x); el.setAttribute('y',y);
+  el.setAttribute('width',w); el.setAttribute('height',h);
+  el.setAttribute('fill',fill);
+  parent.appendChild(el);
+}
+function line(parent, x1, y1, x2, y2, stroke, sw=1, dash='') {
+  const el = document.createElementNS('http://www.w3.org/2000/svg','line');
+  el.setAttribute('x1',x1); el.setAttribute('y1',y1);
+  el.setAttribute('x2',x2); el.setAttribute('y2',y2);
+  el.setAttribute('stroke',stroke);
+  el.setAttribute('stroke-width',sw);
+  if (dash) el.setAttribute('stroke-dasharray',dash);
+  parent.appendChild(el);
+}
+function text(parent, x, y, str, fill, size, anchor='start') {
+  const el = document.createElementNS('http://www.w3.org/2000/svg','text');
+  el.setAttribute('x',x); el.setAttribute('y',y);
+  el.setAttribute('fill',fill);
+  el.setAttribute('font-size',size);
+  el.setAttribute('text-anchor',anchor);
+  el.textContent = str;
+  parent.appendChild(el);
+}
+
+// Tooltip
+const tip = document.getElementById('tooltip');
+function showTip(e, t) {
+  tip.style.display = 'block';
+  tip.innerHTML = `
+    <strong>${t.label}</strong><br>
+    ⏱ ${t.hours.toFixed(1)}h · ${t.days}d úteis<br>
+    📅 ${formatDate(t.start)} → ${formatDate(t.end)}
+  `;
+  moveTip(e);
+}
+function moveTip(e) {
+  tip.style.left = (e.clientX + 12) + 'px';
+  tip.style.top  = (e.clientY - 10) + 'px';
+}
+function hideTip() { tip.style.display = 'none'; }
+
+// ═══════════════════════════════════════════════════════
+//  EXPORT SVG
+// ═══════════════════════════════════════════════════════
+function exportSVG() {
+  const svg = document.getElementById('ganttChart');
+  const blob = new Blob([svg.outerHTML], {type:'image/svg+xml'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (ESTIMATE.projectName || 'gantt') + '.svg';
+  a.click();
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>
