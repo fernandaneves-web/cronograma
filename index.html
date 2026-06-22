@@ -959,6 +959,7 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 .gantt-fill-mini{height:100%;border-radius:3px;position:absolute;left:0;top:0;}
 
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/9.0.3/docx.umd.min.js"></script>
 </head>
 <body>
 
@@ -986,7 +987,7 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
       <span class="nav-icon">📊</span> Cronograma
     </div>
     <div class="nav-item" onclick="showPage('report')" id="nav-report">
-      <span class="nav-icon">📝</span> Report Semanal
+      <span class="nav-icon">📝</span> Reporte
     </div>
     <div class="nav-item" onclick="showPage('log')" id="nav-log">
       <span class="nav-icon">🔄</span> Log de Mudanças
@@ -1159,7 +1160,8 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
         </div>
       </div>
 
-      <div style="display:flex;justify-content:flex-end;margin-top:16px">
+      <div style="display:flex;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:8px">
+        <button class="btn btn-secondary" onclick="generateWordPhase('d1')">📄 Gerar Word — Kick-off</button>
         <button class="btn btn-primary" onclick="showPhase('d2')">Próxima fase: AS-IS →</button>
       </div>
     </div>
@@ -1242,9 +1244,12 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
         </div>
       </div>
 
-      <div style="display:flex;justify-content:space-between;margin-top:16px">
+      <div style="display:flex;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:8px">
         <button class="btn btn-secondary" onclick="showPhase('d1')">← Kick-off</button>
-        <button class="btn btn-primary" onclick="showPhase('d3')">Próxima: To-Be →</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="generateWordPhase('d2')">📄 Gerar Word — AS-IS</button>
+          <button class="btn btn-primary" onclick="showPhase('d3')">Próxima: To-Be →</button>
+        </div>
       </div>
     </div>
 
@@ -1417,9 +1422,12 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
         </div>
       </div>
 
-      <div style="display:flex;justify-content:space-between;margin-top:16px">
+      <div style="display:flex;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:8px">
         <button class="btn btn-secondary" onclick="showPhase('d2')">← AS-IS</button>
-        <button class="btn btn-primary" onclick="showPhase('d4')">Próxima: SIPOC & RACI →</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="generateWordPhase('d3')">📄 Gerar Word — To-Be</button>
+          <button class="btn btn-primary" onclick="showPhase('d4')">Próxima: SIPOC & RACI →</button>
+        </div>
       </div>
     </div>
 
@@ -1465,9 +1473,12 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
       <div id="pendenciasContainer"></div>
       <button class="btn-add-row" onclick="addPendencia()" style="margin-bottom:20px">＋ Adicionar Pendência</button>
 
-      <div style="display:flex;justify-content:space-between;margin-top:16px">
+      <div style="display:flex;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:8px">
         <button class="btn btn-secondary" onclick="showPhase('d3')">← To-Be</button>
-        <button class="btn btn-primary" onclick="showPhase('d5')">Próxima: Documentação →</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="generateWordPhase('d4')">📄 Gerar Word — SIPOC & Pipes</button>
+          <button class="btn btn-primary" onclick="showPhase('d5')">Próxima: Documentação →</button>
+        </div>
       </div>
     </div>
 
@@ -1597,25 +1608,72 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 <!-- ══ PAGE: REPORT ══ -->
 <div class="page" id="page-report">
   <div class="page-header">
-    <h1>Report <em>Semanal</em></h1>
-    <p>Gerado automaticamente com base no Gantt. Renovado toda semana.</p>
+    <h1><em>Reporte</em></h1>
+    <p>Semanal: gerado do Gantt. Diário: registre seu dia em tempo real.</p>
   </div>
 
-  <div class="report-toggle">
-    <button class="report-btn active" onclick="setReport('cliente')" id="btn-report-cliente">📋 Versão Cliente</button>
-    <button class="report-btn" onclick="setReport('interna')" id="btn-report-interna">🔒 Versão Interna</button>
+  <!-- TABS: Semanal / Diário -->
+  <div class="view-toggle" style="margin-bottom:20px">
+    <button class="view-btn active" onclick="setReportTab('semanal')" id="rtab-semanal">📅 Semanal</button>
+    <button class="view-btn" onclick="setReportTab('diario')" id="rtab-diario">📋 Diário</button>
   </div>
 
-  <div style="display:flex;gap:10px;margin-bottom:16px">
-    <button class="btn btn-primary" onclick="generateReport()">↻ Gerar Report</button>
-    <button class="btn btn-secondary" onclick="copyReport()">📋 Copiar</button>
+  <!-- ── SEMANAL ── -->
+  <div id="report-semanal-panel">
+    <div class="report-toggle" style="margin-bottom:12px">
+      <button class="report-btn active" onclick="setReport('cliente')" id="btn-report-cliente">📋 Versão Cliente</button>
+      <button class="report-btn" onclick="setReport('interna')" id="btn-report-interna">🔒 Versão Interna</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn btn-primary" onclick="generateReport()">↻ Gerar</button>
+      <button class="btn btn-secondary" id="btn-copy-semanal" onclick="copyReportText()">📋 Copiar</button>
+    </div>
+    <div class="report-block" id="reportContent"><span style="color:var(--text3)">Clique em "Gerar" para atualizar com os dados do Gantt.</span></div>
   </div>
 
-  <div class="report-block" id="reportContent">
-    <span style="color:var(--text3)">Clique em "Gerar Report" para atualizar com os dados do Gantt.</span>
+  <!-- ── DIÁRIO ── -->
+  <div id="report-diario-panel" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:11px;color:var(--text2)" id="diario-date-label"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="navDiario(-1)">← Dia anterior</button>
+        <button class="btn btn-secondary" onclick="navDiario(1)">Dia seguinte →</button>
+        <button class="btn btn-secondary" onclick="navDiario(0)">Hoje</button>
+        <button class="btn btn-secondary" id="btn-copy-diario" onclick="copyDiario()">📋 Copiar</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-header">
+        <h2 style="color:var(--green)">✅ Feito hoje</h2>
+      </div>
+      <textarea id="diario-feito" rows="5"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:var(--radius);font-size:13px;font-family:inherit;outline:none;resize:vertical;line-height:1.7"
+        placeholder="• O que você concluiu hoje?&#10;• Tarefas finalizadas, entregas feitas, reuniões realizadas..."
+        oninput="saveDiario()"></textarea>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-header">
+        <h2 style="color:var(--blue)">🔜 Fazer amanhã</h2>
+      </div>
+      <textarea id="diario-amanha" rows="5"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:var(--radius);font-size:13px;font-family:inherit;outline:none;resize:vertical;line-height:1.7"
+        placeholder="• O que você vai fazer amanhã?&#10;• Próximas tarefas, reuniões agendadas, entregas pendentes..."
+        oninput="saveDiario()"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 style="color:var(--red)">🚧 Travas</h2>
+      </div>
+      <textarea id="diario-travas" rows="4"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:var(--radius);font-size:13px;font-family:inherit;outline:none;resize:vertical;line-height:1.7"
+        placeholder="• O que está travando o seu progresso?&#10;• Pendências externas, decisões aguardando, bloqueios técnicos..."
+        oninput="saveDiario()"></textarea>
+    </div>
   </div>
 </div>
-
 <!-- ══ PAGE: LOG ══ -->
 <div class="page" id="page-log">
   <div class="page-header">
@@ -1892,7 +1950,7 @@ function showPage(name) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   document.getElementById('nav-' + name).classList.add('active');
-  if (name === 'report') generateReport();
+  if (name === 'report') { setReportTab('semanal'); }
   if (name === 'calculadora') { updateConsultorCalcSelect(); loadCalcFromProject(); }
   if (name === 'cronograma') { checkCronogramaGate(); renderGantt(); }
 }
@@ -3018,10 +3076,22 @@ function confirmApplyToGantt() {
 
   // Gerar marcos do Gantt com base no cálculo
   const gantt = [];
-  const calc = window._calcResult;
-  const seniority = calc.seniority;
-  const comp = calc.comp;
-  const pipes = calc.pipes;
+
+  // Ler dados SEMPRE direto do projeto (fonte de verdade)
+  const projPipes = (proj.pipes || []).length || 1;
+  let projIntegracoes = 0;
+  (proj.pipes || []).forEach(p => { projIntegracoes += parseInt(p.int_externas || 0); });
+
+  // Complementar com _calcResult se existir (consultor e complexidade)
+  const calc = window._calcResult || {};
+  const seniority = (calc.seniority) || (() => {
+    const consultorId = document.getElementById('calc_consultor')?.value;
+    const c = state.team.find(t => t.id === consultorId);
+    return c ? c.senioridade : 'senior';
+  })();
+  const comp = proj.complexity || 'low';
+  const pipes = projPipes;
+  const integracoes = projIntegracoes; // sempre dos pipes do projeto
 
   function nextWorkDay(d) {
     let next = new Date(d);
@@ -3158,88 +3228,259 @@ function setReport(mode) {
   generateReport();
 }
 
+// ── REPORT TABS ──
+function setReportTab(tab) {
+  document.getElementById('rtab-semanal').classList.toggle('active', tab === 'semanal');
+  document.getElementById('rtab-diario').classList.toggle('active', tab === 'diario');
+  document.getElementById('report-semanal-panel').style.display = tab === 'semanal' ? 'block' : 'none';
+  document.getElementById('report-diario-panel').style.display = tab === 'diario' ? 'block' : 'none';
+  if (tab === 'semanal') generateReport();
+  if (tab === 'diario') loadDiario();
+}
+
+// ── DIÁRIO ──
+let diarioDate = null; // ISO date string YYYY-MM-DD
+
+function todayISO() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function loadDiario(dateStr) {
+  if (!dateStr) dateStr = diarioDate || todayISO();
+  diarioDate = dateStr;
+
+  const d = new Date(dateStr + 'T12:00:00');
+  const label = d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+  const el = document.getElementById('diario-date-label');
+  if (el) el.textContent = '📅 ' + label.charAt(0).toUpperCase() + label.slice(1);
+
+  const proj = getProject();
+  const key = 'diario_' + (proj ? proj.id : 'global') + '_' + dateStr;
+  const saved = JSON.parse(localStorage.getItem(key) || '{}');
+
+  const feito = document.getElementById('diario-feito');
+  const amanha = document.getElementById('diario-amanha');
+  const travas = document.getElementById('diario-travas');
+  if (feito) feito.value = saved.feito || '';
+  if (amanha) amanha.value = saved.amanha || '';
+  if (travas) travas.value = saved.travas || '';
+}
+
+function saveDiario() {
+  const proj = getProject();
+  const dateStr = diarioDate || todayISO();
+  const key = 'diario_' + (proj ? proj.id : 'global') + '_' + dateStr;
+  const data = {
+    feito: (document.getElementById('diario-feito') || {}).value || '',
+    amanha: (document.getElementById('diario-amanha') || {}).value || '',
+    travas: (document.getElementById('diario-travas') || {}).value || '',
+    savedAt: new Date().toISOString()
+  };
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+function navDiario(delta) {
+  const current = new Date((diarioDate || todayISO()) + 'T12:00:00');
+  if (delta === 0) {
+    diarioDate = todayISO();
+  } else {
+    current.setDate(current.getDate() + delta);
+    diarioDate = current.toISOString().split('T')[0];
+  }
+  loadDiario(diarioDate);
+}
+
+function copyDiario() {
+  const proj = getProject();
+  const dateStr = diarioDate || todayISO();
+  const d = new Date(dateStr + 'T12:00:00');
+  const label = d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+  const feito = (document.getElementById('diario-feito') || {}).value || '(nada registrado)';
+  const amanha = (document.getElementById('diario-amanha') || {}).value || '(nada registrado)';
+  const travas = (document.getElementById('diario-travas') || {}).value || '(nenhuma)';
+  const projNome = proj ? proj.empresa + ' — ' + proj.processo : 'Projeto';
+
+  const text = [
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'REPORTE DIÁRIO — ' + label.toUpperCase(),
+    'Projeto: ' + projNome,
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    '',
+    '✅ FEITO HOJE',
+    feito,
+    '',
+    '🔜 FAZER AMANHÃ',
+    amanha,
+    '',
+    '🚧 TRAVAS',
+    travas,
+    '',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  ].join('
+');
+
+  const btn = document.getElementById('btn-copy-diario');
+  navigator.clipboard.writeText(text).then(() => {
+    if(btn){btn.textContent='✓ Copiado!';setTimeout(()=>btn.textContent='📋 Copiar',2000);}
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    if(btn){btn.textContent='✓ Copiado!';setTimeout(()=>btn.textContent='📋 Copiar',2000);}
+  });
+}
+
+
 function generateReport() {
   const proj = getProject();
   const el = document.getElementById('reportContent');
-  if (!proj) { el.innerHTML = '<span style="color:var(--text3)">Selecione um projeto para gerar o report.</span>'; return; }
+  if (!el) return;
+  if (!proj) {
+    el.textContent = 'Selecione um projeto para gerar o report.';
+    return;
+  }
 
   const today = new Date();
-  const weekStart = getMonday(today);
-  const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 4);
-  const nextWeekStart = new Date(weekEnd); nextWeekStart.setDate(nextWeekStart.getDate() + 3);
-  const nextWeekEnd = new Date(nextWeekStart); nextWeekEnd.setDate(nextWeekStart.getDate() + 4);
+  today.setHours(23, 59, 59, 0);
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+
+  const weekStart = getMonday(new Date());
+  const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 6);
+  const nextWeekStart = new Date(weekEnd); nextWeekStart.setDate(nextWeekStart.getDate() + 1);
+  const nextWeekEnd = new Date(nextWeekStart); nextWeekEnd.setDate(nextWeekEnd.getDate() + 6);
 
   const gantt = proj.gantt || [];
-  const marcos = gantt.filter(i => !i.parentId);
+  // Todos os itens (marcos e sub-marcos)
+  const allItems = gantt;
   const subs = gantt.filter(i => i.parentId);
+  const marcos = gantt.filter(i => !i.parentId);
 
   const totalSubs = subs.length;
   const doneSubs = subs.filter(s => s.done).length;
   const pctTotal = totalSubs > 0 ? Math.round((doneSubs / totalSubs) * 100) : 0;
 
-  const thisWeekDone = subs.filter(s => s.done && s.executed_end && isInRange(s.executed_end, weekStart, weekEnd));
-  const thisWeekPend = subs.filter(s => !s.done && s.planned_end && isInRange(s.planned_end, weekStart, weekEnd));
-  const nextWeekPend = subs.filter(s => !s.done && s.planned_start && isInRange(s.planned_start, nextWeekStart, nextWeekEnd));
-  const lateItems = subs.filter(s => !s.done && s.planned_end && new Date(s.planned_end) < today);
+  // Concluídos esta semana — qualquer item marcado done cujo executed_end está nesta semana
+  // OU sem executed_end mas planned_end está nesta semana (concluído sem data exata)
+  const thisWeekDone = allItems.filter(s => {
+    if (!s.done) return false;
+    if (s.executed_end) return isInRange(s.executed_end, weekStart, weekEnd);
+    if (s.planned_end) return isInRange(s.planned_end, weekStart, weekEnd);
+    return true; // concluído mas sem data — inclui
+  });
 
-  const week = formatDate(weekStart) + ' – ' + formatDate(weekEnd);
-  const nweek = formatDate(nextWeekStart) + ' – ' + formatDate(nextWeekEnd);
+  // Todos os concluídos (para mostrar histórico quando semana não tem nada)
+  const allDone = allItems.filter(s => s.done);
 
-  const bar = (pct) => {
-    const filled = Math.round(pct / 10);
-    return '█'.repeat(filled) + '░'.repeat(10 - filled);
+  // Próxima semana — planejados não concluídos
+  const nextWeekPend = allItems.filter(s =>
+    !s.done && s.planned_start && isInRange(s.planned_start, nextWeekStart, nextWeekEnd)
+  );
+
+  // Atrasados — planejados para antes de hoje, não concluídos
+  const lateItems = allItems.filter(s =>
+    !s.done && s.planned_end && new Date(s.planned_end) < todayStart
+  );
+
+  // Em andamento esta semana
+  const inProgressNow = allItems.filter(s =>
+    !s.done && s.planned_start && s.planned_end &&
+    new Date(s.planned_start) <= today && new Date(s.planned_end) >= todayStart
+  );
+
+  const bar = pct => '█'.repeat(Math.round(pct / 10)) + '░'.repeat(10 - Math.round(pct / 10));
+
+  const fmtItem = s => {
+    const parent = s.parentId ? gantt.find(i => i.id === s.parentId) : null;
+    const prefix = parent ? `  [${parent.title}]` : '';
+    return `${prefix} ${s.title}`.trim();
   };
+
+  const week = formatDate(weekStart.toISOString()) + ' – ' + formatDate(weekEnd.toISOString());
+  const nweek = formatDate(nextWeekStart.toISOString()) + ' – ' + formatDate(nextWeekEnd.toISOString());
 
   let report = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PROJETO: ${proj.empresa} — ${proj.processo}
-SEMANA: ${week}
+SEMANA:  ${week}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ━━ PROGRESSO GERAL ━━
-${bar(pctTotal)} ${pctTotal}% concluído
-Marcos: ${doneSubs}/${totalSubs} sub-marcos concluídos
+${bar(pctTotal)} ${pctTotal}%
+${doneSubs} de ${totalSubs} sub-marcos concluídos
 
-━━ O QUE FOI ENTREGUE ESTA SEMANA (${week}) ━━
-${thisWeekDone.length > 0 ? thisWeekDone.map(s => `✅ ${s.title} — concluído em ${formatDate(s.executed_end)}`).join('\n') : '— Nenhuma entrega registrada esta semana'}
+━━ CONCLUÍDOS ESTA SEMANA ━━
+${thisWeekDone.length > 0
+  ? thisWeekDone.map(s => `✅ ${fmtItem(s)}${s.executed_end ? ' — ' + formatDate(s.executed_end) : ''}`).join('\n')
+  : allDone.length > 0
+    ? '— Nenhuma entrega nesta semana\n   (histórico: ' + allDone.length + ' item(ns) concluído(s) no total)'
+    : '— Nenhuma entrega registrada ainda'}
 
-━━ O QUE FAREMOS NA PRÓXIMA SEMANA (${nweek}) ━━
-${nextWeekPend.length > 0 ? nextWeekPend.map(s => `🔨 ${s.title} — previsto: ${formatDate(s.planned_start)} – ${formatDate(s.planned_end)}`).join('\n') : '— Aguardando conclusão desta semana'}
+━━ EM ANDAMENTO AGORA ━━
+${inProgressNow.length > 0
+  ? inProgressNow.map(s => `🔨 ${fmtItem(s)} — até ${formatDate(s.planned_end)}`).join('\n')
+  : '— Nenhum item em andamento esta semana'}
 
-━━ PENDÊNCIAS E RESPONSÁVEIS ━━
-${(proj.pendencias || []).length > 0 ? 
-  (proj.pendencias || []).map(p => `${p.impacta ? '⚠️' : '•'} ${p.descricao} — Resp: ${p.responsavel || 'N/D'}${p.impacta ? ' [IMPACTA CRONOGRAMA]' : ''}`).join('\n') 
-  : '— Sem pendências externas registradas'}`;
+━━ PRÓXIMA SEMANA (${nweek}) ━━
+${nextWeekPend.length > 0
+  ? nextWeekPend.map(s => `📌 ${fmtItem(s)} — início ${formatDate(s.planned_start)}`).join('\n')
+  : '— Nada planejado para a próxima semana ainda'}
+
+━━ PENDÊNCIAS EXTERNAS ━━
+${(proj.pendencias || []).length > 0
+  ? (proj.pendencias || []).map(p =>
+      `${p.impacta ? '⚠️' : '•'} ${p.descricao} — Resp: ${p.responsavel || 'N/D'}${p.impacta ? ' [IMPACTA ' + (p.marco || 'cronograma') + ']' : ''}`
+    ).join('\n')
+  : '— Sem pendências externas'}`;
 
   if (reportMode === 'interna') {
     report += `
 
-━━ [INTERNO] MARCOS ATRASADOS ━━
-${lateItems.length > 0 ? 
-  lateItems.map(s => {
-    const delta = Math.ceil((today - new Date(s.planned_end)) / (1000*60*60*24));
-    return `🔴 ${s.title} — ${delta} dia(s) de atraso`;
-  }).join('\n') 
-  : '✅ Sem atrasos registrados'}
+━━ [INTERNO] ATRASADOS ━━
+${lateItems.length > 0
+  ? lateItems.map(s => {
+      const delta = Math.ceil((todayStart - new Date(s.planned_end)) / 86400000);
+      return `🔴 ${fmtItem(s)} — ${delta} dia(s) de atraso`;
+    }).join('\n')
+  : '✅ Nenhum item atrasado'}
 
 ━━ [INTERNO] RISCOS ━━
-${(proj.pendencias || []).filter(p => p.impacta).map(p => `⚠️ ${p.descricao} → Marco ${p.marco || 'N/D'}`).join('\n') || '— Sem riscos críticos identificados'}`;
+${(proj.pendencias || []).filter(p => p.impacta).map(p =>
+    `⚠️ ${p.descricao} → ${p.marco || 'Marco N/D'}`
+  ).join('\n') || '— Sem riscos críticos'}`;
   }
 
   report += `
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Gerado em ${formatDate(today.toISOString())} — ProfixLab`;
+Gerado em ${new Date().toLocaleString('pt-BR')} — ProfixLab`;
 
   el.textContent = report;
 }
 
-function copyReport() {
-  const text = document.getElementById('reportContent').textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = event.target;
-    btn.textContent = '✓ Copiado!';
-    setTimeout(() => btn.textContent = '📋 Copiar', 2000);
+function copyReportText() {
+  const el = document.getElementById('reportContent');
+  const text = (el ? el.textContent : '').trim();
+  const btn = document.getElementById('btn-copy-semanal');
+  if (!text || text.includes('Selecione um projeto') || text.includes('Clique em')) {
+    if (btn) { btn.textContent = '⚠️ Gere o report primeiro'; setTimeout(() => btn.textContent = '📋 Copiar', 2000); }
+    return;
+  }
+  const doFeedback = () => {
+    if (btn) { btn.textContent = '✓ Copiado!'; btn.style.color = 'var(--green)'; setTimeout(() => { btn.textContent = '📋 Copiar'; btn.style.color = ''; }, 2500); }
+  };
+  navigator.clipboard.writeText(text).then(doFeedback).catch(() => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.cssText = 'position:fixed;top:-999px;left:-999px;opacity:0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      doFeedback();
+    } catch(e) { alert('Não foi possível copiar automaticamente. Selecione o texto manualmente.'); }
   });
 }
+
+function copyReport() { copyReportText(); }
+
 
 function getMonday(d) {
   const dt = new Date(d);
@@ -3250,8 +3491,12 @@ function getMonday(d) {
 }
 
 function isInRange(dateStr, start, end) {
-  const d = new Date(dateStr);
-  return d >= start && d <= end;
+  if (!dateStr) return false;
+  // Normalize to midnight for comparison
+  const d = new Date(dateStr + (dateStr.length === 10 ? 'T00:00:00' : ''));
+  const s = new Date(start); s.setHours(0,0,0,0);
+  const e = new Date(end); e.setHours(23,59,59,999);
+  return d >= s && d <= e;
 }
 
 // ══════════════════════════════════════════
@@ -3478,142 +3723,361 @@ function importData(event) {
 }
 
 
-function generateWordPhase(phase) {
+// ═══════════════════════════════════════════
+// WORD DOCUMENT GENERATION (real .docx)
+// ═══════════════════════════════════════════
+async function generateWordPhase(phase) {
   const proj = getProject();
-  if (!proj) { alert('Selecione um projeto.'); return; }
-  const labels = {d1:'Kick-off',d2:'AS-IS',d3:'To-Be',d4:'SIPOC & Pipes',all:'Completo (TO-BE)'};
-  const phaseLabel = labels[phase] || phase;
-  const w = window.open('', '_blank');
-  if (!w) { alert('Pop-ups bloqueados. Permita pop-ups para gerar o documento.'); return; }
-  const ans = proj.answers || {};
-  const now = new Date().toLocaleDateString('pt-BR');
+  if (!proj) { alert('Selecione um projeto primeiro.'); return; }
+
+  // d5 = documento completo
+  if (phase === 'd5') phase = 'all';
+
+  // Check docx library
+  if (!window.docx) {
+    alert('Biblioteca docx não carregada. Verifique sua conexão com a internet e recarregue a página.');
+    return;
+  }
+
+  const {
+    Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+    HeadingLevel, BorderStyle, WidthType, ShadingType, PageBreak, ImageRun, AlignmentType
+  } = window.docx;
+
+  const ans   = proj.answers || {};
+  const imgs  = proj.images  || {};
   const consul = state.team.find(c => c.id === proj.consultor);
   const consulNome = consul ? consul.nome : '—';
-  const imgs = proj.images || {};
+  const now = new Date().toLocaleDateString('pt-BR');
+  const phaseLabels = { d1:'Kick-off', d2:'AS-IS', d3:'To-Be', d4:'SIPOC & Pipes', all:'Documento TO-BE Completo' };
+  const phaseLabel  = phaseLabels[phase] || phase;
 
-  let content = '';
+  // ── COLORS ──
+  const C_PURPLE = '4F46E5';
+  const C_DARK   = '141B2E';
+  const C_GRAY   = 'EEF0F8';
+  const C_WHITE  = 'FFFFFF';
+  const C_ACCENT = '7C5CFC';
+  const C_GREEN  = '059669';
+  const C_RED    = 'DC2626';
 
+  // Content width A4 with 2cm margins each side (in DXA: 1440 = 1 inch)
+  const W = 8748; // ~15.24cm
+
+  const bdr  = { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' };
+  const bdrs = { top: bdr, bottom: bdr, left: bdr, right: bdr };
+  const noBdr  = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+  const noBdrs = { top: noBdr, bottom: noBdr, left: noBdr, right: noBdr };
+
+  // ── HELPERS ──
+  const txt = (t, opts={}) => new TextRun({ text: String(t||''), font: 'Arial', size: 20, ...opts });
+
+  const h1 = text => new Paragraph({
+    spacing: { before: 320, after: 120 },
+    border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: C_PURPLE, space: 4 } },
+    children: [ txt(text, { bold: true, size: 28, color: C_PURPLE }) ]
+  });
+
+  const h2 = text => new Paragraph({
+    spacing: { before: 240, after: 80 },
+    children: [ txt(text, { bold: true, size: 22, color: C_DARK }) ]
+  });
+
+  const h3 = text => new Paragraph({
+    spacing: { before: 180, after: 60 },
+    children: [ txt(text, { bold: true, size: 20, color: C_ACCENT }) ]
+  });
+
+  const spacer = (pts=80) => new Paragraph({ spacing: { before: 0, after: pts }, children: [txt(' ')] });
+
+  // QA block: purple left border + label + answer lines
+  const qa = (question, answer) => {
+    const text = (answer && answer.trim()) ? answer : '(não informado)';
+    const lines = text.split('\n');
+    return [
+      new Paragraph({
+        spacing: { before: 140, after: 40 },
+        border: { left: { style: BorderStyle.SINGLE, size: 14, color: C_PURPLE, space: 6 } },
+        indent: { left: 300 },
+        children: [ txt(question, { bold: true, size: 19, color: C_PURPLE }) ]
+      }),
+      ...lines.map(line => new Paragraph({
+        spacing: { before: 0, after: 36 },
+        indent: { left: 380 },
+        children: [ txt(line || ' ', { size: 19, color: '1E293B' }) ]
+      })),
+      spacer(60)
+    ];
+  };
+
+  const pgBreak = () => new Paragraph({ children: [ new PageBreak() ] });
+
+  // Cover block as dark table
+  const coverBlock = () => new Table({
+    width: { size: W, type: WidthType.DXA }, columnWidths: [W],
+    rows: [ new TableRow({ children: [ new TableCell({
+      borders: noBdrs,
+      shading: { fill: C_DARK, type: ShadingType.CLEAR },
+      margins: { top: 500, bottom: 500, left: 600, right: 600 },
+      width: { size: W, type: WidthType.DXA },
+      children: [
+        new Paragraph({ children: [ txt(proj.empresa || '—', { bold: true, size: 44, color: '9D7FFE' }) ] }),
+        new Paragraph({ spacing:{before:80}, children: [ txt('PROCESSO: ' + (proj.processo || '—'), { size: 22, color: 'AAAACC' }) ] }),
+        new Paragraph({ spacing:{before:60}, children: [ txt('Documento TO-BE — ' + phaseLabel, { size: 20, color: 'DDDDFF' }) ] }),
+        new Paragraph({ spacing:{before:120}, children: [
+          txt(now + '  ·  ' + consulNome, { size: 18, color: '888899' })
+        ]})
+      ]
+    }) ] }) ]
+  });
+
+  // Table builder
+  const makeTable = (headers, rows, colW) => new Table({
+    width: { size: colW.reduce((a,b)=>a+b,0), type: WidthType.DXA },
+    columnWidths: colW,
+    rows: [
+      new TableRow({ tableHeader: true, children: headers.map((h, i) => new TableCell({
+        borders: bdrs,
+        shading: { fill: C_PURPLE, type: ShadingType.CLEAR },
+        margins: { top: 80, bottom: 80, left: 120, right: 120 },
+        width: { size: colW[i], type: WidthType.DXA },
+        children: [ new Paragraph({ children: [ txt(h, { bold: true, size: 18, color: C_WHITE }) ] }) ]
+      }))}),
+      ...rows.map((row, ri) => new TableRow({ children: row.map((cell, ci) => new TableCell({
+        borders: bdrs,
+        shading: { fill: ri%2===0 ? C_WHITE : C_GRAY, type: ShadingType.CLEAR },
+        margins: { top: 72, bottom: 72, left: 120, right: 120 },
+        width: { size: colW[ci], type: WidthType.DXA },
+        children: [ new Paragraph({ children: [ txt(String(cell||'—'), { size: 18, color: C_DARK }) ] }) ]
+      }))}))
+    ]
+  });
+
+  // Image (base64 → ImageRun)
+  const imgBlock = async (src, caption) => {
+    if (!src) return [];
+    try {
+      const match = src.match(/^data:image\/([^;]+);base64,(.+)$/);
+      if (!match) return [];
+      const type = match[1].toLowerCase().replace('jpeg','jpg');
+      const binary = atob(match[2]);
+      const bytes = new Uint8Array(binary.length);
+      for (let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+      const docxType = ['png','jpg','gif','bmp'].includes(type) ? type : 'png';
+      const imgW = Math.round(W * 0.0278 * 96);   // DXA→pt→px (approx)
+      const imgH = Math.round(imgW * 0.55);
+      return [
+        ...(caption ? [new Paragraph({ spacing:{before:120,after:40}, children:[txt(caption,{bold:true,size:18,color:'555555'})] })] : []),
+        new Paragraph({ spacing:{before:60,after:80}, children:[
+          new ImageRun({ data: bytes, transformation:{width:imgW,height:imgH}, type: docxType })
+        ]}),
+      ];
+    } catch(e) {
+      return [ new Paragraph({ children:[txt('[Imagem não disponível: ' + (caption||'') + ']',{italics:true,color:'999999'})] }) ];
+    }
+  };
+
+  // ── BUILD CONTENT ──
+  const children = [];
+
+  children.push(coverBlock());
+  children.push(pgBreak());
+
+  // ──────── D1: KICK-OFF ────────
   if (phase === 'd1' || phase === 'all') {
-    content += `<h1 class="section-h">P1 a P6 — Kick-off</h1>
-    <div class="qa"><div class="q">P1 — O cliente já usou o Pipefy antes?</div><div class="a">${htmlE(ans.p1||'—')}</div></div>
-    <div class="qa"><div class="q">P2 — O dono do processo entende os conceitos básicos?</div><div class="a">${htmlE(ans.p2||'—')}</div></div>
-    <div class="qa"><div class="q">P3 — Objetivo do processo e definição de sucesso:</div><div class="a">${htmlE(ans.p3||'—')}</div></div>
-    <div class="qa"><div class="q">P4 — Dono do processo e executores:</div><div class="a">${htmlE(ans.p4||'—')}</div></div>
-    <div class="qa"><div class="q">P5 — Stakeholders presentes:</div><div class="a">${htmlE(ans.p5||'—')}</div></div>
-    <div class="qa"><div class="q">P6 — O processo já existe? Como é feito hoje?</div><div class="a">${htmlE(ans.p6||'—')}</div></div>
-    <div class="qa"><div class="q">Observações:</div><div class="a">${htmlE(ans.obs_d1||'—')}</div></div>
-    <div class="page-break"></div>`;
+    children.push(h1('Seção 1 — Kick-off (P1 a P6)'));
+    children.push(h2('1.1 — Conhecimento do Cliente em Pipefy'));
+    children.push(...qa('P1 — O cliente já usou o Pipefy antes?', ans.p1));
+    children.push(...qa('P2 — O dono do processo entende os conceitos básicos da ferramenta?', ans.p2));
+    children.push(h2('1.2 — Maturidade do Processo e Stakeholders'));
+    children.push(...qa('P3 — Qual é o objetivo desse processo e o que define sucesso?', ans.p3));
+    children.push(...qa('P4 — Quem é o dono do processo e quem o executa no dia a dia?', ans.p4));
+    children.push(...qa('P5 — Todos os stakeholders estão presentes nesta reunião?', ans.p5));
+    children.push(...qa('P6 — O processo já existe e é executado hoje? Como?', ans.p6));
+    if (ans.obs_d1) { children.push(h3('Observações — Kick-off')); children.push(...(ans.obs_d1||'').split('\n').map(l=>new Paragraph({indent:{left:240},children:[txt(l,{size:19,color:'1E293B'})]}))); }
+    if (phase !== 'all') children.push(pgBreak());
   }
 
+  // ──────── D2: AS-IS ────────
   if (phase === 'd2' || phase === 'all') {
-    content += `<h1 class="section-h">P7 a P11 — Mapeamento AS-IS</h1>
-    <div class="qa"><div class="q">P7 — Como chegam as solicitações?</div><div class="a">${htmlE(ans.p7||'—')}</div></div>
-    <div class="qa"><div class="q">P8 — Quem faz as solicitações?</div><div class="a">${htmlE(ans.p8||'—')}</div></div>
-    <div class="qa"><div class="q">P9 — Que informações chegam no início?</div><div class="a">${htmlE(ans.p9||'—')}</div></div>
-    <div class="qa"><div class="q">P10 — O que você faz com as informações? Quais as regras?</div><div class="a">${htmlE(ans.p10||'—')}</div></div>
-    <div class="qa"><div class="q">P11 — O que precisa acontecer para avançar ou encerrar?</div><div class="a">${htmlE(ans.p11||'—')}</div></div>
-    <div class="qa"><div class="q">Observações:</div><div class="a">${htmlE(ans.obs_d2||'—')}</div></div>
-    <div class="page-break"></div>`;
+    if (phase==='all') children.push(pgBreak());
+    children.push(h1('Seção 2 — Mapeamento AS-IS (P7 a P11)'));
+    children.push(h2('2.1 — Entradas do Processo'));
+    children.push(...qa('P7 — Como chegam as solicitações para esse processo?', ans.p7));
+    children.push(...qa('P8 — Quem faz essas solicitações?', ans.p8));
+    children.push(...qa('P9 — Que informações chegam no início do processo?', ans.p9));
+    children.push(h2('2.2 — Regras, Fluxo e Critérios de Saída'));
+    children.push(...qa('P10 — O que você faz com as informações que recebe? Quais são as regras?', ans.p10));
+    children.push(...qa('P11 — O que precisa acontecer para o processo avançar ou ser encerrado?', ans.p11));
+    if (ans.obs_d2) { children.push(h3('Observações — AS-IS')); children.push(...(ans.obs_d2||'').split('\n').map(l=>new Paragraph({indent:{left:240},children:[txt(l,{size:19,color:'1E293B'})]}))); }
   }
 
+  // ──────── D3: TO-BE ────────
   if (phase === 'd3' || phase === 'all') {
-    content += `<h1 class="section-h">P12 a P21 — To-Be</h1>
-    <div class="qa"><div class="q">P12 — Fases validadas do processo:</div><div class="a">${htmlE(ans.p12||'—')}</div></div>`;
-    if (imgs.fluxograma) content += `<div class="img-section"><div class="img-label">Fluxograma BPMN</div><img src="${imgs.fluxograma}" class="doc-img"></div>`;
-    if (imgs.kanban) content += `<div class="img-section"><div class="img-label">Kanban TO-BE</div><img src="${imgs.kanban}" class="doc-img"></div>`;
-    content += `
-    <div class="qa"><div class="q">P13 — RACI por fase:</div><div class="a">${htmlE(ans.p13||'—')}</div></div>
-    <div class="qa"><div class="q">P14 — Fases de aprovação:</div><div class="a">${htmlE(ans.p14||'—')}</div></div>
-    <div class="qa"><div class="q">P15 — SLA por fase:</div><div class="a">${htmlE(ans.p15||'—')}</div></div>
-    <div class="qa"><div class="q">P16 — Integrações com sistemas externos:</div><div class="a">${htmlE(ans.p16||'—')}</div></div>
-    <div class="qa"><div class="q">P17 — Emissão ou validação de documentos:</div><div class="a">${htmlE(ans.p17||'—')}</div></div>
-    <div class="qa"><div class="q">P18 — Campos da fase e regras:</div><div class="a">${htmlE(ans.p18||'—')}</div></div>
-    <div class="qa"><div class="q">P19 — Réguas de comunicação:</div><div class="a">${htmlE(ans.p19||'—')}</div></div>
-    <div class="qa"><div class="q">P20 — Etiquetas e alertas visuais:</div><div class="a">${htmlE(ans.p20||'—')}</div></div>
-    <div class="qa"><div class="q">P21 — Atividades paralelas e sub-processos:</div><div class="a">${htmlE(ans.p21||'—')}</div></div>
-    <div class="qa"><div class="q">Observações:</div><div class="a">${htmlE(ans.obs_d3||'—')}</div></div>
-    <div class="page-break"></div>`;
+    if (phase==='all') children.push(pgBreak());
+    children.push(h1('Seção 3 — To-Be Detalhado (P12 a P21)'));
+    children.push(h2('3.1 — Fases Validadas do Processo'));
+    children.push(...qa('P12 — Quais são as fases do processo no Pipefy?', ans.p12));
+
+    if (imgs.fluxograma) { const n = await imgBlock(imgs.fluxograma, 'Fluxograma BPMN / AS-IS'); children.push(...n); }
+    if (imgs.kanban)     { const n = await imgBlock(imgs.kanban, 'Kanban TO-BE');                children.push(...n); }
+
+    children.push(h2('3.2 — RACI e Aprovações'));
+    children.push(...qa('P13 — Quem é responsável por esta fase e quem precisa ser informado?', ans.p13));
+    children.push(...qa('P14 — Esta fase é de aprovação? Como funciona?', ans.p14));
+    children.push(h2('3.3 — SLA e Integrações'));
+    children.push(...qa('P15 — Esta fase tem SLA? O que acontece quando vence?', ans.p15));
+    children.push(...qa('P16 — Esta fase precisa integrar com algum sistema externo?', ans.p16));
+    children.push(...qa('P17 — Esta fase tem emissão ou validação de documento?', ans.p17));
+    children.push(h2('3.4 — Campos, Comunicações e Atividades Paralelas'));
+    children.push(...qa('P18 — Quais são os campos desta fase e quais são as regras deles?', ans.p18));
+    children.push(...qa('P19 — Quais são as réguas de comunicação desta fase?', ans.p19));
+    children.push(...qa('P20 — Esta fase precisa de etiquetas ou alertas visuais?', ans.p20));
+    children.push(...qa('P21 — Esta fase gera alguma atividade paralela ou sub-processo?', ans.p21));
+    if (ans.obs_d3) { children.push(h3('Observações — To-Be')); children.push(...(ans.obs_d3||'').split('\n').map(l=>new Paragraph({indent:{left:240},children:[txt(l,{size:19,color:'1E293B'})]}))); }
   }
 
+  // ──────── D4: SIPOC & PIPES ────────
   if (phase === 'd4' || phase === 'all') {
-    content += `<h1 class="section-h">SIPOC & Pipes</h1>`;
-    (proj.pipes || []).forEach((pipe, i) => {
-      content += `<h2 style="color:#4f46e5;margin:20px 0 10px;font-size:15px">Pipe ${i+1}: ${htmlE(pipe.nome)}</h2>`;
-      if (pipe.raci && pipe.raci.length > 0) {
-        content += `<h3 style="color:#333;font-size:13px;margin-bottom:8px">Matriz RACI</h3>
-        <table><thead><tr><th>Fase</th><th>R — Responsável</th><th>A — Aprovador</th><th>C — Consultado</th><th>I — Informado</th></tr></thead><tbody>
-        ${pipe.raci.map(r=>`<tr><td>${htmlE(r.fase||'—')}</td><td>${htmlE(r.r||'—')}</td><td>${htmlE(r.a||'—')}</td><td>${htmlE(r.c||'—')}</td><td>${htmlE(r.i||'—')}</td></tr>`).join('')}
-        </tbody></table>`;
+    if (phase==='all') children.push(pgBreak());
+    children.push(h1('Seção 4 — SIPOC & Pipes'));
+
+    (proj.pipes || []).forEach((pipe, pi) => {
+      children.push(h2(`Pipe ${pi+1}: ${pipe.nome || '—'}`));
+
+      // Métricas
+      children.push(h3('Configuração'));
+      children.push(makeTable(
+        ['Parâmetro','Valor'],
+        [
+          ['Automações', String(pipe.automacoes||0)],
+          ['Templates de E-mail', String(pipe.templates||0)],
+          ['Bancos de Dados', String(pipe.bancos||0)],
+          ['Integrações Externas', String(pipe.int_externas||0)],
+          ['Portal Externo / Interface', pipe.portal ? 'Sim' : 'Não'],
+          ['Nova Integração', pipe.nova_integracao ? 'Sim' : 'Não'],
+        ],
+        [4000, 4748]
+      ));
+      children.push(spacer(80));
+
+      // RACI
+      if ((pipe.raci||[]).length > 0) {
+        children.push(h3('Matriz RACI — ' + pipe.nome));
+        children.push(makeTable(
+          ['Fase','R — Responsável','A — Aprovador','C — Consultado','I — Informado'],
+          pipe.raci.map(r => [r.fase||'—',r.r||'—',r.a||'—',r.c||'—',r.i||'—']),
+          [1600, 1787, 1787, 1787, 1787]
+        ));
+        children.push(spacer(80));
       }
-      if (pipe.campos && pipe.campos.length > 0) {
-        content += `<h3 style="color:#333;font-size:13px;margin:14px 0 8px">Campos por Fase</h3>
-        <table><thead><tr><th>Fase</th><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Condicional</th></tr></thead><tbody>
-        ${pipe.campos.map(c=>`<tr><td>${htmlE(c.fase||'—')}</td><td>${htmlE(c.nome||'—')}</td><td>${htmlE(c.tipo||'—')}</td><td>${htmlE(c.obrigatorio||'—')}</td><td>${htmlE(c.condicional||'—')}</td></tr>`).join('')}
-        </tbody></table>`;
+
+      // Campos
+      if ((pipe.campos||[]).length > 0) {
+        children.push(h3('Campos por Fase — ' + pipe.nome));
+        children.push(makeTable(
+          ['Fase','Campo','Tipo','Obrigatório','Condicional'],
+          pipe.campos.map(c => [c.fase||'—',c.nome||'—',c.tipo||'—',c.obrigatorio||'—',c.condicional||'—']),
+          [1400, 2000, 1800, 1274, 2274]
+        ));
+        children.push(spacer(80));
       }
     });
-    if (proj.sipoc && proj.sipoc.length > 0) {
-      content += `<h2 style="color:#4f46e5;margin:20px 0 10px;font-size:15px">SIPOC</h2>
-      <table><thead><tr><th>Fornecedor (S)</th><th>Entrada (I)</th><th>Processo (P)</th><th>Saída (O)</th><th>Cliente (C)</th></tr></thead><tbody>
-      ${proj.sipoc.map(r=>`<tr><td>${htmlE(r.s||'—')}</td><td>${htmlE(r.i||'—')}</td><td>${htmlE(r.p||'—')}</td><td>${htmlE(r.o||'—')}</td><td>${htmlE(r.c||'—')}</td></tr>`).join('')}
-      </tbody></table>`;
+
+    // SIPOC
+    if ((proj.sipoc||[]).length > 0) {
+      children.push(h2('SIPOC — Visão Geral do Processo'));
+      children.push(makeTable(
+        ['Fornecedor (S)','Entrada (I)','Processo (P)','Saída (O)','Cliente (C)'],
+        proj.sipoc.map(r => [r.s||'—',r.i||'—',r.p||'—',r.o||'—',r.c||'—']),
+        [1748,1750,1750,1750,1750]
+      ));
+      children.push(spacer(80));
     }
-    if (proj.pendencias && proj.pendencias.length > 0) {
-      content += `<h2 style="color:#4f46e5;margin:20px 0 10px;font-size:15px">Pendências Externas</h2>
-      <table><thead><tr><th>Descrição</th><th>Responsável</th><th>Impacta Cronograma?</th><th>Marco Afetado</th></tr></thead><tbody>
-      ${proj.pendencias.map(p=>`<tr><td>${htmlE(p.descricao||'—')}</td><td>${htmlE(p.responsavel||'—')}</td><td>${p.impacta?'<strong style="color:#dc2626">Sim</strong>':'Não'}</td><td>${htmlE(p.marco||'—')}</td></tr>`).join('')}
-      </tbody></table>`;
+
+    // Pendências
+    if ((proj.pendencias||[]).length > 0) {
+      children.push(h2('Pendências Externas'));
+      children.push(makeTable(
+        ['Descrição','Responsável','Impacta?','Marco Afetado'],
+        proj.pendencias.map(p => [p.descricao||'—', p.responsavel||'—', p.impacta?'Sim ⚠️':'Não', p.marco||'—']),
+        [3000, 1748, 1000, 3000]
+      ));
     }
-    content += '<div class="page-break"></div>';
   }
 
+  // ──────── D5: DOCUMENTAÇÃO FINAL ────────
   if (phase === 'all') {
-    content += `<h1 class="section-h">Documentação Final</h1>
-    <div class="qa"><div class="q">Integrações a Desenvolver:</div><div class="a">${htmlE(ans.doc_integracoes||'—')}</div></div>
-    <div class="qa"><div class="q">Templates de E-mail e Comunicações:</div><div class="a">${htmlE(ans.doc_templates||'—')}</div></div>
-    <div class="qa"><div class="q">Observações Finais e Itens Fora do Escopo:</div><div class="a">${htmlE(ans.doc_fora_escopo||'—')}</div></div>`;
+    children.push(pgBreak());
+    children.push(h1('Seção 5 — Documentação Final e Aceite'));
+
+    if (ans.doc_integracoes) { children.push(h2('Integrações a Desenvolver')); children.push(...qa('', ans.doc_integracoes)); }
+    if (ans.doc_templates)   { children.push(h2('Templates de E-mail')); children.push(...qa('', ans.doc_templates)); }
+    if (ans.doc_fora_escopo) { children.push(h2('Itens Fora do Escopo')); children.push(...qa('', ans.doc_fora_escopo)); }
+
+    // Checklist de aceite
+    children.push(h2('Checklist de Aceite Formal'));
+    const aceiteItems = [
+      ['ac1','Fluxograma TO-BE validado e aprovado pelo cliente'],
+      ['ac2','SIPOC revisado e confirmado'],
+      ['ac3','Matriz RACI aprovada pelos responsáveis'],
+      ['ac4','Campos por fase definidos e aprovados'],
+      ['ac5','Escopo de integrações confirmado'],
+      ['ac6','Pendências externas identificadas e comunicadas'],
+      ['ac7','Cliente deu aceite formal (assinatura ou confirmação escrita)'],
+    ];
+    aceiteItems.forEach(([id, label]) => {
+      const checked = ans[id];
+      children.push(new Paragraph({
+        spacing: { before: 60, after: 40 },
+        children: [
+          txt(checked ? '☑  ' : '☐  ', { size: 20, color: checked ? C_GREEN : '888888' }),
+          txt(label, { size: 20, color: checked ? C_GREEN : '444444', bold: checked }),
+        ]
+      }));
+    });
   }
 
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Discovery TO-BE — ${htmlE(proj.empresa)} — ${phaseLabel}</title>
-  <style>
-    @page{margin:2.5cm 2cm;}
-    *{box-sizing:border-box;}
-    body{font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#141b2e;line-height:1.6;max-width:800px;margin:0 auto;padding:20px;}
-    .doc-header{background:#141b2e;color:white;padding:24px 32px;border-radius:8px;margin-bottom:28px;}
-    .doc-header .company{font-size:20pt;font-weight:700;color:#9d7ffe;margin-bottom:4px;}
-    .doc-header .subtitle{font-size:12pt;color:rgba(255,255,255,.7);}
-    .doc-header .meta{font-size:10pt;color:rgba(255,255,255,.5);margin-top:8px;}
-    .section-h{color:#4f46e5;font-size:16pt;font-weight:700;border-bottom:2px solid #4f46e5;padding-bottom:8px;margin:28px 0 16px;}
-    .qa{margin-bottom:14px;padding:12px 14px;background:#f8f9ff;border-left:3px solid #7c5cfc;border-radius:4px;}
-    .q{font-weight:700;font-size:10pt;color:#4f46e5;margin-bottom:5px;}
-    .a{font-size:11pt;color:#1e293b;white-space:pre-wrap;}
-    table{width:100%;border-collapse:collapse;margin:10px 0;}
-    th{background:#4f46e5;color:white;padding:8px 10px;font-size:9pt;text-align:left;}
-    td{padding:7px 10px;border:1px solid #e2e8f0;font-size:10pt;}
-    tr:nth-child(even) td{background:#f8f9ff;}
-    .img-section{margin:16px 0;padding:14px;background:#f8f9ff;border-radius:6px;}
-    .img-label{font-weight:700;font-size:10pt;color:#4f46e5;margin-bottom:8px;}
-    .doc-img{max-width:100%;border:1px solid #e2e8f0;border-radius:4px;}
-    .page-break{page-break-after:always;margin:24px 0;border-top:1px solid #e2e8f0;}
-    .no-print{display:block;margin-bottom:20px;}
-    @media print{.no-print{display:none!important;}body{max-width:none;padding:0;}}
-  </style></head><body>
-  <div class="doc-header">
-    <div class="company">${htmlE(proj.empresa)}</div>
-    <div class="subtitle">Documento TO-BE — ${phaseLabel}</div>
-    <div class="meta">Processo: ${htmlE(proj.processo)} &nbsp;·&nbsp; ${now} &nbsp;·&nbsp; ${htmlE(consulNome)}</div>
-  </div>
-  <button class="no-print" onclick="window.print()" style="background:#4f46e5;color:white;border:none;padding:10px 22px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🖨 Imprimir / Salvar como PDF</button>
-  ${content}
-  </body></html>`);
-  w.document.close();
+  // ── GENERATE & DOWNLOAD ──
+  const doc = new Document({
+    styles: {
+      default: { document: { run: { font: 'Arial', size: 20 } } },
+      paragraphStyles: [
+        { id:'Heading1', name:'Heading 1', basedOn:'Normal', next:'Normal', quickFormat:true,
+          run:{size:28,bold:true,font:'Arial',color:C_PURPLE},
+          paragraph:{spacing:{before:320,after:120},outlineLevel:0} },
+        { id:'Heading2', name:'Heading 2', basedOn:'Normal', next:'Normal', quickFormat:true,
+          run:{size:22,bold:true,font:'Arial',color:C_DARK},
+          paragraph:{spacing:{before:240,after:80},outlineLevel:1} },
+      ]
+    },
+    sections: [{
+      properties: {
+        page: {
+          size: { width: 11906, height: 16838 },        // A4
+          margin: { top: 1134, right: 1134, bottom: 1134, left: 1134 } // ~2cm
+        }
+      },
+      children
+    }]
+  });
+
+  try {
+    const blob = await Packer.toBlob(doc);
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const name = `TO-BE_${(proj.empresa||'Projeto').replace(/\s+/g,'_')}_${phaseLabel.replace(/[^a-zA-Z0-9]/g,'_')}.docx`;
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    addLog('Word gerado: ' + name);
+  } catch(err) {
+    alert('Erro ao gerar o documento: ' + err.message + '\n\nVerifique se o navegador permite pop-ups e downloads.');
+    console.error(err);
+  }
 }
 
-function htmlE(s) {
-  if (!s) return '—';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+
 
 
 // ══════════════════════════════════════════
