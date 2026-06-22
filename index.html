@@ -959,7 +959,7 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 .gantt-fill-mini{height:100%;border-radius:3px;position:absolute;left:0;top:0;}
 
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/9.0.3/docx.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/9.0.3/docx.umd.min.js" defer onerror="console.warn('docx CDN não carregou - Word geração indisponível')"></script>
 </head>
 <body>
 
@@ -3316,8 +3316,7 @@ function copyDiario() {
     travas,
     '',
     '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-  ].join('
-');
+  ].join('\n');
 
   const btn = document.getElementById('btn-copy-diario');
   navigator.clipboard.writeText(text).then(() => {
@@ -3734,8 +3733,12 @@ async function generateWordPhase(phase) {
   if (phase === 'd5') phase = 'all';
 
   // Check docx library
+  // Check if docx library loaded
   if (!window.docx) {
-    alert('Biblioteca docx não carregada. Verifique sua conexão com a internet e recarregue a página.');
+    // Try to show an informative message
+    if (confirm('A biblioteca de geração Word (docx.js) não carregou.\n\nIsso acontece quando:\n• Sem conexão com internet\n• Pop-ups/scripts bloqueados\n\nClique OK para tentar recarregar a página.')) {
+      location.reload();
+    }
     return;
   }
 
