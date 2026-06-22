@@ -1,1065 +1,3209 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Estimativa Pipefy — Pesos & Cronograma</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProfixLab</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  /* ── Reset & Base ── */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --green:  #16a34a; --green-light: #dcfce7; --green-mid: #bbf7d0;
-    --yellow: #ca8a04; --yellow-light: #fef9c3; --yellow-mid: #fde68a;
-    --red:    #dc2626; --red-light:   #fee2e2; --red-mid:   #fecaca;
-    --blue:   #2563eb; --blue-light:  #eff6ff;
-    --gray:   #6b7280; --gray-light:  #f3f4f6; --gray-mid: #e5e7eb;
-    --dark:   #111827;
-    --radius: 10px;
-    --shadow: 0 2px 8px rgba(0,0,0,.08);
-  }
-  body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background: #f8fafc;
-    color: var(--dark);
-    font-size: 14px;
-    line-height: 1.5;
-  }
+/* ── TOKENS ── */
+:root {
+  --bg:       #0d0f14;
+  --surface:  #14171f;
+  --surface2: #1c2030;
+  --surface3: #232840;
+  --border:   #2a2f45;
+  --border2:  #363d5a;
+  --text:     #e8eaf2;
+  --text2:    #8b91b0;
+  --text3:    #555d80;
+  --accent:   #7c5cfc;
+  --accent2:  #9d7ffe;
+  --green:    #3dd68c;
+  --amber:    #f5a623;
+  --red:      #f0545a;
+  --blue:     #4fa3f7;
+  --orange:   #f97316;
+  --radius:   10px;
+  --radius-lg:16px;
+}
 
-  /* ── Layout ── */
-  .app { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
-  h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-  .subtitle { color: var(--gray); margin-bottom: 32px; font-size: 13px; }
+* { margin:0; padding:0; box-sizing:border-box; }
+html { font-size:14px; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
 
-  /* ── Steps ── */
-  .steps { display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; }
-  .step {
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 16px; border-radius: 999px;
-    font-size: 13px; font-weight: 500;
-    background: var(--gray-light); color: var(--gray);
-    border: 1.5px solid var(--gray-mid);
-    cursor: default; transition: all .2s;
-  }
-  .step.active   { background: var(--blue); color: #fff; border-color: var(--blue); }
-  .step.done     { background: var(--green-light); color: var(--green); border-color: var(--green-mid); }
-  .step-num { font-weight: 700; }
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius:3px; }
 
-  /* ── Cards ── */
-  .card {
-    background: #fff; border-radius: var(--radius);
-    box-shadow: var(--shadow); border: 1px solid var(--gray-mid);
-    padding: 24px; margin-bottom: 20px;
-  }
-  .card-title {
-    font-size: 15px; font-weight: 700; margin-bottom: 16px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .card-title .badge {
-    font-size: 11px; font-weight: 600; padding: 2px 8px;
-    border-radius: 999px; background: var(--blue-light);
-    color: var(--blue);
-  }
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+}
+.sidebar-logo {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .logo-mark {
+  font-family: 'DM Mono', monospace;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+.sidebar-logo .logo-mark em { color: var(--accent2); font-style: normal; }
+.sidebar-logo .logo-sub {
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-top: 2px;
+}
 
-  /* ── Sections visíveis/ocultas ── */
-  .section { display: none; }
-  .section.active { display: block; }
+.project-selector {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.project-selector select {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  padding: 7px 10px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+}
+.project-selector select:focus { border-color: var(--accent); }
+.btn-new-project {
+  width: 100%;
+  margin-top: 8px;
+  background: rgba(124,92,252,0.12);
+  border: 1px dashed rgba(124,92,252,0.4);
+  color: var(--accent2);
+  padding: 6px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: all 0.15s;
+}
+.btn-new-project:hover { background: rgba(124,92,252,0.2); }
 
-  /* ── Configuração de Projeto ── */
-  .project-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-  @media(max-width:640px){ .project-grid { grid-template-columns: 1fr; } }
+.nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 10px;
+}
+.nav-section {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text3);
+  padding: 12px 8px 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.12s;
+  margin-bottom: 1px;
+  user-select: none;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: rgba(124,92,252,0.15); color: var(--accent2); }
+.nav-item .nav-icon { font-size: 15px; width:20px; text-align:center; flex-shrink:0; }
+.nav-item .nav-badge {
+  margin-left: auto;
+  font-size: 10px;
+  background: var(--accent);
+  color: white;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+}
 
-  label { display: block; font-size: 12px; font-weight: 600; color: var(--gray); margin-bottom: 4px; }
-  input[type=text], input[type=number], input[type=date], select, textarea {
-    width: 100%; padding: 8px 10px; border-radius: 6px;
-    border: 1.5px solid var(--gray-mid); font-size: 13px;
-    background: #fff; color: var(--dark); outline: none;
-    transition: border-color .2s;
-  }
-  input:focus, select:focus, textarea:focus { border-color: var(--blue); }
+.sidebar-footer {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+}
+.btn-io {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  padding: 7px 4px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.12s;
+}
+.btn-io:hover { border-color: var(--accent); color: var(--accent2); }
 
-  /* ── Tabela de pesos ── */
-  .weights-header {
-    display: grid; gap: 8px;
-    grid-template-columns: 200px 1fr 1fr 1fr 120px;
-    font-size: 11px; font-weight: 700; color: var(--gray);
-    text-transform: uppercase; letter-spacing: .05em;
-    padding: 0 8px 8px; border-bottom: 1px solid var(--gray-mid);
-    margin-bottom: 8px;
-  }
-  .weight-row {
-    display: grid; gap: 8px;
-    grid-template-columns: 200px 1fr 1fr 1fr 120px;
-    align-items: center; padding: 8px;
-    border-radius: 6px; transition: background .15s;
-  }
-  .weight-row:hover { background: var(--gray-light); }
-  .weight-label { font-size: 13px; font-weight: 500; }
-  .weight-unit  { font-size: 11px; color: var(--gray); margin-top: 2px; }
-  .col-simple input { border-color: var(--green-mid); }
-  .col-medio  input { border-color: var(--yellow-mid); }
-  .col-complexo input { border-color: var(--red-mid); }
-  @media(max-width:760px){
-    .weights-header, .weight-row { grid-template-columns: 1fr 1fr 1fr; }
-    .weights-header > :first-child,
-    .weights-header > :last-child,
-    .weight-row > .weight-label-cell,
-    .weight-row > .col-unit { display: none; }
-  }
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  height: 100vh;
+}
+.page { display: none; padding: 32px 36px; max-width: 960px; }
+.page.active { display: block; }
 
-  /* Fases do projeto */
-  .phase-grid {
-    display: grid; grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px; margin-top: 8px;
-  }
-  @media(max-width:640px){ .phase-grid { grid-template-columns: 1fr; } }
-  .phase-item {
-    background: var(--gray-light); border-radius: 8px;
-    padding: 12px; border: 1px solid var(--gray-mid);
-  }
-  .phase-name { font-weight: 600; font-size: 13px; margin-bottom: 8px; }
-  .phase-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-  .phase-col-label {
-    font-size: 10px; font-weight: 700; text-align: center;
-    padding: 2px 0 4px;
-  }
-  .c-s { color: var(--green); }
-  .c-m { color: var(--yellow); }
-  .c-c { color: var(--red); }
+/* ── PAGE HEADER ── */
+.page-header { margin-bottom: 28px; }
+.page-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+.page-header h1 em { color: var(--accent2); font-style: normal; }
+.page-header p { color: var(--text2); font-size: 13px; margin-top: 4px; }
 
-  /* ── Estimativa Input ── */
-  .estimate-grid {
-    display: grid; grid-template-columns: 1fr 1fr 1fr;
-    gap: 16px; margin-top: 4px;
-  }
-  @media(max-width:640px){ .estimate-grid { grid-template-columns: 1fr; } }
-  .level-card {
-    border-radius: 8px; padding: 16px;
-    border: 1.5px solid;
-  }
-  .level-card.simples   { border-color: var(--green); background: var(--green-light); }
-  .level-card.medio     { border-color: var(--yellow); background: var(--yellow-light); }
-  .level-card.complexo  { border-color: var(--red); background: var(--red-light); }
-  .level-title {
-    font-size: 13px; font-weight: 700; margin-bottom: 12px;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .level-field { margin-bottom: 10px; }
-  .level-field label { color: inherit; opacity: .7; }
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  margin-bottom: 16px;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.card-header h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.card-header .section-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(124,92,252,0.15);
+  color: var(--accent2);
+  border: 1px solid rgba(124,92,252,0.3);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
 
-  /* ── Painel de Revisão ── */
-  .review-table { width: 100%; border-collapse: collapse; }
-  .review-table th, .review-table td {
-    padding: 10px 12px; text-align: left;
-    border-bottom: 1px solid var(--gray-mid); font-size: 13px;
-  }
-  .review-table th {
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    color: var(--gray); letter-spacing: .05em; background: var(--gray-light);
-  }
-  .review-table tr:last-child td { border-bottom: none; }
-  .pill {
-    display: inline-block; padding: 2px 8px; border-radius: 999px;
-    font-size: 11px; font-weight: 600;
-  }
-  .pill.s { background: var(--green-light);  color: var(--green); }
-  .pill.m { background: var(--yellow-light); color: var(--yellow); }
-  .pill.c { background: var(--red-light);    color: var(--red); }
+/* ── FORM ELEMENTS ── */
+.field { margin-bottom: 14px; }
+.field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.12s;
+}
+.field input:focus,
+.field textarea:focus,
+.field select:focus { border-color: var(--accent); }
+.field textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+.field input::placeholder,
+.field textarea::placeholder { color: var(--text3); }
 
-  .review-section-title {
-    font-size: 12px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .06em; color: var(--gray);
-    padding: 8px 12px; background: var(--gray-light);
-    border-bottom: 1px solid var(--gray-mid);
-  }
+/* ── GUIDE TOGGLE ── */
+.guide-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent2);
+  cursor: pointer;
+  margin-bottom: 8px;
+  user-select: none;
+  width: fit-content;
+}
+.guide-toggle:hover { opacity: 0.8; }
+.guide-box {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text2);
+  margin-bottom: 10px;
+  display: none;
+}
+.guide-box.open { display: block; }
+.guide-box strong { color: var(--text); }
+.guide-box p { margin-bottom: 8px; }
+.guide-box p:last-child { margin-bottom: 0; }
 
-  .totals-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px; }
-  .total-box {
-    border-radius: 8px; padding: 14px 16px;
-    display: flex; flex-direction: column; gap: 4px;
-  }
-  .total-box.s { background: var(--green-light); border: 1px solid var(--green-mid); }
-  .total-box.m { background: var(--yellow-light); border: 1px solid var(--yellow-mid); }
-  .total-box.c { background: var(--red-light);    border: 1px solid var(--red-mid); }
-  .total-label { font-size: 11px; font-weight: 700; text-transform: uppercase; opacity: .6; }
-  .total-hours { font-size: 24px; font-weight: 800; }
-  .total-days  { font-size: 13px; opacity: .7; }
+/* ── QUESTION BLOCK ── */
+.q-block {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  background: var(--surface);
+  transition: border-color 0.12s;
+}
+.q-block:focus-within { border-color: var(--border2); }
+.q-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent2);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.q-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 12px;
+}
 
-  .confidence-banner {
-    border-radius: 8px; padding: 14px 16px; margin-top: 16px;
-    border-left: 4px solid;
-  }
-  .confidence-banner.alta    { background: var(--green-light);  border-color: var(--green); }
-  .confidence-banner.media   { background: var(--yellow-light); border-color: var(--yellow); }
-  .confidence-banner.baixa   { background: var(--red-light);    border-color: var(--red); }
-  .confidence-banner .cb-title { font-weight: 700; font-size: 13px; }
-  .confidence-banner .cb-text  { font-size: 12px; margin-top: 4px; opacity: .8; }
+/* ── CHECKLIST ── */
+.check-list { list-style: none; }
+.check-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text2);
+}
+.check-list li:last-child { border-bottom: none; }
+.check-list li input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.check-list li label { cursor: pointer; flex: 1; }
+.check-list li.checked label { color: var(--text3); text-decoration: line-through; }
 
-  /* ── Botões ── */
-  .btn {
-    padding: 10px 20px; border-radius: 7px; border: none;
-    font-size: 13px; font-weight: 600; cursor: pointer;
-    transition: all .2s; display: inline-flex; align-items: center; gap: 6px;
-  }
-  .btn-primary { background: var(--blue); color: #fff; }
-  .btn-primary:hover { background: #1d4ed8; }
-  .btn-secondary {
-    background: var(--gray-light); color: var(--dark);
-    border: 1.5px solid var(--gray-mid);
-  }
-  .btn-secondary:hover { background: var(--gray-mid); }
-  .btn-success { background: var(--green); color: #fff; }
-  .btn-success:hover { background: #15803d; }
+/* ── PHASE TABS ── */
+.phase-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  background: var(--surface);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.phase-tab {
+  flex: 1;
+  min-width: 100px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  text-align: center;
+  transition: all 0.15s;
+  user-select: none;
+  white-space: nowrap;
+}
+.phase-tab:hover { background: var(--surface2); color: var(--text); }
+.phase-tab.active { background: var(--accent); color: white; }
+.phase-tab.done { color: var(--green); }
+.phase-tab.done::after { content: ' ✓'; }
 
-  .btn-row { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+/* ── DYNAMIC TABLE ── */
+.dyn-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+.dyn-table th {
+  background: var(--surface2);
+  color: var(--text3);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+.dyn-table td {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  vertical-align: top;
+}
+.dyn-table td input,
+.dyn-table td select,
+.dyn-table td textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  padding: 2px 4px;
+}
+.dyn-table td select { cursor: pointer; }
+.dyn-table td input::placeholder { color: var(--text3); }
+.btn-del-row {
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.12s;
+}
+.btn-del-row:hover { color: var(--red); background: rgba(240,84,90,0.1); }
+.btn-add-row {
+  background: none;
+  border: 1px dashed var(--border2);
+  color: var(--text2);
+  padding: 7px 14px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-add-row:hover { border-color: var(--accent); color: var(--accent2); }
 
-  /* ── Gantt ── */
-  .gantt-wrapper { overflow-x: auto; margin-top: 8px; }
-  #ganttChart { min-width: 800px; }
-  .gantt-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-secondary {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent2); }
+.btn-danger { background: rgba(240,84,90,0.15); color: var(--red); border: 1px solid rgba(240,84,90,0.3); }
+.btn-danger:hover { background: rgba(240,84,90,0.25); }
+.btn-green { background: rgba(61,214,140,0.15); color: var(--green); border: 1px solid rgba(61,214,140,0.3); }
+.btn-green:hover { background: rgba(61,214,140,0.25); }
 
-  /* ── Info box ── */
-  .info-box {
-    background: var(--blue-light); border: 1px solid #bfdbfe;
-    border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
-    font-size: 13px; color: #1e40af;
-  }
-  .info-box strong { font-weight: 700; }
+/* ── ALERTS ── */
+.alert {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  font-size: 13px;
+  align-items: flex-start;
+}
+.alert-green { background: rgba(61,214,140,0.08); border: 1px solid rgba(61,214,140,0.25); color: #6ee7b7; }
+.alert-amber { background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.25); color: #fcd34d; }
+.alert-red { background: rgba(240,84,90,0.08); border: 1px solid rgba(240,84,90,0.25); color: #fca5a5; }
+.alert-blue { background: rgba(79,163,247,0.08); border: 1px solid rgba(79,163,247,0.25); color: #93c5fd; }
+.alert strong { display: block; margin-bottom: 2px; }
 
-  /* ── Gorduura visual ── */
-  .fat-badge {
-    display: inline-block; background: #fef3c7; border: 1px solid #fde68a;
-    color: #92400e; border-radius: 999px; padding: 1px 8px;
-    font-size: 11px; font-weight: 600;
-  }
+/* ── STATUS BADGE ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+.badge-green { background: rgba(61,214,140,0.12); color: var(--green); border: 1px solid rgba(61,214,140,0.3); }
+.badge-amber { background: rgba(245,166,35,0.12); color: var(--amber); border: 1px solid rgba(245,166,35,0.3); }
+.badge-red { background: rgba(240,84,90,0.12); color: var(--red); border: 1px solid rgba(240,84,90,0.3); }
+.badge-blue { background: rgba(79,163,247,0.12); color: var(--blue); border: 1px solid rgba(79,163,247,0.3); }
+.badge-purple { background: rgba(124,92,252,0.12); color: var(--accent2); border: 1px solid rgba(124,92,252,0.3); }
 
-  /* ── Gantt SVG styles ── */
-  .gantt-bar { cursor: grab; transition: filter .15s; }
-  .gantt-bar:hover { filter: brightness(1.08); }
-  .gantt-bar:active { cursor: grabbing; }
-  text { font-family: 'Inter', system-ui, sans-serif; }
+/* ── TWO COL ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
 
-  /* Tooltip */
-  #tooltip {
-    position: fixed; background: #1e293b; color: #fff;
-    padding: 8px 12px; border-radius: 7px; font-size: 12px;
-    pointer-events: none; display: none; z-index: 9999;
-    max-width: 240px; line-height: 1.6;
-  }
+/* ── PIPE SECTION ── */
+.pipe-section {
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.pipe-header {
+  background: var(--surface2);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.pipe-header h3 { font-size: 14px; font-weight: 700; color: var(--text); flex: 1; }
+.pipe-header input {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  flex: 1;
+  outline: none;
+}
+.pipe-body { padding: 18px; display: block; }
+.pipe-body.collapsed { display: none; }
+
+/* ── PENDENCIAS ── */
+.pendencia-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.pendencia-item .pend-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: start;
+  margin-bottom: 10px;
+}
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text2);
+}
+.toggle {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--surface3);
+  border-radius: 20px;
+  transition: 0.2s;
+  border: 1px solid var(--border2);
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: var(--text3);
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: 0.2s;
+}
+.toggle input:checked + .toggle-slider { background: var(--accent); border-color: var(--accent); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(16px); background: white; }
+
+/* ── GANTT ── */
+.gantt-container { overflow-x: auto; }
+.gantt-table { min-width: 800px; border-collapse: collapse; }
+.gantt-table th {
+  background: var(--surface2);
+  color: var(--text3);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.gantt-table td {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text2);
+  vertical-align: middle;
+}
+.gantt-table tr:hover td { background: rgba(255,255,255,0.02); }
+.gantt-marco-row td { background: var(--surface2); }
+.gantt-marco-row td:first-child {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+}
+.gantt-sub-row td:first-child { padding-left: 28px; }
+.gantt-bar-cell { padding: 6px 8px; min-width: 200px; }
+.gantt-bar-bg {
+  background: var(--surface3);
+  border-radius: 4px;
+  height: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.gantt-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  transition: width 0.3s;
+  display: flex;
+  align-items: center;
+  padding-left: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.8);
+  white-space: nowrap;
+}
+.bar-discovery { background: linear-gradient(90deg, #4fa3f7, #3b82f6); }
+.bar-dev { background: linear-gradient(90deg, #7c5cfc, #9d7ffe); }
+.bar-test { background: linear-gradient(90deg, #3dd68c, #10b981); }
+.bar-train { background: linear-gradient(90deg, #f5a623, #f97316); }
+.bar-support { background: linear-gradient(90deg, #f0545a, #ef4444); }
+.bar-late { background: repeating-linear-gradient(45deg,#f0545a,#f0545a 4px,#c53030 4px,#c53030 8px); }
+
+.check-sub {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--green);
+  cursor: pointer;
+}
+.late-badge { color: var(--red); font-size: 10px; font-weight: 700; }
+.warn-badge { color: var(--amber); font-size: 14px; }
+
+/* ── COMPLEXITY DISPLAY ── */
+.complexity-display {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  display: none;
+}
+.complexity-display.visible { display: block; }
+.complexity-level {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 4px;
+}
+.complexity-low { color: var(--green); }
+.complexity-mid { color: var(--amber); }
+.complexity-high { color: var(--red); }
+.complexity-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+.complexity-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  text-align: center;
+}
+.complexity-item .ci-val {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+}
+.complexity-item .ci-label {
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: 2px;
+}
+
+/* ── CALCULADORA ── */
+.calc-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.calc-result {
+  background: var(--surface2);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+}
+.calc-result-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent2);
+  margin-bottom: 16px;
+}
+.calc-result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.calc-result-row:last-child { border-bottom: none; }
+.calc-result-row .label { color: var(--text2); }
+.calc-result-row .val {
+  font-family: 'DM Mono', monospace;
+  font-weight: 600;
+  color: var(--text);
+}
+.calc-total {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--accent2);
+  font-family: 'DM Mono', monospace;
+}
+.marco-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.marco-toggle-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text2);
+}
+.marco-toggle-item.active {
+  border-color: var(--accent);
+  background: rgba(124,92,252,0.1);
+  color: var(--accent2);
+}
+.marco-toggle-item input { accent-color: var(--accent); cursor: pointer; }
+
+/* ── REPORT ── */
+.report-toggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  background: var(--surface2);
+  padding: 4px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+.report-btn {
+  padding: 7px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  transition: all 0.12s;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+.report-btn.active { background: var(--accent); color: white; }
+
+.report-block {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  line-height: 2;
+  color: var(--text2);
+  white-space: pre-wrap;
+}
+.report-block .r-header { color: var(--accent2); font-weight: 600; }
+.report-block .r-section { color: var(--text); font-weight: 600; }
+.report-block .r-ok { color: var(--green); }
+.report-block .r-warn { color: var(--amber); }
+.report-block .r-late { color: var(--red); }
+
+/* ── LOG ── */
+.log-entry {
+  display: flex;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.log-entry:last-child { border-bottom: none; }
+.log-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.log-time {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  white-space: nowrap;
+  min-width: 120px;
+}
+.log-text { font-size: 13px; color: var(--text2); }
+.log-text strong { color: var(--text); }
+
+/* ── TEAM ── */
+.team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+.team-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  position: relative;
+}
+.team-card .tc-name { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.team-card .tc-role { font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+.team-card .tc-del {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 14px;
+  transition: color 0.12s;
+}
+.team-card .tc-del:hover { color: var(--red); }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  width: 480px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--text); }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+/* ── DIVIDER ── */
+hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+/* ── COMPLEXITY BADGE IN NAV ── */
+.complexity-nav-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-left: auto;
+  text-transform: uppercase;
+}
+.cnb-low { background: rgba(61,214,140,0.15); color: var(--green); }
+.cnb-mid { background: rgba(245,166,35,0.15); color: var(--amber); }
+.cnb-high { background: rgba(240,84,90,0.15); color: var(--red); }
+
+/* ── ACEITE GATE ── */
+.gate-locked {
+  text-align: center;
+  padding: 60px 40px;
+  color: var(--text3);
+}
+.gate-locked .gate-icon { font-size: 48px; margin-bottom: 16px; }
+.gate-locked h2 { font-size: 18px; color: var(--text2); margin-bottom: 8px; }
+.gate-locked p { font-size: 13px; max-width: 360px; margin: 0 auto; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+/* ── SECTION TITLE ── */
+.section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text3);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* responsive */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .page { padding: 20px 16px; }
+  .two-col, .three-col, .calc-inputs, .team-grid, .complexity-grid { grid-template-columns: 1fr; }
+  .marco-toggle-grid { grid-template-columns: 1fr 1fr; }
+}
 </style>
 </head>
 <body>
-<div class="app">
-  <h1>🧠 Estimativa & Cronograma Pipefy</h1>
-  <p class="subtitle">Defina os pesos → insira as dimensões → revise → gere o Gantt</p>
 
-  <!-- Steps -->
-  <div class="steps">
-    <div class="step active" id="step1"><span class="step-num">1</span> Configuração & Pesos</div>
-    <div class="step" id="step2"><span class="step-num">2</span> Dimensões do Processo</div>
-    <div class="step" id="step3"><span class="step-num">3</span> Revisar Estimativa</div>
-    <div class="step" id="step4"><span class="step-num">4</span> Gantt</div>
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">Profix<em>Lab</em></div>
+    <div class="logo-sub">Gestão de Projetos</div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════
-       SEÇÃO 1 — CONFIGURAÇÃO & PESOS
-  ═══════════════════════════════════════════════ -->
-  <div class="section active" id="sec1">
-
-    <!-- Projeto -->
-    <div class="card">
-      <div class="card-title">⚙️ Projeto</div>
-      <div class="project-grid">
-        <div>
-          <label>Nome do Projeto</label>
-          <input type="text" id="projectName" placeholder="Ex: Automatização de Reembolso" />
-        </div>
-        <div>
-          <label>Data de Início (Kick-off)</label>
-          <input type="date" id="startDate" />
-        </div>
-        <div>
-          <label>Gordura por Etapa (%)</label>
-          <input type="number" id="fatPct" value="20" min="0" max="100" />
-        </div>
-        <div>
-          <label>Horas por Dia Útil</label>
-          <input type="number" id="hoursPerDay" value="6" min="1" max="12" />
-        </div>
-        <div>
-          <label>Nível de Complexidade do Processo</label>
-          <select id="complexity">
-            <option value="simples">🟢 Simples</option>
-            <option value="medio">🟡 Médio</option>
-            <option value="complexo">🔴 Complexo</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- Pesos de desenvolvimento -->
-    <div class="card">
-      <div class="card-title">
-        ⚖️ Pesos de Desenvolvimento
-        <span class="badge">editável</span>
-      </div>
-      <div class="info-box">
-        <strong>Como funciona:</strong> cada item abaixo define quantas horas de trabalho são necessárias
-        por unidade, separado por nível de complexidade. Ajuste conforme sua experiência real.
-      </div>
-
-      <div class="weights-header">
-        <div>Dimensão</div>
-        <div>🟢 Simples (h/un)</div>
-        <div>🟡 Médio (h/un)</div>
-        <div>🔴 Complexo (h/un)</div>
-        <div>Unidade</div>
-      </div>
-
-      <!-- Fases -->
-      <div class="weight-row">
-        <div class="weight-label-cell">
-          <div class="weight-label">Fases</div>
-          <div class="weight-unit">por fase</div>
-        </div>
-        <div class="col-simple"><input type="number" id="w_fase_s" value="0.5" step="0.25" min="0" /></div>
-        <div class="col-medio"><input type="number" id="w_fase_m" value="1" step="0.25" min="0" /></div>
-        <div class="col-complexo"><input type="number" id="w_fase_c" value="2" step="0.25" min="0" /></div>
-        <div><span class="fat-badge">h / fase</span></div>
-      </div>
-      <!-- Automações if/then -->
-      <div class="weight-row">
-        <div class="weight-label-cell">
-          <div class="weight-label">Automações if/then</div>
-          <div class="weight-unit">por automação</div>
-        </div>
-        <div class="col-simple"><input type="number" id="w_auto_s" value="0.5" step="0.25" min="0" /></div>
-        <div class="col-medio"><input type="number" id="w_auto_m" value="1" step="0.25" min="0" /></div>
-        <div class="col-complexo"><input type="number" id="w_auto_c" value="2" step="0.25" min="0" /></div>
-        <div><span class="fat-badge">h / auto</span></div>
-      </div>
-      <!-- AI Automações -->
-      <div class="weight-row">
-        <div class="weight-label-cell">
-          <div class="weight-label">AI Automações</div>
-          <div class="weight-unit">por automação IA</div>
-        </div>
-        <div class="col-simple"><input type="number" id="w_ai_s" value="2" step="0.5" min="0" /></div>
-        <div class="col-medio"><input type="number" id="w_ai_m" value="4" step="0.5" min="0" /></div>
-        <div class="col-complexo"><input type="number" id="w_ai_c" value="8" step="0.5" min="0" /></div>
-        <div><span class="fat-badge">h / ai</span></div>
-      </div>
-      <!-- Templates -->
-      <div class="weight-row">
-        <div class="weight-label-cell">
-          <div class="weight-label">Templates de E-mail</div>
-          <div class="weight-unit">por template</div>
-        </div>
-        <div class="col-simple"><input type="number" id="w_tpl_s" value="0.5" step="0.25" min="0" /></div>
-        <div class="col-medio"><input type="number" id="w_tpl_m" value="1" step="0.25" min="0" /></div>
-        <div class="col-complexo"><input type="number" id="w_tpl_c" value="1.5" step="0.25" min="0" /></div>
-        <div><span class="fat-badge">h / tpl</span></div>
-      </div>
-      <!-- Integrações -->
-      <div class="weight-row">
-        <div class="weight-label-cell">
-          <div class="weight-label">Integrações</div>
-          <div class="weight-unit">por integração</div>
-        </div>
-        <div class="col-simple"><input type="number" id="w_int_s" value="4" step="1" min="0" /></div>
-        <div class="col-medio"><input type="number" id="w_int_m" value="8" step="1" min="0" /></div>
-        <div class="col-complexo"><input type="number" id="w_int_c" value="16" step="1" min="0" /></div>
-        <div><span class="fat-badge">h / integ</span></div>
-      </div>
-      <!-- Relações -->
-      <div class="weight-row">
-        <div class="weight-label-cell">
-          <div class="weight-label">Relações entre Pipes</div>
-          <div class="weight-unit">por relação</div>
-        </div>
-        <div class="col-simple"><input type="number" id="w_rel_s" value="1" step="0.25" min="0" /></div>
-        <div class="col-medio"><input type="number" id="w_rel_m" value="2" step="0.25" min="0" /></div>
-        <div class="col-complexo"><input type="number" id="w_rel_c" value="4" step="0.25" min="0" /></div>
-        <div><span class="fat-badge">h / relação</span></div>
-      </div>
-    </div>
-
-    <!-- Pesos das fases do projeto -->
-    <div class="card">
-      <div class="card-title">
-        📅 Pesos das Fases do Projeto
-        <span class="badge">editável</span>
-      </div>
-      <div class="info-box">
-        Horas fixas por fase do projeto (não por unidade). Ajuste por nível de complexidade.
-      </div>
-
-      <div class="phase-grid">
-        <!-- Mapeamento -->
-        <div class="phase-item">
-          <div class="phase-name">🗺️ Mapeamento AS-IS/TO-BE</div>
-          <div class="phase-col-label" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:4px">
-            <span class="c-s">Simples</span><span class="c-m">Médio</span><span class="c-c">Complexo</span>
-          </div>
-          <div class="phase-inputs">
-            <input type="number" id="ph_map_s" value="4"  min="0" step="0.5" />
-            <input type="number" id="ph_map_m" value="8"  min="0" step="0.5" />
-            <input type="number" id="ph_map_c" value="16" min="0" step="0.5" />
-          </div>
-        </div>
-        <!-- Teste Dev -->
-        <div class="phase-item">
-          <div class="phase-name">🧪 Teste Interno (Dev)</div>
-          <div class="info-box" style="font-size:11px;padding:6px 10px;margin:4px 0 8px">% do tempo de dev</div>
-          <div class="phase-inputs">
-            <input type="number" id="ph_testdev_s" value="20" min="0" step="5" />
-            <input type="number" id="ph_testdev_m" value="20" min="0" step="5" />
-            <input type="number" id="ph_testdev_c" value="25" min="0" step="5" />
-          </div>
-        </div>
-        <!-- Teste Cliente -->
-        <div class="phase-item">
-          <div class="phase-name">👤 Teste do Cliente (UAT)</div>
-          <div class="phase-col-label" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:4px">
-            <span class="c-s">Simples</span><span class="c-m">Médio</span><span class="c-c">Complexo</span>
-          </div>
-          <div class="phase-inputs">
-            <input type="number" id="ph_uat_s" value="4"  min="0" step="0.5" />
-            <input type="number" id="ph_uat_m" value="8"  min="0" step="0.5" />
-            <input type="number" id="ph_uat_c" value="16" min="0" step="0.5" />
-          </div>
-        </div>
-        <!-- Ajustes -->
-        <div class="phase-item">
-          <div class="phase-name">🔧 Ajustes Pós-Teste</div>
-          <div class="info-box" style="font-size:11px;padding:6px 10px;margin:4px 0 8px">% do tempo de dev</div>
-          <div class="phase-inputs">
-            <input type="number" id="ph_ajustes_s" value="15" min="0" step="5" />
-            <input type="number" id="ph_ajustes_m" value="15" min="0" step="5" />
-            <input type="number" id="ph_ajustes_c" value="20" min="0" step="5" />
-          </div>
-        </div>
-        <!-- Validação -->
-        <div class="phase-item">
-          <div class="phase-name">✅ Validação Formal</div>
-          <div class="phase-col-label" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:4px">
-            <span class="c-s">Simples</span><span class="c-m">Médio</span><span class="c-c">Complexo</span>
-          </div>
-          <div class="phase-inputs">
-            <input type="number" id="ph_val_s" value="2" min="0" step="0.5" />
-            <input type="number" id="ph_val_m" value="2" min="0" step="0.5" />
-            <input type="number" id="ph_val_c" value="4" min="0" step="0.5" />
-          </div>
-        </div>
-        <!-- Treinamento -->
-        <div class="phase-item">
-          <div class="phase-name">🎓 Treinamento</div>
-          <div class="phase-col-label" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:4px">
-            <span class="c-s">Simples</span><span class="c-m">Médio</span><span class="c-c">Complexo</span>
-          </div>
-          <div class="phase-inputs">
-            <input type="number" id="ph_train_s" value="2" min="0" step="0.5" />
-            <input type="number" id="ph_train_m" value="4" min="0" step="0.5" />
-            <input type="number" id="ph_train_c" value="8" min="0" step="0.5" />
-          </div>
-        </div>
-        <!-- Hypercare -->
-        <div class="phase-item">
-          <div class="phase-name">🛡️ Hypercare (semanas)</div>
-          <div class="phase-col-label" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:4px">
-            <span class="c-s">Simples</span><span class="c-m">Médio</span><span class="c-c">Complexo</span>
-          </div>
-          <div class="phase-inputs">
-            <input type="number" id="ph_hyper_s" value="1" min="0" step="1" />
-            <input type="number" id="ph_hyper_m" value="2" min="0" step="1" />
-            <input type="number" id="ph_hyper_c" value="4" min="0" step="1" />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="goToStep(2)">Próximo → Dimensões do Processo</button>
-    </div>
+  <div class="project-selector">
+    <select id="projectSelect" onchange="selectProject(this.value)">
+      <option value="">— Selecione um projeto —</option>
+    </select>
+    <button class="btn-new-project" onclick="openModal('modalNewProject')">＋ Novo Projeto</button>
   </div>
 
-  <!-- ═══════════════════════════════════════════════
-       SEÇÃO 2 — DIMENSÕES DO PROCESSO
-  ═══════════════════════════════════════════════ -->
-  <div class="section" id="sec2">
-    <div class="card">
-      <div class="card-title">📊 Dimensões do Processo</div>
-      <div class="info-box">
-        Insira as quantidades mapeadas. O nível de complexidade selecionado
-        (<strong id="complexityLabel">—</strong>) será usado para aplicar os pesos.
-      </div>
-
-      <div class="estimate-grid">
-        <!-- Pipes -->
-        <div class="level-field">
-          <label>Quantidade de Pipes</label>
-          <input type="number" id="d_pipes" value="1" min="0" step="1" />
-        </div>
-        <!-- Fases -->
-        <div class="level-field">
-          <label>Total de Fases (todos os pipes)</label>
-          <input type="number" id="d_fases" value="5" min="0" step="1" />
-        </div>
-        <!-- Automações -->
-        <div class="level-field">
-          <label>Automações if/then</label>
-          <input type="number" id="d_autos" value="4" min="0" step="1" />
-        </div>
-        <!-- AI -->
-        <div class="level-field">
-          <label>AI Automações</label>
-          <input type="number" id="d_ai" value="0" min="0" step="1" />
-        </div>
-        <!-- Templates -->
-        <div class="level-field">
-          <label>Templates de E-mail</label>
-          <input type="number" id="d_tpl" value="3" min="0" step="1" />
-        </div>
-        <!-- Integrações -->
-        <div class="level-field">
-          <label>Integrações</label>
-          <input type="number" id="d_int" value="0" min="0" step="1" />
-        </div>
-        <!-- Relações -->
-        <div class="level-field">
-          <label>Relações entre Pipes</label>
-          <input type="number" id="d_rel" value="0" min="0" step="1" />
-        </div>
-        <!-- Confiança -->
-        <div class="level-field">
-          <label>Confiança da Estimativa</label>
-          <select id="d_conf">
-            <option value="alta">🟢 Alta — AS-IS claro</option>
-            <option value="media">🟡 Média — lacunas pontuais</option>
-            <option value="baixa">🔴 Baixa — muitas incógnitas</option>
-          </select>
-        </div>
-        <!-- Observações -->
-        <div class="level-field" style="grid-column:1/-1">
-          <label>Observações / Riscos (opcional)</label>
-          <textarea id="d_obs" rows="2" placeholder="Ex: Totvs com API incerta, CEO com aprovação ad hoc..."></textarea>
-        </div>
-      </div>
+  <nav class="nav">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="showPage('discovery')" id="nav-discovery">
+      <span class="nav-icon">📋</span> Discovery
+      <span id="complexityNavBadge" style="display:none" class="complexity-nav-badge cnb-low"></span>
     </div>
-
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="goToStep(1)">← Voltar</button>
-      <button class="btn btn-primary" onclick="calcAndReview()">Calcular & Revisar →</button>
+    <div class="nav-item" onclick="showPage('cronograma')" id="nav-cronograma">
+      <span class="nav-icon">📊</span> Cronograma
     </div>
+    <div class="nav-item" onclick="showPage('report')" id="nav-report">
+      <span class="nav-icon">📝</span> Report Semanal
+    </div>
+    <div class="nav-item" onclick="showPage('log')" id="nav-log">
+      <span class="nav-icon">🔄</span> Log de Mudanças
+    </div>
+    <div class="nav-item" onclick="showPage('calculadora')" id="nav-calculadora">
+      <span class="nav-icon">🧮</span> Calculadora
+    </div>
+    <div class="nav-section">Configurações</div>
+    <div class="nav-item" onclick="showPage('equipe')" id="nav-equipe">
+      <span class="nav-icon">👥</span> Equipe
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="btn-io" onclick="exportData()">⬆ Exportar</button>
+    <button class="btn-io" onclick="document.getElementById('importFile').click()">⬇ Importar</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+
+<!-- ══ PAGE: DISCOVERY ══ -->
+<div class="page active" id="page-discovery">
+  <div class="page-header">
+    <h1>Discovery <em>—</em> <span id="disc-proj-name">Sem projeto ativo</span></h1>
+    <p>Registre os achados de cada reunião. Use os guias para conduzir melhor as perguntas.</p>
+    <div class="progress-bar" style="margin-top:12px"><div class="progress-fill" id="discoveryProgress" style="width:0%"></div></div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════
-       SEÇÃO 3 — REVISÃO
-  ═══════════════════════════════════════════════ -->
-  <div class="section" id="sec3">
-    <div class="card">
-      <div class="card-title">🔍 Revisão da Estimativa — <span id="reviewProjectName">—</span></div>
+  <div id="noProjectMsg" class="alert alert-amber">
+    <span>⚠️</span>
+    <div><strong>Nenhum projeto selecionado</strong> Selecione ou crie um projeto na barra lateral para começar.</div>
+  </div>
 
-      <!-- Tabela de breakdown -->
-      <table class="review-table" id="reviewTable">
+  <div id="discoveryContent" style="display:none">
+
+    <!-- COMPLEXITY DISPLAY -->
+    <div class="complexity-display" id="complexityDisplay">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);margin-bottom:4px">Complexidade Calculada</div>
+          <div class="complexity-level" id="complexityLevel">—</div>
+        </div>
+        <div style="flex:1"></div>
+        <div id="complexityJustification" style="font-size:12px;color:var(--text2);max-width:360px;text-align:right"></div>
+      </div>
+      <div class="complexity-grid" id="complexityGrid"></div>
+    </div>
+
+    <!-- PHASE TABS -->
+    <div class="phase-tabs">
+      <div class="phase-tab active" onclick="showPhase('d1')" id="tab-d1">📋 D1 — Kick-off</div>
+      <div class="phase-tab" onclick="showPhase('d2')" id="tab-d2">🔍 D2 — AS-IS</div>
+      <div class="phase-tab" onclick="showPhase('d3')" id="tab-d3">🚀 D3 — To-Be</div>
+      <div class="phase-tab" onclick="showPhase('d4')" id="tab-d4">📊 D4 — SIPOC & RACI</div>
+      <div class="phase-tab" onclick="showPhase('d5')" id="tab-d5">📁 D5 — Documentação</div>
+    </div>
+
+    <!-- ── D1: KICK-OFF ── -->
+    <div id="phase-d1">
+      <div class="section-title">1.1 — Conhecimento do Cliente em Pipefy</div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P1</span></div>
+        <div class="q-text">O cliente já usou o Pipefy antes?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p1')">💡 Ver guia <span id="g-p1-icon">▼</span></div>
+        <div class="guide-box" id="g-p1">
+          <p><strong>💬 Como perguntar:</strong> "Antes de começarmos, quero entender um pouco o nível de familiaridade do time com o Pipefy. Você ou alguém da equipe já usou a ferramenta — aqui nessa empresa ou em alguma outra que trabalhou antes?"</p>
+          <p><strong>👀 Observe:</strong> Observe se a resposta é genérica ('já ouvi falar') ou específica. Uma resposta vaga indica conhecimento superficial.</p>
+          <p><strong>⚠️ Alerta:</strong> Se o cliente disser que conhece muito bem mas não conseguir citar nenhum exemplo prático, não assuma que ele realmente domina.</p>
+          <p><strong>💡 Dica:</strong> Se o cliente não conhece o Pipefy, não explique tudo na hora — a reunião vai virar um treinamento.</p>
+        </div>
+        <div class="field">
+          <textarea id="p1" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea>
+        </div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P2</span></div>
+        <div class="q-text">O dono do processo entende os conceitos básicos da ferramenta?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p2')">💡 Ver guia <span id="g-p2-icon">▼</span></div>
+        <div class="guide-box" id="g-p2">
+          <p><strong>💬 Como perguntar:</strong> "Vou citar alguns conceitos do Pipefy para você me dizer se já está confortável com eles ou se prefere que eu explique antes de avançarmos."</p>
+          <p><strong>👀 Observe:</strong> O objetivo é calibrar o nível da conversa. Se ele não entende o que é uma fase ou automação, qualquer mapeamento precisará ser reexplicado.</p>
+          <p><strong>⚠️ Alerta:</strong> Se o dono do processo não entende nenhum dos conceitos básicos, o risco de validar algo que não entende é alto.</p>
+          <p><strong>💡 Dica:</strong> Os conceitos mínimos: o que é uma fase, um formulário de entrada, uma automação simples e uma aprovação.</p>
+        </div>
+        <div class="field">
+          <textarea id="p2" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea>
+        </div>
+      </div>
+
+      <div class="section-title">1.2 — Maturidade do Processo e Stakeholders</div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P3</span></div>
+        <div class="q-text">Qual é o objetivo desse processo e o que define sucesso?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p3')">💡 Ver guia <span id="g-p3-icon">▼</span></div>
+        <div class="guide-box" id="g-p3">
+          <p><strong>💬 Como perguntar:</strong> "Para começar a entender o processo, me conta: para que ele existe? Qual problema ele resolve e como vocês sabem quando ele funcionou bem?"</p>
+          <p><strong>👀 Observe:</strong> Você precisa sair com: (1) propósito do processo e (2) definição de 'concluído com sucesso'.</p>
+          <p><strong>⚠️ Alerta:</strong> Cuidado com respostas como 'é para controlar as coisas'. Isso indica que o processo ainda não tem objetivo claro.</p>
+          <p><strong>💡 Dica:</strong> Uma boa definição de objetivo: 'O processo existe para [verbo] + [o quê] + [para quem ou com qual resultado].'</p>
+        </div>
+        <div class="field">
+          <textarea id="p3" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea>
+        </div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P4</span></div>
+        <div class="q-text">Quem é o dono do processo e quem o executa no dia a dia?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p4')">💡 Ver guia <span id="g-p4-icon">▼</span></div>
+        <div class="guide-box" id="g-p4">
+          <p><strong>💬 Como perguntar:</strong> "Preciso entender quem são as pessoas mais importantes para esse processo. Quem é o responsável e quem são os executores do dia a dia?"</p>
+          <p><strong>👀 Observe:</strong> O dono formal (gestor) frequentemente é diferente de quem realmente entende como o processo funciona (executor). Você precisa dos dois.</p>
+          <p><strong>⚠️ Alerta:</strong> Se o dono não participa das reuniões e delega para alguém sem poder de decisão, o mapeamento vai travar na hora de validar.</p>
+          <p><strong>💡 Dica:</strong> Pergunte 'se você ficasse doente amanhã, quem faria esse processo no seu lugar?' Essa pessoa precisa estar nas reuniões.</p>
+        </div>
+        <div class="field">
+          <textarea id="p4" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea>
+        </div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P5</span></div>
+        <div class="q-text">Todos os stakeholders estão presentes nesta reunião?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p5')">💡 Ver guia <span id="g-p5-icon">▼</span></div>
+        <div class="guide-box" id="g-p5">
+          <p><strong>💬 Como perguntar:</strong> "Antes de avançarmos, preciso confirmar: todo mundo que participa ou é impactado por esse processo está aqui hoje? Uma vez que o fluxo for validado, não fazemos mais alterações estruturais."</p>
+          <p><strong>👀 Observe:</strong> Preste atenção se alguém menciona outras pessoas ('ah, mas o fulano também participa'). Isso indica stakeholders ausentes.</p>
+          <p><strong>⚠️ Alerta:</strong> Se stakeholders importantes estiverem ausentes, não avance para o mapeamento.</p>
+          <p><strong>💡 Dica:</strong> Use este momento para combinar a frequência e o formato das próximas reuniões.</p>
+        </div>
+        <div class="field">
+          <textarea id="p5" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea>
+        </div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P6</span></div>
+        <div class="q-text">O processo já existe e é executado hoje? Como?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p6')">💡 Ver guia <span id="g-p6-icon">▼</span></div>
+        <div class="guide-box" id="g-p6">
+          <p><strong>💬 Como perguntar:</strong> "Esse processo que vamos mapear — ele já acontece hoje na empresa, mesmo que seja de forma manual ou não documentada? Como ele funciona na prática atualmente?"</p>
+          <p><strong>👀 Observe:</strong> Identifique se o processo já existe (mesmo informalmente) ou será criado do zero. Processos novos levam mais tempo.</p>
+          <p><strong>⚠️ Alerta:</strong> Se o cliente disser 'cada um faz do seu jeito', o mapeamento AS-IS vai demandar muito mais tempo.</p>
+          <p><strong>💡 Dica:</strong> Peça para o cliente te 'contar uma história': 'Me dá um exemplo de como foi a última vez que esse processo aconteceu, do início ao fim.'</p>
+        </div>
+        <div class="field">
+          <textarea id="p6" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea>
+        </div>
+      </div>
+
+      <div class="section-title">1.3 — Documentos Coletados</div>
+      <div class="card">
+        <ul class="check-list" id="docChecklist">
+          <li><input type="checkbox" id="doc1" onchange="autoSave()"><label for="doc1">Fluxogramas ou mapas de processo (mesmo desatualizados)</label></li>
+          <li><input type="checkbox" id="doc2" onchange="autoSave()"><label for="doc2">Planilhas de controle utilizadas no processo</label></li>
+          <li><input type="checkbox" id="doc3" onchange="autoSave()"><label for="doc3">Formulários físicos ou digitais em uso</label></li>
+          <li><input type="checkbox" id="doc4" onchange="autoSave()"><label for="doc4">Políticas, procedimentos ou manuais documentados</label></li>
+          <li><input type="checkbox" id="doc5" onchange="autoSave()"><label for="doc5">E-mails ou mensagens que mostrem como o processo ocorre</label></li>
+          <li><input type="checkbox" id="doc6" onchange="autoSave()"><label for="doc6">Outros documentos citados durante a reunião</label></li>
+        </ul>
+        <div class="field" style="margin-top:14px">
+          <label>OBS — Observações gerais do Kick-off</label>
+          <textarea id="obs_d1" rows="3" placeholder="Anotações adicionais..." oninput="autoSave()"></textarea>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:16px">
+        <button class="btn btn-primary" onclick="showPhase('d2')">Próxima fase: AS-IS →</button>
+      </div>
+    </div>
+
+    <!-- ── D2: AS-IS ── -->
+    <div id="phase-d2" style="display:none">
+      <div class="section-title">2.1 — Entradas do Processo</div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P7</span></div>
+        <div class="q-text">Como chegam as solicitações para esse processo?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p7')">💡 Ver guia <span id="g-p7-icon">▼</span></div>
+        <div class="guide-box" id="g-p7">
+          <p><strong>💬 Como perguntar:</strong> "Quando alguém quer iniciar esse processo, o que acontece? Abre em algum sistema, manda e-mail, preenche planilha?"</p>
+          <p><strong>👀 Observe:</strong> Você precisa entender o canal de entrada. Isso define se o pipe terá formulário público, integração por API ou abertura manual.</p>
+          <p><strong>⚠️ Alerta:</strong> Se houver múltiplos canais (e-mail + planilha + presencial), o processo tem problema de governança. Documente todos.</p>
+          <p><strong>💡 Dica:</strong> Se o cliente mencionar integração com outro sistema, não aprofunde tecnicamente agora — anote o nome e a necessidade.</p>
+        </div>
+        <div class="field"><textarea id="p7" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea></div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P8</span></div>
+        <div class="q-text">Quem faz essas solicitações?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p8')">💡 Ver guia <span id="g-p8-icon">▼</span></div>
+        <div class="guide-box" id="g-p8">
+          <p><strong>💬 Como perguntar:</strong> "Quem são as pessoas que normalmente abrem ou disparam esse processo? São pessoas internas, clientes externos, fornecedores?"</p>
+          <p><strong>👀 Observe:</strong> Identificar o solicitante define se o formulário será interno ou público. Isso tem impacto direto na configuração do pipe.</p>
+          <p><strong>⚠️ Alerta:</strong> Se solicitantes externos precisam participar, o escopo aumenta. Isso pode exigir portal público no Pipefy.</p>
+          <p><strong>💡 Dica:</strong> Pergunte 'quem abriu a última solicitação?' Nomes concretos ajudam mais do que descrição genérica.</p>
+        </div>
+        <div class="field"><textarea id="p8" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea></div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P9</span></div>
+        <div class="q-text">Que informações chegam no início do processo?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p9')">💡 Ver guia <span id="g-p9-icon">▼</span></div>
+        <div class="guide-box" id="g-p9">
+          <p><strong>💬 Como perguntar:</strong> "Quando essa solicitação chega até você, o que vem junto? Quais informações, dados ou documentos você recebe — ou precisa receber?"</p>
+          <p><strong>👀 Observe:</strong> Esta pergunta mapeia os campos do formulário inicial do pipe. Anote cada informação como campo potencial.</p>
+          <p><strong>⚠️ Alerta:</strong> Se o cliente não souber listar as informações necessárias, o processo tem maturidade baixa.</p>
+          <p><strong>💡 Dica:</strong> Leia a lista em voz alta ao final e pergunte 'Tem algo faltando ou algo que na prática não usam?' Calibra em tempo real.</p>
+        </div>
+        <div class="field"><textarea id="p9" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea></div>
+      </div>
+
+      <div class="section-title">2.2 — Regras, Fluxo e Critérios de Saída</div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P10</span></div>
+        <div class="q-text">O que você faz com as informações que recebe? Quais são as regras?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p10')">💡 Ver guia <span id="g-p10-icon">▼</span></div>
+        <div class="guide-box" id="g-p10">
+          <p><strong>💬 Como perguntar:</strong> "Me conta o que acontece depois que você recebe todas essas informações. O que você faz com elas? E se vier de formas diferentes, como funciona cada caso?"</p>
+          <p><strong>👀 Observe:</strong> Esta é a pergunta mais importante do AS-IS. Preste atenção nos 'se... então...': cada 'se' é uma condicional ou rota no fluxo.</p>
+          <p><strong>⚠️ Alerta:</strong> Se o cliente disser 'depende' com frequência sem conseguir definir de que depende, insista até ter a regra clara.</p>
+          <p><strong>💡 Dica:</strong> Use o método dos exemplos: 'Me dá três situações diferentes — uma fácil, uma difícil e uma que você precisou resolver de forma diferente.'</p>
+        </div>
+        <div class="field"><textarea id="p10" placeholder="Registre a resposta..." rows="4" oninput="autoSave()"></textarea></div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P11</span></div>
+        <div class="q-text">O que precisa acontecer para o processo avançar ou ser encerrado?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p11')">💡 Ver guia <span id="g-p11-icon">▼</span></div>
+        <div class="guide-box" id="g-p11">
+          <p><strong>💬 Como perguntar:</strong> "O que precisa estar feito, aprovado ou preenchido para o processo poder passar de uma etapa para a próxima? E o que significa dizer que o processo foi concluído?"</p>
+          <p><strong>👀 Observe:</strong> Você está mapeando os critérios de saída de cada fase — gates de qualidade. Um processo sem critérios claros fica emperrado.</p>
+          <p><strong>⚠️ Alerta:</strong> Se o cliente não souber definir quando uma etapa está concluída, as fases do pipe ficam subjetivas.</p>
+          <p><strong>💡 Dica:</strong> 'Se você estivesse de férias, como seu substituto saberia que a etapa X foi concluída e pode passar para a Y?'</p>
+        </div>
+        <div class="field"><textarea id="p11" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea></div>
+      </div>
+
+      <div class="card">
+        <div class="field">
+          <label>OBS — Observações gerais do AS-IS</label>
+          <textarea id="obs_d2" rows="3" placeholder="Anotações adicionais..." oninput="autoSave()"></textarea>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;margin-top:16px">
+        <button class="btn btn-secondary" onclick="showPhase('d1')">← Kick-off</button>
+        <button class="btn btn-primary" onclick="showPhase('d3')">Próxima: To-Be →</button>
+      </div>
+    </div>
+
+    <!-- ── D3: TO-BE ── -->
+    <div id="phase-d3" style="display:none">
+      <div class="section-title">3.1 — Validação das Fases</div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P12</span></div>
+        <div class="q-text">Quais são as fases do processo no Pipefy?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p12')">💡 Ver guia <span id="g-p12-icon">▼</span></div>
+        <div class="guide-box" id="g-p12">
+          <p><strong>💬 Como perguntar:</strong> "Com base no fluxograma que construímos juntos, vou apresentar as fases para você confirmar. Faz sentido? Tem alguma fase faltando ou que deveria ser juntada?"</p>
+          <p><strong>👀 Observe:</strong> Esta é uma validação, não descoberta. Fique atento se o cliente quiser adicionar fases novas que não existiam no AS-IS.</p>
+          <p><strong>⚠️ Alerta:</strong> Novas fases = alteração de escopo. Documente, avalie com seu líder e peça nova validação.</p>
+          <p><strong>💡 Dica:</strong> Apresente as fases visualmente durante essa conversa. Facilita muito a validação.</p>
+        </div>
+        <div class="field"><textarea id="p12" placeholder="Liste as fases validadas..." rows="3" oninput="autoSave()"></textarea></div>
+      </div>
+
+      <div class="section-title">3.2 — RACI e Aprovações</div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P13</span></div>
+        <div class="q-text">Quem é responsável por esta fase e quem precisa ser informado?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p13')">💡 Ver guia <span id="g-p13-icon">▼</span></div>
+        <div class="guide-box" id="g-p13">
+          <p><strong>💬 Como perguntar:</strong> "Para essa fase, quem é a pessoa ou equipe responsável por executar? E tem alguém que precisa ser consultado antes de uma decisão, ou informado quando essa fase for concluída?"</p>
+          <p><strong>👀 Observe:</strong> Você está construindo a matriz RACI: R (executa), A (valida), C (dá input), I (notificado).</p>
+          <p><strong>⚠️ Alerta:</strong> Se o cliente não souber dizer quem é o responsável por uma fase, há um problema de governança.</p>
+          <p><strong>💡 Dica:</strong> Use uma tabela simples: colunas são as fases, linhas são as pessoas com R/A/C/I.</p>
+        </div>
+        <div class="field"><textarea id="p13" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea></div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P14</span></div>
+        <div class="q-text">Esta fase é de aprovação? Como funciona?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p14')">💡 Ver guia <span id="g-p14-icon">▼</span></div>
+        <div class="guide-box" id="g-p14">
+          <p><strong>💬 Como perguntar:</strong> "Nessa fase, existe alguma decisão de aprovação ou reprovação? Quem aprova, quais são os critérios, e o que acontece em cada caso?"</p>
+          <p><strong>👀 Observe:</strong> Aprovações têm variações: único aprovador, múltiplos em sequência, em paralelo, por alçada. Entenda qual é o modelo.</p>
+          <p><strong>⚠️ Alerta:</strong> Múltiplos aprovadores em sequência com regras de alçada aumentam significativamente a complexidade.</p>
+          <p><strong>💡 Dica:</strong> Sempre pergunte pelo caso de reprovação — ele é frequentemente esquecido. Um fluxo de aprovação sem o caminho de reprovação está incompleto.</p>
+        </div>
+        <div class="field"><textarea id="p14" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea></div>
+      </div>
+
+      <div class="section-title">3.3 — SLA e Integrações</div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P15</span></div>
+        <div class="q-text">Esta fase tem SLA? O que acontece quando vence?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p15')">💡 Ver guia <span id="g-p15-icon">▼</span></div>
+        <div class="guide-box" id="g-p15">
+          <p><strong>💬 Como perguntar:</strong> "Essa fase tem prazo definido? Se sim, o que acontece quando esse prazo está perto de vencer ou quando vence de verdade?"</p>
+          <p><strong>👀 Observe:</strong> SLA tem 3 componentes: (1) o prazo, (2) o que dispara o contador, (3) o que acontece quando vence.</p>
+          <p><strong>⚠️ Alerta:</strong> Se o cliente disser que tem SLA mas não souber quanto tempo, documente como 'SLA a definir'.</p>
+          <p><strong>💡 Dica:</strong> Separe 'data de vencimento do card' (prazo geral) de 'SLA da fase' (prazo daquela etapa). São configurações diferentes no Pipefy.</p>
+        </div>
+        <div class="field"><textarea id="p15" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea></div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P16</span></div>
+        <div class="q-text">Esta fase precisa integrar com algum sistema externo?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p16')">💡 Ver guia <span id="g-p16-icon">▼</span></div>
+        <div class="guide-box" id="g-p16">
+          <p><strong>💬 Como perguntar:</strong> "Nessa fase, existe algum momento em que você precisa buscar ou enviar alguma informação para outro sistema — ERP, CRM, sistema financeiro?"</p>
+          <p><strong>👀 Observe:</strong> Integrações podem ser de leitura, escrita ou gatilho. Anote o sistema, o que precisa ser trocado e em qual direção.</p>
+          <p><strong>⚠️ Alerta:</strong> Integrações com sistemas legados ou sem API podem inviabilizar parte do escopo. Não prometa sem validar com a equipe técnica.</p>
+          <p><strong>💡 Dica:</strong> Sempre pergunte se a integração é obrigatória ou opcional.</p>
+        </div>
+        <div class="field"><textarea id="p16" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea></div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P17</span></div>
+        <div class="q-text">Esta fase tem emissão ou validação de documento?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p17')">💡 Ver guia <span id="g-p17-icon">▼</span></div>
+        <div class="guide-box" id="g-p17">
+          <p><strong>💬 Como perguntar:</strong> "Nessa fase, é gerado algum documento — contrato, ata, relatório, ordem de serviço? Ou precisa validar algum documento que veio de fora?"</p>
+          <p><strong>👀 Observe:</strong> Documentos podem ser gerados automaticamente, anexados manualmente ou validados por humano ou IA.</p>
+          <p><strong>⚠️ Alerta:</strong> Se o cliente mencionar assinatura digital com plataforma específica, verifique se está no escopo.</p>
+          <p><strong>💡 Dica:</strong> Pergunte onde o documento final precisa ficar armazenado. Muitas vezes quer que fique em um Drive específico.</p>
+        </div>
+        <div class="field"><textarea id="p17" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea></div>
+      </div>
+
+      <div class="section-title">3.4 — Campos, Comunicações e Atividades Paralelas</div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P18</span></div>
+        <div class="q-text">Quais são os campos desta fase e quais são as regras deles?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p18')">💡 Ver guia <span id="g-p18-icon">▼</span></div>
+        <div class="guide-box" id="g-p18">
+          <p><strong>💬 Como perguntar:</strong> "Quais informações precisam ser preenchidas ou visualizadas aqui? E tem algum campo que só aparece dependendo de uma resposta anterior?"</p>
+          <p><strong>👀 Observe:</strong> Para cada campo: nome, tipo, se é obrigatório e se tem condicional. Anote também se algum campo exige cálculo automático.</p>
+          <p><strong>⚠️ Alerta:</strong> Mais de 15 campos em uma única fase geralmente indica que o processo precisa ser repensado.</p>
+          <p><strong>💡 Dica:</strong> Percorra os campos com o cliente mostrando o formulário atual e pergunte campo a campo o que cada um significa.</p>
+        </div>
+        <div class="field"><textarea id="p18" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea></div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P19</span></div>
+        <div class="q-text">Quais são as réguas de comunicação desta fase?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p19')">💡 Ver guia <span id="g-p19-icon">▼</span></div>
+        <div class="guide-box" id="g-p19">
+          <p><strong>💬 Como perguntar:</strong> "Existe alguma comunicação automática que precisa sair — um e-mail avisando alguém que o processo chegou aqui, ou notificação quando o prazo está perto de vencer?"</p>
+          <p><strong>👀 Observe:</strong> Réguas têm 3 componentes: (1) gatilho, (2) destinatário, (3) conteúdo. Anote os três para cada régua.</p>
+          <p><strong>⚠️ Alerta:</strong> Comunicações muito customizadas com muitas variáveis dinâmicas — verifique se o template do Pipefy suporta.</p>
+          <p><strong>💡 Dica:</strong> Pergunte especificamente sobre lembretes de SLA — muitas vezes o cliente quer aviso automático X dias antes do vencimento.</p>
+        </div>
+        <div class="field"><textarea id="p19" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea></div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P20</span></div>
+        <div class="q-text">Esta fase precisa de etiquetas ou alertas visuais?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p20')">💡 Ver guia <span id="g-p20-icon">▼</span></div>
+        <div class="guide-box" id="g-p20">
+          <p><strong>💬 Como perguntar:</strong> "Existe alguma situação em que seria importante sinalizar visualmente que aquele card precisa de atenção especial — urgente, pendente, bloqueado?"</p>
+          <p><strong>👀 Observe:</strong> Para cada etiqueta: o que faz ser colocada e o que faz ser removida.</p>
+          <p><strong>⚠️ Alerta:</strong> Mais de 6 ou 7 etiquetas pode poluir o Kanban. Questione quais são realmente essenciais.</p>
+          <p><strong>💡 Dica:</strong> Mostre ao cliente como as etiquetas aparecem visualmente no board antes de definir quais usar.</p>
+        </div>
+        <div class="field"><textarea id="p20" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea></div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-label"><span>P21</span></div>
+        <div class="q-text">Esta fase gera alguma atividade paralela ou sub-processo?</div>
+        <div class="guide-toggle" onclick="toggleGuide('g-p21')">💡 Ver guia <span id="g-p21-icon">▼</span></div>
+        <div class="guide-box" id="g-p21">
+          <p><strong>💬 Como perguntar:</strong> "Quando essa fase está acontecendo, existe alguma atividade que roda ao mesmo tempo em outra área — uma solicitação de cotação para o financeiro enquanto o processo principal continua aqui?"</p>
+          <p><strong>👀 Observe:</strong> Atividades paralelas podem ser: tarefas dentro do card, cards filhos, solicitações para outra área ou processos manuais externos.</p>
+          <p><strong>⚠️ Alerta:</strong> Sub-processos com pipes separados aumentam a complexidade. Avalie com seu líder se o escopo comporta.</p>
+          <p><strong>💡 Dica:</strong> Pergunte sobre renovações automáticas: 'Tem algum card que precisa voltar ao processo depois de um tempo?' Esse é um fluxo cíclico.</p>
+        </div>
+        <div class="field"><textarea id="p21" placeholder="Registre a resposta..." rows="3" oninput="autoSave()"></textarea></div>
+      </div>
+
+      <div class="card">
+        <div class="field">
+          <label>OBS — Observações gerais do To-Be</label>
+          <textarea id="obs_d3" rows="3" placeholder="Anotações adicionais..." oninput="autoSave()"></textarea>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;margin-top:16px">
+        <button class="btn btn-secondary" onclick="showPhase('d2')">← AS-IS</button>
+        <button class="btn btn-primary" onclick="showPhase('d4')">Próxima: SIPOC & RACI →</button>
+      </div>
+    </div>
+
+    <!-- ── D4: SIPOC & RACI ── -->
+    <div id="phase-d4" style="display:none">
+
+      <!-- PIPES -->
+      <div class="section-title">Pipes do Projeto</div>
+      <div id="pipesContainer"></div>
+      <button class="btn-add-row" onclick="addPipe()" style="margin-bottom:20px">＋ Adicionar Pipe</button>
+
+      <hr class="div">
+
+      <!-- SIPOC -->
+      <div class="section-title">SIPOC — Visão Geral do Processo</div>
+      <div class="card">
+        <div style="overflow-x:auto">
+          <table class="dyn-table" id="sipocTable">
+            <thead>
+              <tr>
+                <th>Fornecedor (S)</th>
+                <th>Entrada (I)</th>
+                <th>Processo (P)</th>
+                <th>Saída (O)</th>
+                <th>Cliente (C)</th>
+                <th style="width:40px"></th>
+              </tr>
+            </thead>
+            <tbody id="sipocBody"></tbody>
+          </table>
+        </div>
+        <button class="btn-add-row" style="margin-top:10px" onclick="addSipocRow()">＋ Linha</button>
+      </div>
+
+      <!-- RACI -->
+      <div class="section-title" style="margin-top:20px">Matriz RACI por Fase</div>
+      <div class="alert alert-blue" style="margin-bottom:14px">
+        <span>ℹ️</span>
+        <div><strong>R</strong> = Responsável (executa) · <strong>A</strong> = Aprovador (valida) · <strong>C</strong> = Consultado (dá input) · <strong>I</strong> = Informado (notificado)</div>
+      </div>
+      <div class="card">
+        <div style="overflow-x:auto">
+          <table class="dyn-table" id="raciTable">
+            <thead>
+              <tr>
+                <th>Fase</th>
+                <th>Responsável (R)</th>
+                <th>Aprovador (A)</th>
+                <th>Consultado (C)</th>
+                <th>Informado (I)</th>
+                <th style="width:40px"></th>
+              </tr>
+            </thead>
+            <tbody id="raciBody"></tbody>
+          </table>
+        </div>
+        <button class="btn-add-row" style="margin-top:10px" onclick="addRaciRow()">＋ Fase</button>
+      </div>
+
+      <!-- PENDENCIAS -->
+      <div class="section-title" style="margin-top:20px">Pendências Externas</div>
+      <div class="alert alert-amber" style="margin-bottom:14px">
+        <span>⚠️</span>
+        <div><strong>Itens fora do controle do dev</strong> que podem travar o projeto: tokens de API, credenciais, acessos, documentos do cliente, etc.</div>
+      </div>
+      <div id="pendenciasContainer"></div>
+      <button class="btn-add-row" onclick="addPendencia()" style="margin-bottom:20px">＋ Adicionar Pendência</button>
+
+      <div style="display:flex;justify-content:space-between;margin-top:16px">
+        <button class="btn btn-secondary" onclick="showPhase('d3')">← To-Be</button>
+        <button class="btn btn-primary" onclick="showPhase('d5')">Próxima: Documentação →</button>
+      </div>
+    </div>
+
+    <!-- ── D5: DOCUMENTAÇÃO ── -->
+    <div id="phase-d5" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <h2>D1 — Integrações a Desenvolver</h2>
+        </div>
+        <div class="field">
+          <textarea id="doc_integracoes" rows="4" placeholder="Descreva cada integração: sistema, direção (leitura/escrita/gatilho), obrigatório ou nice-to-have..." oninput="autoSave()"></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>D2 — Templates de E-mail e Comunicações</h2>
+        </div>
+        <div class="field">
+          <textarea id="doc_templates" rows="4" placeholder="Liste os templates de e-mail e comunicações a configurar..." oninput="autoSave()"></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>D3 — Checklist de Validação — Aceite Formal</h2>
+          <span class="section-tag">GATILHO DO CRONOGRAMA</span>
+        </div>
+        <div class="alert alert-amber" style="margin-bottom:14px">
+          <span>⚠️</span>
+          <div>Quando o aceite formal for dado, o Cronograma será liberado automaticamente.</div>
+        </div>
+        <ul class="check-list" id="aceiteChecklist">
+          <li><input type="checkbox" id="ac1" onchange="checkAceite()"><label for="ac1">Fluxograma TO-BE validado e aprovado pelo cliente</label></li>
+          <li><input type="checkbox" id="ac2" onchange="checkAceite()"><label for="ac2">SIPOC revisado e confirmado</label></li>
+          <li><input type="checkbox" id="ac3" onchange="checkAceite()"><label for="ac3">Matriz RACI aprovada pelos responsáveis</label></li>
+          <li><input type="checkbox" id="ac4" onchange="checkAceite()"><label for="ac4">Campos por fase definidos e aprovados</label></li>
+          <li><input type="checkbox" id="ac5" onchange="checkAceite()"><label for="ac5">Escopo de integrações confirmado</label></li>
+          <li><input type="checkbox" id="ac6" onchange="checkAceite()"><label for="ac6">Pendências externas identificadas e comunicadas</label></li>
+          <li><input type="checkbox" id="ac7" onchange="checkAceite()"><label for="ac7">Cliente deu aceite formal (assinatura ou confirmação escrita)</label></li>
+        </ul>
+        <div id="aceiteStatus" style="margin-top:14px;padding:12px 16px;border-radius:var(--radius);background:var(--surface2);font-size:13px;color:var(--text2)">
+          Aceite pendente — complete o checklist acima.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>D4 — Observações Finais e Itens Fora do Escopo</h2>
+        </div>
+        <div class="field">
+          <textarea id="doc_fora_escopo" rows="4" placeholder="Documente aqui tudo que foi discutido mas ficou fora do escopo contratado..." oninput="autoSave()"></textarea>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:10px">
+        <button class="btn btn-secondary" onclick="showPhase('d4')">← SIPOC & RACI</button>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary" onclick="generateWord('d5')">📄 Gerar Word Completo</button>
+          <button class="btn btn-primary" onclick="showPage('cronograma')">🚀 Ir para Cronograma →</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- end discoveryContent -->
+</div><!-- end page-discovery -->
+
+<!-- ══ PAGE: CRONOGRAMA ══ -->
+<div class="page" id="page-cronograma">
+  <div class="page-header">
+    <h1>Cronograma — <em>Gantt</em></h1>
+    <p>Planejado vs Executado. Cascade automático em atrasos.</p>
+  </div>
+
+  <div id="cronogramaLocked" class="gate-locked">
+    <div class="gate-icon">🔒</div>
+    <h2>Aceite formal pendente</h2>
+    <p>Complete o D3 — Checklist de Validação no Discovery e dê o aceite formal para liberar o Cronograma.</p>
+  </div>
+
+  <div id="cronogramaContent" style="display:none">
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+      <button class="btn btn-secondary" onclick="openModal('modalCalcApply')">🧮 Aplicar Calculadora ao Gantt</button>
+      <button class="btn btn-secondary" onclick="addMarco()">＋ Marco Manual</button>
+      <button class="btn btn-secondary" onclick="addFeriado()">📅 Adicionar Feriado</button>
+    </div>
+
+    <div class="gantt-container">
+      <table class="gantt-table" id="ganttTable">
         <thead>
           <tr>
-            <th>Dimensão</th>
-            <th>Qtd</th>
-            <th>Peso (h/un)</th>
-            <th>Subtotal (h)</th>
-            <th>Com gordura (h)</th>
+            <th style="min-width:200px">Marco / Sub-marco</th>
+            <th>Resp.</th>
+            <th>Planejado Início</th>
+            <th>Planejado Fim</th>
+            <th>Executado</th>
+            <th>Status</th>
+            <th style="min-width:200px">Progresso</th>
+            <th style="width:40px"></th>
           </tr>
         </thead>
-        <tbody id="reviewBody"></tbody>
-        <tfoot>
-          <tr style="font-weight:700;background:#f8fafc">
-            <td colspan="3">Total de Desenvolvimento</td>
-            <td id="totalDevH">—</td>
-            <td id="totalDevFat">—</td>
-          </tr>
-        </tfoot>
+        <tbody id="ganttBody">
+          <!-- Preenchido por JS -->
+        </tbody>
       </table>
-
-      <!-- Fases do projeto -->
-      <div style="margin-top:20px">
-        <div class="review-section-title">📅 Fases do Projeto</div>
-        <table class="review-table" id="phasesTable">
-          <thead>
-            <tr>
-              <th>Fase</th>
-              <th>Horas</th>
-              <th>Dias Úteis</th>
-            </tr>
-          </thead>
-          <tbody id="phasesBody"></tbody>
-          <tfoot>
-            <tr style="font-weight:700;background:#f8fafc">
-              <td>Total Geral</td>
-              <td id="totalAllH">—</td>
-              <td id="totalAllD">—</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
-      <!-- Totais visuais -->
-      <div class="totals-row" id="totalsVisual"></div>
-
-      <!-- Confiança -->
-      <div id="confidenceBanner"></div>
-
-      <!-- Obs -->
-      <div id="obsBox"></div>
     </div>
 
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="goToStep(2)">← Ajustar Dimensões</button>
-      <button class="btn btn-secondary" onclick="goToStep(1)">⚙️ Ajustar Pesos</button>
-      <button class="btn btn-success" onclick="generateGantt()">✅ Confirmar & Gerar Gantt →</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════
-       SEÇÃO 4 — GANTT
-  ═══════════════════════════════════════════════ -->
-  <div class="section" id="sec4">
-    <div class="card">
-      <div class="card-title">📊 Cronograma Gantt — <span id="ganttProjectName">—</span></div>
-      <div class="gantt-controls">
-        <button class="btn btn-secondary" onclick="goToStep(3)">← Revisar</button>
-        <button class="btn btn-secondary" onclick="exportSVG()">⬇️ Exportar SVG</button>
-      </div>
-      <div class="gantt-wrapper">
-        <svg id="ganttChart"></svg>
+    <div class="card" style="margin-top:20px">
+      <div class="card-header"><h2>Legenda</h2></div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text2)">
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:14px;height:14px;border-radius:3px;background:linear-gradient(90deg,#4fa3f7,#3b82f6)"></div> Discovery</div>
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:14px;height:14px;border-radius:3px;background:linear-gradient(90deg,#7c5cfc,#9d7ffe)"></div> Desenvolvimento</div>
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:14px;height:14px;border-radius:3px;background:linear-gradient(90deg,#3dd68c,#10b981)"></div> Testes / Treinamento</div>
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:14px;height:14px;border-radius:3px;background:linear-gradient(90deg,#f5a623,#f97316)"></div> Go-live / Suporte</div>
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:14px;height:14px;border-radius:3px;background:repeating-linear-gradient(45deg,#f0545a,#f0545a 3px,#c53030 3px,#c53030 6px)"></div> Atrasado</div>
+        <div style="display:flex;align-items:center;gap:6px"><span>⚠️</span> Pendência externa ligada</div>
       </div>
     </div>
   </div>
-
 </div>
 
-<!-- Tooltip -->
-<div id="tooltip"></div>
+<!-- ══ PAGE: REPORT ══ -->
+<div class="page" id="page-report">
+  <div class="page-header">
+    <h1>Report <em>Semanal</em></h1>
+    <p>Gerado automaticamente com base no Gantt. Renovado toda semana.</p>
+  </div>
+
+  <div class="report-toggle">
+    <button class="report-btn active" onclick="setReport('cliente')" id="btn-report-cliente">📋 Versão Cliente</button>
+    <button class="report-btn" onclick="setReport('interna')" id="btn-report-interna">🔒 Versão Interna</button>
+  </div>
+
+  <div style="display:flex;gap:10px;margin-bottom:16px">
+    <button class="btn btn-primary" onclick="generateReport()">↻ Gerar Report</button>
+    <button class="btn btn-secondary" onclick="copyReport()">📋 Copiar</button>
+  </div>
+
+  <div class="report-block" id="reportContent">
+    <span style="color:var(--text3)">Clique em "Gerar Report" para atualizar com os dados do Gantt.</span>
+  </div>
+</div>
+
+<!-- ══ PAGE: LOG ══ -->
+<div class="page" id="page-log">
+  <div class="page-header">
+    <h1>Log de <em>Mudanças</em></h1>
+    <p>Histórico imutável de todas as alterações do projeto.</p>
+  </div>
+  <div class="card">
+    <div id="logContainer">
+      <div style="color:var(--text3);font-size:13px;padding:20px 0;text-align:center">Nenhuma mudança registrada ainda.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE: CALCULADORA ══ -->
+<div class="page" id="page-calculadora">
+  <div class="page-header">
+    <h1><em>Calculadora</em> M1–M10</h1>
+    <p>Engine de estimativa de horas e dias úteis. Use "Aplicar ao Projeto" para preencher o Gantt.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2>Parâmetros do Projeto</h2></div>
+    <div class="calc-inputs">
+      <div class="field">
+        <label>Consultor / Senioridade</label>
+        <select id="calc_consultor" onchange="recalculate()">
+          <option value="">— Selecione —</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Projetos Simultâneos</label>
+        <select id="calc_simultaneos" onchange="recalculate()">
+          <option value="1">1 projeto (100%)</option>
+          <option value="2">2 projetos (50%)</option>
+          <option value="3">3 projetos (33%)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Depende de Outro Dev?</label>
+        <select id="calc_peso4" onchange="recalculate()">
+          <option value="0">Não</option>
+          <option value="1">Sim (+30%)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Número de Pipes</label>
+        <input type="number" id="calc_pipes" value="1" min="1" oninput="recalculate()">
+      </div>
+      <div class="field">
+        <label>Número de Integrações</label>
+        <input type="number" id="calc_integracoes" value="0" min="0" oninput="recalculate()">
+      </div>
+      <div class="field">
+        <label>Data do Aceite Formal</label>
+        <input type="date" id="calc_aceite" oninput="recalculate()">
+      </div>
+    </div>
+
+    <div class="section-title">Marcos Ativos</div>
+    <div class="marco-toggle-grid">
+      <div class="marco-toggle-item active" id="mtog-m1" onclick="toggleMarco('m1')">
+        <input type="checkbox" checked id="cb-m1"> M1 — Kick-off
+      </div>
+      <div class="marco-toggle-item active" id="mtog-m2" onclick="toggleMarco('m2')">
+        <input type="checkbox" checked id="cb-m2"> M2 — AS-IS
+      </div>
+      <div class="marco-toggle-item active" id="mtog-m3" onclick="toggleMarco('m3')">
+        <input type="checkbox" checked id="cb-m3"> M3 — TO-BE
+      </div>
+      <div class="marco-toggle-item active" id="mtog-m4" onclick="toggleMarco('m4')">
+        <input type="checkbox" checked id="cb-m4"> M4 — Construção
+      </div>
+      <div class="marco-toggle-item active" id="mtog-m5" onclick="toggleMarco('m5')">
+        <input type="checkbox" checked id="cb-m5"> M5 — Automações
+      </div>
+      <div class="marco-toggle-item active" id="mtog-m6" onclick="toggleMarco('m6')">
+        <input type="checkbox" checked id="cb-m6"> M6 — Integrações
+      </div>
+      <div class="marco-toggle-item active" id="mtog-m7" onclick="toggleMarco('m7')">
+        <input type="checkbox" checked id="cb-m7"> M7 — Testes
+      </div>
+      <div class="marco-toggle-item active" id="mtog-m8" onclick="toggleMarco('m8')">
+        <input type="checkbox" checked id="cb-m8"> M8 — Treinamento
+      </div>
+      <div class="marco-toggle-item active" id="mtog-m9" onclick="toggleMarco('m9')">
+        <input type="checkbox" checked id="cb-m9"> M9 — Hypercare
+      </div>
+      <div class="marco-toggle-item active" id="mtog-m10" onclick="toggleMarco('m10')">
+        <input type="checkbox" checked id="cb-m10"> M10 — Documentação
+      </div>
+    </div>
+  </div>
+
+  <div class="calc-result" id="calcResult">
+    <div class="calc-result-title">Resultado do Cálculo</div>
+    <div id="calcResultContent">
+      <div style="color:var(--text3);font-size:13px">Selecione um consultor e preencha os parâmetros para calcular.</div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;display:flex;gap:10px">
+    <button class="btn btn-primary" onclick="applyToGantt()">🚀 Aplicar ao Projeto</button>
+    <button class="btn btn-secondary" onclick="clearCalc()">↺ Limpar</button>
+  </div>
+</div>
+
+<!-- ══ PAGE: EQUIPE ══ -->
+<div class="page" id="page-equipe">
+  <div class="page-header">
+    <h1>Gestão de <em>Equipe</em></h1>
+    <p>Consultores e senioridades. A senioridade define os pesos na calculadora.</p>
+  </div>
+
+  <div style="margin-bottom:20px">
+    <button class="btn btn-primary" onclick="openModal('modalNewConsultor')">＋ Adicionar Consultor</button>
+  </div>
+
+  <div class="team-grid" id="teamGrid">
+    <!-- Preenchido por JS -->
+  </div>
+
+  <div class="card" style="margin-top:8px">
+    <div class="card-header"><h2>Referência de Senioridade</h2></div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <tr>
+        <th style="background:var(--surface2);padding:8px 12px;border:1px solid var(--border);color:var(--text3);text-align:left">Nível</th>
+        <th style="background:var(--surface2);padding:8px 12px;border:1px solid var(--border);color:var(--text3)">M4 Baixa</th>
+        <th style="background:var(--surface2);padding:8px 12px;border:1px solid var(--border);color:var(--text3)">M4 Média</th>
+        <th style="background:var(--surface2);padding:8px 12px;border:1px solid var(--border);color:var(--text3)">M4 Alta</th>
+        <th style="background:var(--surface2);padding:8px 12px;border:1px solid var(--border);color:var(--text3)">M5 Baixa</th>
+        <th style="background:var(--surface2);padding:8px 12px;border:1px solid var(--border);color:var(--text3)">M5 Média</th>
+        <th style="background:var(--surface2);padding:8px 12px;border:1px solid var(--border);color:var(--text3)">M5 Alta</th>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;border:1px solid var(--border);font-weight:700">Sênior</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">12h</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">14h</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">20h</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">6h</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">8h</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">14h</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;border:1px solid var(--border);font-weight:700">Pleno</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">17h</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">20h</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">28h</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">8h</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">11h</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">20h</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;border:1px solid var(--border);font-weight:700">Júnior</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">22h</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">25h</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">36h</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">11h</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">14h</td>
+        <td style="padding:8px 12px;border:1px solid var(--border);text-align:center;color:var(--text2)">25h</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+</main>
+
+<!-- ══ MODALS ══ -->
+
+<!-- Modal: Novo Projeto -->
+<div class="modal-overlay" id="modalNewProject">
+  <div class="modal">
+    <h2>Novo Projeto</h2>
+    <div class="field"><label>Empresa</label><input type="text" id="np_empresa" placeholder="Nome da empresa..."></div>
+    <div class="field"><label>Processo</label><input type="text" id="np_processo" placeholder="Nome do processo..."></div>
+    <div class="field">
+      <label>Consultor Responsável</label>
+      <select id="np_consultor">
+        <option value="">— Selecione —</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalNewProject')">Cancelar</button>
+      <button class="btn btn-primary" onclick="createProject()">Criar Projeto →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Novo Consultor -->
+<div class="modal-overlay" id="modalNewConsultor">
+  <div class="modal">
+    <h2>Adicionar Consultor</h2>
+    <div class="field"><label>Nome Completo</label><input type="text" id="nc_nome" placeholder="Nome do consultor..."></div>
+    <div class="field"><label>Cargo / Função</label><input type="text" id="nc_cargo" placeholder="Ex: Analista de Processos..."></div>
+    <div class="field">
+      <label>Senioridade</label>
+      <select id="nc_senioridade">
+        <option value="senior">Sênior</option>
+        <option value="pleno">Pleno</option>
+        <option value="junior">Júnior</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalNewConsultor')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addConsultor()">Adicionar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Calc Apply -->
+<div class="modal-overlay" id="modalCalcApply">
+  <div class="modal">
+    <h2>Aplicar Calculadora ao Gantt</h2>
+    <div class="alert alert-amber"><span>⚠️</span><div>Isso vai substituir os marcos atuais do Gantt pelos calculados. Esta ação é registrada no Log.</div></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalCalcApply')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmApplyToGantt()">Confirmar e Aplicar</button>
+    </div>
+  </div>
+</div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-//  NAVEGAÇÃO
-// ═══════════════════════════════════════════════════════
-function goToStep(n) {
-  document.querySelectorAll('.section').forEach((s,i) => {
-    s.classList.toggle('active', i+1 === n);
-  });
-  document.querySelectorAll('.step').forEach((s,i) => {
-    s.classList.remove('active','done');
-    if (i+1 < n)  s.classList.add('done');
-    if (i+1 === n) s.classList.add('active');
-  });
-  if (n === 2) updateComplexityLabel();
-  window.scrollTo({top:0, behavior:'smooth'});
-}
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let state = {
+  projects: [],
+  currentProjectId: null,
+  team: [],
+  calcMarcos: { m1:true,m2:true,m3:true,m4:true,m5:true,m6:true,m7:true,m8:true,m9:true,m10:true }
+};
 
-function updateComplexityLabel() {
-  const map = { simples:'🟢 Simples', medio:'🟡 Médio', complexo:'🔴 Complexo' };
-  const el = document.getElementById('complexityLabel');
-  if (el) el.textContent = map[getComplexity()] || '—';
-}
+// Tabela de horas por marco × senioridade × complexidade
+const HOURS = {
+  m1: { fixed: 2 },
+  m2: { fixed: 4 },
+  m3: { fixed: 6 },
+  m4: { senior:{low:12,mid:14,high:20}, pleno:{low:17,mid:20,high:28}, junior:{low:22,mid:25,high:36} },
+  m5: { senior:{low:6,mid:8,high:14}, pleno:{low:8,mid:11,high:20}, junior:{low:11,mid:14,high:25} },
+  m6: { senior:{low:4,mid:10,high:16}, pleno:{low:6,mid:14,high:22}, junior:{low:7,mid:18,high:29} },
+  m7: { low:16, mid:30, high:50 },
+  m8: { low:4, mid:6, high:10 },
+  m9: { low:7, mid:9, high:11 },
+  m10: { low:4, mid:8, high:14 }
+};
 
-// ═══════════════════════════════════════════════════════
-//  HELPERS
-// ═══════════════════════════════════════════════════════
-function getComplexity() { return document.getElementById('complexity').value; }
-function v(id) { return parseFloat(document.getElementById(id).value) || 0; }
-function vi(id) { return parseInt(document.getElementById(id).value) || 0; }
-function vs(id) { return document.getElementById(id).value.trim(); }
+// Feriados fixos Brasil (dd-mm)
+const FERIADOS_FIXOS = ['01-01','21-04','01-05','07-09','12-10','02-11','15-11','25-12'];
 
-function getSuffix() {
-  const c = getComplexity();
-  return c === 'simples' ? 's' : c === 'medio' ? 'm' : 'c';
-}
-
-function withFat(h) { return h * (1 + v('fatPct')/100); }
-
-function hToDays(h) {
-  const hpd = v('hoursPerDay') || 6;
-  return Math.ceil(h / hpd * 10) / 10;
-}
-
-function addWorkDays(date, days) {
-  let d = new Date(date);
-  let added = 0;
-  while (added < Math.ceil(days)) {
-    d.setDate(d.getDate() + 1);
-    if (d.getDay() !== 0 && d.getDay() !== 6) added++;
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+function init() {
+  const saved = localStorage.getItem('profixlab_state');
+  if (saved) { try { state = JSON.parse(saved); } catch(e) {} }
+  renderTeam();
+  renderProjectSelect();
+  updateConsultorSelects();
+  if (state.currentProjectId) {
+    selectProject(state.currentProjectId, true);
   }
-  return d;
+  showPage('discovery');
 }
 
-function formatDate(d) {
-  return d.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'report') generateReport();
+  if (name === 'calculadora') updateConsultorCalcSelect();
+  if (name === 'cronograma') renderGantt();
 }
 
-// ═══════════════════════════════════════════════════════
-//  CÁLCULO
-// ═══════════════════════════════════════════════════════
-let ESTIMATE = {};
-
-function calcAndReview() {
-  const suf = getSuffix();
-  const fat = v('fatPct') / 100;
-  const hpd = v('hoursPerDay') || 6;
-
-  // Pesos por unidade
-  const weights = {
-    fases: v(`w_fase_${suf}`),
-    autos: v(`w_auto_${suf}`),
-    ai:    v(`w_ai_${suf}`),
-    tpl:   v(`w_tpl_${suf}`),
-    int:   v(`w_int_${suf}`),
-    rel:   v(`w_rel_${suf}`),
-  };
-
-  // Quantidades
-  const qty = {
-    fases: vi('d_fases'),
-    autos: vi('d_autos'),
-    ai:    vi('d_ai'),
-    tpl:   vi('d_tpl'),
-    int:   vi('d_int'),
-    rel:   vi('d_rel'),
-  };
-
-  // Subtotais de dev
-  const rows = [
-    { label:'Fases',              qty: qty.fases, peso: weights.fases },
-    { label:'Automações if/then', qty: qty.autos, peso: weights.autos },
-    { label:'AI Automações',      qty: qty.ai,    peso: weights.ai },
-    { label:'Templates de E-mail',qty: qty.tpl,   peso: weights.tpl },
-    { label:'Integrações',        qty: qty.int,   peso: weights.int },
-    { label:'Relações entre Pipes',qty: qty.rel,  peso: weights.rel },
-  ];
-
-  let totalDevH = 0;
-  rows.forEach(r => { r.sub = r.qty * r.peso; r.fat = withFat(r.sub); totalDevH += r.sub; });
-  const totalDevFat = withFat(totalDevH);
-
-  // Fases do projeto
-  const testDevPct   = v(`ph_testdev_${suf}`) / 100;
-  const ajustesPct   = v(`ph_ajustes_${suf}`) / 100;
-
-  const phases = [
-    { label:'🗺️ Mapeamento AS-IS/TO-BE', hours: v(`ph_map_${suf}`) },
-    { label:'🔨 Desenvolvimento',         hours: totalDevFat },
-    { label:'🧪 Teste Interno (Dev)',      hours: totalDevFat * testDevPct },
-    { label:'👤 Teste do Cliente (UAT)',   hours: v(`ph_uat_${suf}`) },
-    { label:'🔧 Ajustes Pós-Teste',        hours: totalDevFat * ajustesPct },
-    { label:'✅ Validação Formal',          hours: v(`ph_val_${suf}`) },
-    { label:'🎓 Treinamento',              hours: v(`ph_train_${suf}`) },
-    { label:'🛡️ Hypercare',               hours: v(`ph_hyper_${suf}`) * 5 * hpd, isWeeks: true, weeks: v(`ph_hyper_${suf}`) },
-  ];
-
-  let totalAllH = phases.reduce((a,p) => a + p.hours, 0);
-  let totalAllD = hToDays(totalAllH);
-
-  // Salva globalmente
-  ESTIMATE = {
-    projectName: vs('projectName') || 'Projeto Pipefy',
-    startDate:   vs('startDate') || new Date().toISOString().split('T')[0],
-    complexity:  getComplexity(),
-    fat: v('fatPct'),
-    hpd,
-    rows, totalDevH, totalDevFat,
-    phases, totalAllH, totalAllD,
-    conf: vs('d_conf'),
-    obs:  vs('d_obs'),
-    pipes: vi('d_pipes'),
-  };
-
-  renderReview();
-  goToStep(3);
-}
-
-// ═══════════════════════════════════════════════════════
-//  RENDERIZA REVISÃO
-// ═══════════════════════════════════════════════════════
-function renderReview() {
-  const E = ESTIMATE;
-  document.getElementById('reviewProjectName').textContent = E.projectName;
-
-  // Tabela de dev
-  const body = document.getElementById('reviewBody');
-  body.innerHTML = '';
-  E.rows.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${r.label}</td>
-      <td>${r.qty}</td>
-      <td>${r.peso}h</td>
-      <td>${r.sub.toFixed(1)}h</td>
-      <td><strong>${r.fat.toFixed(1)}h</strong></td>
-    `;
-    body.appendChild(tr);
+function showPhase(phase) {
+  ['d1','d2','d3','d4','d5'].forEach(p => {
+    document.getElementById('phase-' + p).style.display = (p === phase) ? 'block' : 'none';
+    const tab = document.getElementById('tab-' + p);
+    tab.classList.toggle('active', p === phase);
   });
-  document.getElementById('totalDevH').textContent   = E.totalDevH.toFixed(1) + 'h';
-  document.getElementById('totalDevFat').textContent = E.totalDevFat.toFixed(1) + 'h';
-
-  // Fases
-  const pb = document.getElementById('phasesBody');
-  pb.innerHTML = '';
-  E.phases.forEach(p => {
-    const tr = document.createElement('tr');
-    const d = hToDays(p.hours);
-    tr.innerHTML = `
-      <td>${p.label}${p.isWeeks ? ` <span class="fat-badge">${p.weeks} sem.</span>` : ''}</td>
-      <td>${p.hours.toFixed(1)}h</td>
-      <td>${d}d</td>
-    `;
-    pb.appendChild(tr);
-  });
-  document.getElementById('totalAllH').textContent = E.totalAllH.toFixed(1) + 'h';
-  document.getElementById('totalAllD').textContent = E.totalAllD + 'd';
-
-  // Totais visuais
-  const tv = document.getElementById('totalsVisual');
-  const cls = E.complexity === 'simples' ? 's' : E.complexity === 'medio' ? 'm' : 'c';
-  const label = E.complexity === 'simples' ? '🟢 Simples' : E.complexity === 'medio' ? '🟡 Médio' : '🔴 Complexo';
-  tv.innerHTML = `
-    <div class="total-box ${cls}">
-      <div class="total-label">${label}</div>
-      <div class="total-hours">${E.totalDevFat.toFixed(0)}h</div>
-      <div class="total-days">Desenvolvimento (com ${E.fat}% gordura)</div>
-    </div>
-    <div class="total-box ${cls}">
-      <div class="total-label">Total Projeto</div>
-      <div class="total-hours">${E.totalAllH.toFixed(0)}h</div>
-      <div class="total-days">${E.totalAllD} dias úteis</div>
-    </div>
-    <div class="total-box ${cls}">
-      <div class="total-label">Pipes</div>
-      <div class="total-hours">${E.pipes}</div>
-      <div class="total-days">${E.hpd}h / dia útil</div>
-    </div>
-  `;
-
-  // Confiança
-  const confMap = {
-    alta:  { cls:'alta',  icon:'🟢', label:'Alta Confiança', text:'AS-IS claro e regras bem definidas. A estimativa é sólida.' },
-    media: { cls:'media', icon:'🟡', label:'Média Confiança', text:'Existem lacunas pontuais que podem causar variação de ±20%. Alinhe antes do kickoff.' },
-    baixa: { cls:'baixa', icon:'🔴', label:'Baixa Confiança', text:'Muitas incógnitas não resolvidas. Congele a estimativa até o AS-IS estar validado.' },
-  };
-  const ci = confMap[E.conf] || confMap.media;
-  document.getElementById('confidenceBanner').innerHTML = `
-    <div class="confidence-banner ${ci.cls}">
-      <div class="cb-title">${ci.icon} ${ci.label}</div>
-      <div class="cb-text">${ci.text}</div>
-    </div>
-  `;
-
-  // Obs
-  const ob = document.getElementById('obsBox');
-  ob.innerHTML = E.obs ? `
-    <div class="info-box" style="margin-top:12px">
-      <strong>⚠️ Observações / Riscos:</strong><br>${E.obs}
-    </div>
-  ` : '';
+  if (phase === 'd4') {
+    renderPipes();
+    renderPendencias();
+  }
 }
 
-// ═══════════════════════════════════════════════════════
-//  GANTT
-// ═══════════════════════════════════════════════════════
-function generateGantt() {
-  const E = ESTIMATE;
-  document.getElementById('ganttProjectName').textContent = E.projectName;
-  goToStep(4);
+// ══════════════════════════════════════════
+// PROJECT
+// ══════════════════════════════════════════
+function createProject() {
+  const emp = document.getElementById('np_empresa').value.trim();
+  const proc = document.getElementById('np_processo').value.trim();
+  const cons = document.getElementById('np_consultor').value;
+  if (!emp || !proc) { alert('Preencha empresa e processo.'); return; }
 
-  const hpd = E.hpd;
-  const start = new Date(E.startDate + 'T12:00:00');
+  const proj = {
+    id: Date.now().toString(),
+    empresa: emp,
+    processo: proc,
+    consultor: cons,
+    createdAt: new Date().toISOString(),
+    aceite: false,
+    complexity: null,
+    answers: {},
+    docs: {},
+    pipes: [],
+    sipoc: [],
+    raci: [],
+    pendencias: [],
+    gantt: [],
+    log: [],
+    feriados: []
+  };
 
-  // Monta tarefas com datas
-  let cursor = new Date(start);
-  const tasks = [];
+  state.projects.push(proj);
+  closeModal('modalNewProject');
+  document.getElementById('np_empresa').value = '';
+  document.getElementById('np_processo').value = '';
+  saveState();
+  renderProjectSelect();
+  selectProject(proj.id);
+  addLog('Projeto criado: ' + emp + ' — ' + proc);
+}
 
-  E.phases.forEach(p => {
-    const days = Math.ceil(p.hours / hpd);
-    const end = addWorkDays(cursor, days);
-    tasks.push({ label: p.label, start: new Date(cursor), end: new Date(end), hours: p.hours, days });
-    cursor = new Date(end);
+function selectProject(id, silent) {
+  if (!id) {
+    state.currentProjectId = null;
+    document.getElementById('noProjectMsg').style.display = 'flex';
+    document.getElementById('discoveryContent').style.display = 'none';
+    document.getElementById('disc-proj-name').textContent = 'Sem projeto ativo';
+    return;
+  }
+  state.currentProjectId = id;
+  const proj = getProject();
+  if (!proj) return;
+  document.getElementById('noProjectMsg').style.display = 'none';
+  document.getElementById('discoveryContent').style.display = 'block';
+  document.getElementById('disc-proj-name').textContent = proj.empresa + ' — ' + proj.processo;
+  document.getElementById('projectSelect').value = id;
+  loadAnswers();
+  checkCronogramaGate();
+  updateComplexity();
+  if (!silent) saveState();
+}
+
+function getProject() {
+  return state.projects.find(p => p.id === state.currentProjectId);
+}
+
+function renderProjectSelect() {
+  const sel = document.getElementById('projectSelect');
+  sel.innerHTML = '<option value="">— Selecione um projeto —</option>';
+  state.projects.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.empresa + ' — ' + p.processo;
+    if (p.id === state.currentProjectId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// ══════════════════════════════════════════
+// ANSWERS
+// ══════════════════════════════════════════
+const TEXT_FIELDS = ['p1','p2','p3','p4','p5','p6','p7','p8','p9','p10','p11','p12','p13','p14','p15','p16','p17','p18','p19','p20','p21','obs_d1','obs_d2','obs_d3','doc_integracoes','doc_templates','doc_fora_escopo'];
+const CHECKBOX_FIELDS = ['doc1','doc2','doc3','doc4','doc5','doc6','ac1','ac2','ac3','ac4','ac5','ac6','ac7'];
+
+function loadAnswers() {
+  const proj = getProject();
+  if (!proj) return;
+  const ans = proj.answers || {};
+  TEXT_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = ans[id] || '';
+  });
+  CHECKBOX_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = ans[id] || false;
+  });
+  checkAceite();
+  updateProgress();
+}
+
+function autoSave() {
+  const proj = getProject();
+  if (!proj) return;
+  if (!proj.answers) proj.answers = {};
+  TEXT_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) proj.answers[id] = el.value;
+  });
+  CHECKBOX_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) proj.answers[id] = el.checked;
+  });
+  updateComplexity();
+  updateProgress();
+  saveState();
+}
+
+function updateProgress() {
+  const proj = getProject();
+  if (!proj) return;
+  const ans = proj.answers || {};
+  const filled = TEXT_FIELDS.filter(id => (ans[id] || '').trim().length > 0).length;
+  const pct = Math.round((filled / TEXT_FIELDS.length) * 100);
+  document.getElementById('discoveryProgress').style.width = pct + '%';
+}
+
+// ══════════════════════════════════════════
+// ACEITE / GATE
+// ══════════════════════════════════════════
+function checkAceite() {
+  const proj = getProject();
+  if (!proj) return;
+  const checkboxes = ['ac1','ac2','ac3','ac4','ac5','ac6','ac7'];
+  const allChecked = checkboxes.every(id => {
+    const el = document.getElementById(id);
+    return el && el.checked;
   });
 
-  drawGantt(tasks);
+  const statusEl = document.getElementById('aceiteStatus');
+  if (allChecked) {
+    proj.aceite = true;
+    statusEl.style.background = 'rgba(61,214,140,0.1)';
+    statusEl.style.border = '1px solid rgba(61,214,140,0.3)';
+    statusEl.style.color = 'var(--green)';
+    statusEl.innerHTML = '✅ <strong>Aceite formal dado.</strong> O Cronograma está liberado.';
+    addLog('Aceite formal registrado para ' + proj.empresa + ' — ' + proj.processo);
+  } else {
+    proj.aceite = false;
+    statusEl.style.background = 'var(--surface2)';
+    statusEl.style.border = 'none';
+    statusEl.style.color = 'var(--text2)';
+    const done = checkboxes.filter(id => { const el = document.getElementById(id); return el && el.checked; }).length;
+    statusEl.innerHTML = 'Aceite pendente — ' + done + '/' + checkboxes.length + ' itens concluídos.';
+  }
+  checkCronogramaGate();
+  autoSave();
 }
 
-function drawGantt(tasks) {
-  const svg = document.getElementById('ganttChart');
-  svg.innerHTML = '';
+function checkCronogramaGate() {
+  const proj = getProject();
+  const hasAceite = proj && proj.aceite;
+  document.getElementById('cronogramaLocked').style.display = hasAceite ? 'none' : 'flex';
+  document.getElementById('cronogramaContent').style.display = hasAceite ? 'block' : 'none';
+}
 
-  const ROW_H    = 44;
-  const LABEL_W  = 220;
-  const PAD      = 20;
-  const HEADER_H = 50;
-  const MIN_DATE = tasks[0].start;
-  const MAX_DATE = tasks[tasks.length-1].end;
-  const totalMs  = MAX_DATE - MIN_DATE || 1;
+// ══════════════════════════════════════════
+// COMPLEXITY
+// ══════════════════════════════════════════
+function updateComplexity() {
+  const proj = getProject();
+  if (!proj) return;
 
-  const CHART_W  = Math.max(700, tasks.length * 120);
-  const SVG_W    = LABEL_W + CHART_W + PAD*2;
-  const SVG_H    = HEADER_H + tasks.length * ROW_H + PAD;
+  const pipes = (proj.pipes || []).length || 1;
+  const integracoes = (proj.pendencias || []).filter(p => p.tipo === 'integracao').length;
+  const campos = getMaxCamposPorFase(proj);
+  const automacoes = parseInt(proj.automacoes || 0);
+  const templates = parseInt(proj.templates_email || 0);
+  const bancos = parseInt(proj.bancos_dados || 0);
+  const portal = proj.portal_externo || false;
+  const intExternas = parseInt(proj.int_externas || 0);
+  const novaIntegracao = proj.nova_integracao || false;
 
-  svg.setAttribute('width',  SVG_W);
-  svg.setAttribute('height', SVG_H);
-  svg.setAttribute('viewBox', `0 0 ${SVG_W} ${SVG_H}`);
+  let level = 'low';
+  let reasons = [];
 
-  const colors = [
-    '#3b82f6','#8b5cf6','#10b981','#f59e0b',
-    '#ef4444','#06b6d4','#84cc16','#f97316',
-  ];
-
-  // Fundo
-  rect(svg, 0, 0, SVG_W, SVG_H, '#f8fafc');
-
-  // Header datas
-  const monthMs = 30 * 24 * 3600 * 1000;
-  let d = new Date(MIN_DATE);
-  d.setDate(1);
-  while (d <= MAX_DATE) {
-    const x = LABEL_W + PAD + ((d - MIN_DATE) / totalMs) * CHART_W;
-    if (x >= LABEL_W + PAD) {
-      line(svg, x, 0, x, SVG_H, '#e5e7eb');
-      text(svg, x+4, 16,
-        d.toLocaleDateString('pt-BR',{month:'short', year:'2-digit'}),
-        '#6b7280', 10, 'start');
+  // Avaliar cada critério
+  if (pipes === 1) {
+    if (campos <= 15 && automacoes <= 10 && templates <= 5 && bancos <= 1 && intExternas === 0 && !portal) {
+      level = 'low';
     }
-    d = new Date(d.getFullYear(), d.getMonth()+1, 1);
   }
 
-  // Linhas de grade horizontais
-  tasks.forEach((_,i) => {
-    const y = HEADER_H + i * ROW_H;
-    rect(svg, 0, y, SVG_W, ROW_H, i%2===0 ? '#fff' : '#f9fafb');
-    line(svg, 0, y, SVG_W, y, '#f1f5f9');
-  });
+  if (pipes >= 2 && pipes <= 3) { level = 'mid'; reasons.push(pipes + ' pipes'); }
+  if (pipes >= 2 && campos >= 15 && campos <= 25) { level = 'mid'; }
+  if (intExternas >= 1 && intExternas <= 2 && !novaIntegracao) { level = 'mid'; }
+  if (automacoes >= 11 && automacoes <= 20) { level = 'mid'; }
+  if (bancos >= 2 && bancos <= 4) { level = 'mid'; }
 
-  // Hoje
+  if (pipes >= 4) { level = 'high'; reasons.push('4+ pipes'); }
+  if (campos > 25) { level = 'high'; reasons.push('26+ campos/fase'); }
+  if (intExternas >= 3 || novaIntegracao) { level = 'high'; reasons.push('3+ integrações ou nova integração'); }
+  if (automacoes > 20) { level = 'high'; reasons.push('21+ automações'); }
+  if (bancos > 4) { level = 'high'; reasons.push('5+ bancos de dados'); }
+  if (portal) { level = 'high'; reasons.push('portal externo'); }
+
+  // Regra: 2 pipes médios → Alta
+  if (pipes === 2 && level === 'mid') { level = 'high'; reasons.push('2 pipes médios = Alta'); }
+
+  // Guardar no projeto
+  proj.complexity = level;
+  saveState();
+
+  // Atualizar UI
+  const display = document.getElementById('complexityDisplay');
+  const levelEl = document.getElementById('complexityLevel');
+  const justEl = document.getElementById('complexityJustification');
+  const badge = document.getElementById('complexityNavBadge');
+
+  const labels = { low: 'BAIXA', mid: 'MÉDIA', high: 'ALTA' };
+  const classes = { low: 'complexity-low', mid: 'complexity-mid', high: 'complexity-high' };
+  const badgeClasses = { low: 'cnb-low', mid: 'cnb-mid', high: 'cnb-high' };
+
+  display.classList.add('visible');
+  levelEl.className = 'complexity-level ' + classes[level];
+  levelEl.textContent = labels[level];
+  justEl.textContent = reasons.length > 0 ? 'Motivo: ' + reasons.join(', ') : 'Calculado com base nos dados do Discovery';
+
+  badge.style.display = 'flex';
+  badge.className = 'complexity-nav-badge ' + badgeClasses[level];
+  badge.textContent = labels[level];
+
+  // Grid de métricas
+  const grid = document.getElementById('complexityGrid');
+  grid.innerHTML = [
+    { val: pipes, label: 'Pipes' },
+    { val: intExternas, label: 'Int. Externas' },
+    { val: automacoes, label: 'Automações' },
+    { val: campos, label: 'Campos/Fase' }
+  ].map(item => `
+    <div class="complexity-item">
+      <div class="ci-val">${item.val}</div>
+      <div class="ci-label">${item.label}</div>
+    </div>
+  `).join('');
+}
+
+function getMaxCamposPorFase(proj) {
+  if (!proj.pipes || proj.pipes.length === 0) return 0;
+  let max = 0;
+  proj.pipes.forEach(pipe => {
+    if (pipe.campos) {
+      const count = pipe.campos.filter(c => c.nome).length;
+      if (count > max) max = count;
+    }
+  });
+  return max;
+}
+
+// ══════════════════════════════════════════
+// PIPES
+// ══════════════════════════════════════════
+function addPipe() {
+  const proj = getProject();
+  if (!proj) return;
+  if (!proj.pipes) proj.pipes = [];
+  proj.pipes.push({
+    id: Date.now().toString(),
+    nome: 'Pipe ' + (proj.pipes.length + 1),
+    collapsed: false,
+    campos: [],
+    raci: [],
+    automacoes: 0,
+    templates: 0,
+    bancos: 0,
+    portal: false,
+    int_externas: 0
+  });
+  saveState();
+  renderPipes();
+  addLog('Pipe adicionado ao projeto');
+}
+
+function removePipe(pipeId) {
+  const proj = getProject();
+  if (!proj) return;
+  proj.pipes = proj.pipes.filter(p => p.id !== pipeId);
+  saveState();
+  renderPipes();
+  updateComplexity();
+}
+
+function renderPipes() {
+  const proj = getProject();
+  const container = document.getElementById('pipesContainer');
+  if (!proj || !proj.pipes) { container.innerHTML = ''; return; }
+
+  container.innerHTML = proj.pipes.map((pipe, idx) => `
+    <div class="pipe-section" id="pipe-${pipe.id}">
+      <div class="pipe-header" onclick="togglePipe('${pipe.id}')">
+        <span style="color:var(--accent2);font-size:12px;font-weight:700">PIPE ${idx+1}</span>
+        <input type="text" value="${pipe.nome}" onclick="event.stopPropagation()" 
+          onchange="updatePipeName('${pipe.id}', this.value)" oninput="event.stopPropagation()">
+        <button class="btn-del-row" onclick="event.stopPropagation();removePipe('${pipe.id}')">🗑</button>
+        <span style="color:var(--text3);font-size:12px">${pipe.collapsed ? '▼' : '▲'}</span>
+      </div>
+      <div class="pipe-body ${pipe.collapsed ? 'collapsed' : ''}" id="pipebody-${pipe.id}">
+        
+        <div class="two-col" style="margin-bottom:14px">
+          <div class="field">
+            <label>Automações</label>
+            <input type="number" min="0" value="${pipe.automacoes || 0}" 
+              oninput="updatePipeNum('${pipe.id}','automacoes',this.value)">
+          </div>
+          <div class="field">
+            <label>Templates de E-mail</label>
+            <input type="number" min="0" value="${pipe.templates || 0}" 
+              oninput="updatePipeNum('${pipe.id}','templates',this.value)">
+          </div>
+          <div class="field">
+            <label>Bancos de Dados</label>
+            <input type="number" min="0" value="${pipe.bancos || 0}" 
+              oninput="updatePipeNum('${pipe.id}','bancos',this.value)">
+          </div>
+          <div class="field">
+            <label>Integrações Externas</label>
+            <input type="number" min="0" value="${pipe.int_externas || 0}" 
+              oninput="updatePipeNum('${pipe.id}','int_externas',this.value)">
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:13px;color:var(--text2)">
+          <label class="toggle"><input type="checkbox" ${pipe.portal ? 'checked' : ''} 
+            onchange="updatePipeBool('${pipe.id}','portal',this.checked)">
+            <span class="toggle-slider"></span></label>
+          Portal Externo / Interface
+          &nbsp;&nbsp;
+          <label class="toggle"><input type="checkbox" ${pipe.nova_integracao ? 'checked' : ''} 
+            onchange="updatePipeBool('${pipe.id}','nova_integracao',this.checked)">
+            <span class="toggle-slider"></span></label>
+          Nova Integração (nunca usada antes)
+        </div>
+
+        <div class="section-title" style="font-size:9px">Campos por Fase</div>
+        <div style="overflow-x:auto">
+          <table class="dyn-table">
+            <thead><tr>
+              <th>Fase</th><th>Nome do Campo</th><th>Tipo</th><th>Obrigatório?</th><th>Condicional?</th><th style="width:40px"></th>
+            </tr></thead>
+            <tbody id="campos-${pipe.id}">
+              ${renderCamposRows(pipe)}
+            </tbody>
+          </table>
+        </div>
+        <button class="btn-add-row" style="margin-top:8px" onclick="addCampo('${pipe.id}')">＋ Campo</button>
+
+        <div class="section-title" style="font-size:9px;margin-top:16px">RACI deste Pipe</div>
+        <div style="overflow-x:auto">
+          <table class="dyn-table">
+            <thead><tr>
+              <th>Fase</th><th>R — Responsável</th><th>A — Aprovador</th><th>C — Consultado</th><th>I — Informado</th><th style="width:40px"></th>
+            </tr></thead>
+            <tbody id="raci-${pipe.id}">
+              ${renderRaciRows(pipe)}
+            </tbody>
+          </table>
+        </div>
+        <button class="btn-add-row" style="margin-top:8px" onclick="addPipeRaci('${pipe.id}')">＋ Fase</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderCamposRows(pipe) {
+  if (!pipe.campos || pipe.campos.length === 0) return '';
+  return pipe.campos.map((c, i) => `
+    <tr>
+      <td><input type="text" value="${c.fase||''}" placeholder="Nome da fase..." onchange="updateCampo('${pipe.id}',${i},'fase',this.value)"></td>
+      <td><input type="text" value="${c.nome||''}" placeholder="Nome do campo..." onchange="updateCampo('${pipe.id}',${i},'nome',this.value)"></td>
+      <td><select onchange="updateCampo('${pipe.id}',${i},'tipo',this.value)">
+        ${['Texto curto','Texto longo','Número','Moeda','Data','Data e hora','Seleção (dropdown)','Seleção múltipla','Checkbox','Telefone','E-mail','URL','Anexo','Conexão com pipe','Assinatura','Fórmula'].map(t => `<option ${c.tipo===t?'selected':''}>${t}</option>`).join('')}
+      </select></td>
+      <td><select onchange="updateCampo('${pipe.id}',${i},'obrigatorio',this.value)">
+        <option ${c.obrigatorio==='Sim'?'selected':''}>Sim</option>
+        <option ${c.obrigatorio==='Não'?'selected':''}>Não</option>
+      </select></td>
+      <td><input type="text" value="${c.condicional||''}" placeholder="Descreva..." onchange="updateCampo('${pipe.id}',${i},'condicional',this.value)"></td>
+      <td><button class="btn-del-row" onclick="removeCampo('${pipe.id}',${i})">×</button></td>
+    </tr>
+  `).join('');
+}
+
+function renderRaciRows(pipe) {
+  if (!pipe.raci || pipe.raci.length === 0) return '';
+  return pipe.raci.map((r, i) => `
+    <tr>
+      <td><input type="text" value="${r.fase||''}" placeholder="Nome da fase..." onchange="updatePipeRaciRow('${pipe.id}',${i},'fase',this.value)"></td>
+      <td><input type="text" value="${r.r||''}" placeholder="Quem executa..." onchange="updatePipeRaciRow('${pipe.id}',${i},'r',this.value)"></td>
+      <td><input type="text" value="${r.a||''}" placeholder="Quem valida..." onchange="updatePipeRaciRow('${pipe.id}',${i},'a',this.value)"></td>
+      <td><input type="text" value="${r.c||''}" placeholder="Quem consultar..." onchange="updatePipeRaciRow('${pipe.id}',${i},'c',this.value)"></td>
+      <td><input type="text" value="${r.i||''}" placeholder="Quem notificar..." onchange="updatePipeRaciRow('${pipe.id}',${i},'i',this.value)"></td>
+      <td><button class="btn-del-row" onclick="removePipeRaciRow('${pipe.id}',${i})">×</button></td>
+    </tr>
+  `).join('');
+}
+
+function togglePipe(pipeId) {
+  const proj = getProject();
+  const pipe = proj.pipes.find(p => p.id === pipeId);
+  if (pipe) { pipe.collapsed = !pipe.collapsed; saveState(); renderPipes(); }
+}
+
+function updatePipeName(pipeId, val) {
+  const proj = getProject();
+  const pipe = proj.pipes.find(p => p.id === pipeId);
+  if (pipe) { pipe.nome = val; saveState(); updateComplexity(); }
+}
+
+function updatePipeNum(pipeId, field, val) {
+  const proj = getProject();
+  const pipe = proj.pipes.find(p => p.id === pipeId);
+  if (pipe) { pipe[field] = parseInt(val) || 0; saveState(); updateComplexity(); }
+}
+
+function updatePipeBool(pipeId, field, val) {
+  const proj = getProject();
+  const pipe = proj.pipes.find(p => p.id === pipeId);
+  if (pipe) { pipe[field] = val; saveState(); updateComplexity(); }
+}
+
+function addCampo(pipeId) {
+  const proj = getProject();
+  const pipe = proj.pipes.find(p => p.id === pipeId);
+  if (!pipe.campos) pipe.campos = [];
+  pipe.campos.push({ fase:'', nome:'', tipo:'Texto curto', obrigatorio:'Não', condicional:'' });
+  saveState();
+  renderPipes();
+  updateComplexity();
+}
+
+function updateCampo(pipeId, idx, field, val) {
+  const proj = getProject();
+  const pipe = proj.pipes.find(p => p.id === pipeId);
+  if (pipe && pipe.campos[idx]) { pipe.campos[idx][field] = val; saveState(); updateComplexity(); }
+}
+
+function removeCampo(pipeId, idx) {
+  const proj = getProject();
+  const pipe = proj.pipes.find(p => p.id === pipeId);
+  if (pipe) { pipe.campos.splice(idx, 1); saveState(); renderPipes(); updateComplexity(); }
+}
+
+function addPipeRaci(pipeId) {
+  const proj = getProject();
+  const pipe = proj.pipes.find(p => p.id === pipeId);
+  if (!pipe.raci) pipe.raci = [];
+  pipe.raci.push({ fase:'', r:'', a:'', c:'', i:'' });
+  saveState();
+  renderPipes();
+}
+
+function updatePipeRaciRow(pipeId, idx, field, val) {
+  const proj = getProject();
+  const pipe = proj.pipes.find(p => p.id === pipeId);
+  if (pipe && pipe.raci[idx]) { pipe.raci[idx][field] = val; saveState(); }
+}
+
+function removePipeRaciRow(pipeId, idx) {
+  const proj = getProject();
+  const pipe = proj.pipes.find(p => p.id === pipeId);
+  if (pipe) { pipe.raci.splice(idx, 1); saveState(); renderPipes(); }
+}
+
+// ══════════════════════════════════════════
+// SIPOC
+// ══════════════════════════════════════════
+function addSipocRow() {
+  const proj = getProject();
+  if (!proj) return;
+  if (!proj.sipoc) proj.sipoc = [];
+  proj.sipoc.push({ s:'', i:'', p:'', o:'', c:'' });
+  saveState();
+  renderSipoc();
+}
+
+function renderSipoc() {
+  const proj = getProject();
+  const tbody = document.getElementById('sipocBody');
+  if (!tbody || !proj) return;
+  tbody.innerHTML = (proj.sipoc || []).map((row, idx) => `
+    <tr>
+      <td><input type="text" value="${row.s||''}" onchange="updateSipoc(${idx},'s',this.value)" placeholder="Fornecedor..."></td>
+      <td><input type="text" value="${row.i||''}" onchange="updateSipoc(${idx},'i',this.value)" placeholder="Entrada..."></td>
+      <td><input type="text" value="${row.p||''}" onchange="updateSipoc(${idx},'p',this.value)" placeholder="Processo..."></td>
+      <td><input type="text" value="${row.o||''}" onchange="updateSipoc(${idx},'o',this.value)" placeholder="Saída..."></td>
+      <td><input type="text" value="${row.c||''}" onchange="updateSipoc(${idx},'c',this.value)" placeholder="Cliente..."></td>
+      <td><button class="btn-del-row" onclick="removeSipoc(${idx})">×</button></td>
+    </tr>
+  `).join('');
+}
+
+function updateSipoc(idx, field, val) {
+  const proj = getProject();
+  if (proj && proj.sipoc[idx]) { proj.sipoc[idx][field] = val; saveState(); }
+}
+
+function removeSipoc(idx) {
+  const proj = getProject();
+  if (proj) { proj.sipoc.splice(idx, 1); saveState(); renderSipoc(); }
+}
+
+// RACI global
+function addRaciRow() {
+  const proj = getProject();
+  if (!proj) return;
+  if (!proj.raci) proj.raci = [];
+  proj.raci.push({ fase:'', r:'', a:'', c:'', i:'' });
+  saveState();
+  renderRaci();
+}
+
+function renderRaci() {
+  const proj = getProject();
+  const tbody = document.getElementById('raciBody');
+  if (!tbody || !proj) return;
+  tbody.innerHTML = (proj.raci || []).map((row, idx) => `
+    <tr>
+      <td><input type="text" value="${row.fase||''}" onchange="updateRaci(${idx},'fase',this.value)" placeholder="Nome da fase..."></td>
+      <td><input type="text" value="${row.r||''}" onchange="updateRaci(${idx},'r',this.value)" placeholder="Quem executa..."></td>
+      <td><input type="text" value="${row.a||''}" onchange="updateRaci(${idx},'a',this.value)" placeholder="Quem valida..."></td>
+      <td><input type="text" value="${row.c||''}" onchange="updateRaci(${idx},'c',this.value)" placeholder="Quem consultar..."></td>
+      <td><input type="text" value="${row.i||''}" onchange="updateRaci(${idx},'i',this.value)" placeholder="Quem notificar..."></td>
+      <td><button class="btn-del-row" onclick="removeRaci(${idx})">×</button></td>
+    </tr>
+  `).join('');
+}
+
+function updateRaci(idx, field, val) {
+  const proj = getProject();
+  if (proj && proj.raci[idx]) { proj.raci[idx][field] = val; saveState(); }
+}
+
+function removeRaci(idx) {
+  const proj = getProject();
+  if (proj) { proj.raci.splice(idx, 1); saveState(); renderRaci(); }
+}
+
+// ══════════════════════════════════════════
+// PENDENCIAS
+// ══════════════════════════════════════════
+function addPendencia() {
+  const proj = getProject();
+  if (!proj) return;
+  if (!proj.pendencias) proj.pendencias = [];
+  proj.pendencias.push({ id: Date.now().toString(), descricao:'', responsavel:'', impacta:false, marco:'' });
+  saveState();
+  renderPendencias();
+}
+
+function renderPendencias() {
+  const proj = getProject();
+  const container = document.getElementById('pendenciasContainer');
+  if (!proj || !container) return;
+  container.innerHTML = (proj.pendencias || []).map((pend, idx) => `
+    <div class="pendencia-item">
+      <div class="pend-row">
+        <div class="field" style="margin:0">
+          <label>Descrição da Pendência</label>
+          <input type="text" value="${pend.descricao||''}" placeholder="Ex: Token API Serasa, Acesso TI..." 
+            onchange="updatePendencia(${idx},'descricao',this.value)">
+        </div>
+        <div class="field" style="margin:0">
+          <label>Responsável</label>
+          <input type="text" value="${pend.responsavel||''}" placeholder="Quem deve resolver..." 
+            onchange="updatePendencia(${idx},'responsavel',this.value)">
+        </div>
+        <button class="btn-del-row" style="margin-top:20px" onclick="removePendencia(${idx})">🗑</button>
+      </div>
+      <div class="toggle-row">
+        <label class="toggle">
+          <input type="checkbox" ${pend.impacta?'checked':''} onchange="updatePendencia(${idx},'impacta',this.checked);togglePendImpacta(${idx})">
+          <span class="toggle-slider"></span>
+        </label>
+        Impacta Cronograma?
+        <div id="pend-marco-${idx}" style="${pend.impacta?'':'display:none'}">
+          &nbsp;→ Marco afetado:
+          <input type="text" value="${pend.marco||''}" placeholder="Ex: M4, M6..." style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:3px 8px;border-radius:4px;font-size:12px;width:80px" 
+            onchange="updatePendencia(${idx},'marco',this.value)">
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function togglePendImpacta(idx) {
+  const proj = getProject();
+  const el = document.getElementById('pend-marco-' + idx);
+  if (el && proj && proj.pendencias[idx]) {
+    el.style.display = proj.pendencias[idx].impacta ? '' : 'none';
+  }
+}
+
+function updatePendencia(idx, field, val) {
+  const proj = getProject();
+  if (proj && proj.pendencias[idx]) { proj.pendencias[idx][field] = val; saveState(); updateComplexity(); }
+}
+
+function removePendencia(idx) {
+  const proj = getProject();
+  if (proj) { proj.pendencias.splice(idx, 1); saveState(); renderPendencias(); }
+}
+
+// ══════════════════════════════════════════
+// GANTT
+// ══════════════════════════════════════════
+function renderGantt() {
+  const proj = getProject();
+  const tbody = document.getElementById('ganttBody');
+  if (!tbody) return;
+  if (!proj || !proj.gantt || proj.gantt.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">
+      Nenhum marco definido. Use a Calculadora para gerar o cronograma ou adicione marcos manualmente.
+    </td></tr>`;
+    return;
+  }
+
   const today = new Date();
-  if (today >= MIN_DATE && today <= MAX_DATE) {
-    const tx = LABEL_W + PAD + ((today - MIN_DATE) / totalMs) * CHART_W;
-    line(svg, tx, 0, tx, SVG_H, '#ef4444', 1.5, '4,3');
-    text(svg, tx+3, 26, 'hoje', '#ef4444', 10);
+  tbody.innerHTML = proj.gantt.map((item, idx) => {
+    const isMarco = !item.parentId;
+    const planned_start = item.planned_start ? new Date(item.planned_start) : null;
+    const planned_end = item.planned_end ? new Date(item.planned_end) : null;
+    const isLate = planned_end && planned_end < today && !item.done;
+    const hasPend = (proj.pendencias || []).some(p => p.impacta && p.marco && item.title.includes(p.marco));
+
+    const pct = calcProgress(proj.gantt, item.id);
+
+    const barClass = {
+      'discovery': 'bar-discovery',
+      'dev': 'bar-dev',
+      'test': 'bar-test',
+      'train': 'bar-train',
+      'support': 'bar-support'
+    }[item.tipo] || 'bar-dev';
+
+    return `<tr class="${isMarco ? 'gantt-marco-row' : 'gantt-sub-row'}">
+      <td style="${!isMarco ? 'padding-left:28px' : ''}">
+        ${hasPend ? '<span class="warn-badge">⚠️</span> ' : ''}
+        ${item.title}
+        ${isLate ? '<span class="late-badge" style="margin-left:8px">ATRASADO</span>' : ''}
+      </td>
+      <td style="color:var(--text2)">${item.responsavel || '—'}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${formatDate(item.planned_start)}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${formatDate(item.planned_end)}</td>
+      <td style="text-align:center">
+        ${!isMarco ? `<input type="checkbox" class="check-sub" ${item.done?'checked':''} 
+          onchange="checkGanttItem(${idx},this.checked)" title="Marcar como concluído">` : ''}
+      </td>
+      <td>
+        ${item.done ? '<span class="badge badge-green">✓ Concluído</span>' : 
+          isLate ? '<span class="badge badge-red">Atrasado</span>' :
+          '<span class="badge badge-blue">Em andamento</span>'}
+      </td>
+      <td class="gantt-bar-cell">
+        <div class="gantt-bar-bg">
+          <div class="gantt-bar-fill ${isLate && !item.done ? 'bar-late' : barClass}" 
+            style="width:${pct}%">${pct > 15 ? pct+'%' : ''}</div>
+        </div>
+      </td>
+      <td>
+        <button class="btn-del-row" onclick="removeGanttItem(${idx})" title="Remover">×</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function calcProgress(gantt, id) {
+  const item = gantt.find(i => i.id === id);
+  if (!item) return 0;
+  if (item.parentId) return item.done ? 100 : 0;
+  const children = gantt.filter(i => i.parentId === id);
+  if (children.length === 0) return item.done ? 100 : 0;
+  const done = children.filter(c => c.done).length;
+  return Math.round((done / children.length) * 100);
+}
+
+function checkGanttItem(idx, checked) {
+  const proj = getProject();
+  if (!proj || !proj.gantt[idx]) return;
+  const item = proj.gantt[idx];
+  const wasChecked = item.done;
+
+  item.done = checked;
+  if (checked) {
+    item.executed_end = new Date().toISOString().split('T')[0];
   }
 
-  // Barras
-  tasks.forEach((t, i) => {
-    const y   = HEADER_H + i * ROW_H;
-    const x0  = LABEL_W + PAD + ((t.start - MIN_DATE) / totalMs) * CHART_W;
-    const x1  = LABEL_W + PAD + ((t.end   - MIN_DATE) / totalMs) * CHART_W;
-    const bw  = Math.max(x1 - x0, 6);
-    const bh  = ROW_H - 12;
-    const by  = y + 6;
-    const col = colors[i % colors.length];
+  // CASCADE: se não concluído, propaga atraso para próximos sub-marcos
+  if (!checked && wasChecked) {
+    // reverter — não cascateia
+  }
 
-    // Label esquerda
-    text(svg, LABEL_W - 8, y + ROW_H/2 + 4, t.label, '#374151', 12, 'end');
-
-    // Barra
-    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
-    g.setAttribute('class','gantt-bar');
-    g.dataset.idx = i;
-
-    const bar = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    bar.setAttribute('x', x0); bar.setAttribute('y', by);
-    bar.setAttribute('width', bw); bar.setAttribute('height', bh);
-    bar.setAttribute('rx', 5);
-    bar.setAttribute('fill', col);
-    bar.setAttribute('opacity','0.85');
-    g.appendChild(bar);
-
-    // Texto dentro da barra
-    if (bw > 50) {
-      const bt = document.createElementNS('http://www.w3.org/2000/svg','text');
-      bt.setAttribute('x', x0 + bw/2);
-      bt.setAttribute('y', by + bh/2 + 4);
-      bt.setAttribute('text-anchor','middle');
-      bt.setAttribute('fill','#fff');
-      bt.setAttribute('font-size','11');
-      bt.setAttribute('font-weight','600');
-      bt.textContent = `${t.days}d`;
-      g.appendChild(bt);
+  // Se concluiu, propaga início do próximo sub-marco do mesmo parent
+  if (checked && item.parentId) {
+    const siblings = proj.gantt.filter(i => i.parentId === item.parentId);
+    const myIdx = siblings.findIndex(i => i.id === item.id);
+    if (myIdx >= 0 && myIdx < siblings.length - 1) {
+      const next = siblings[myIdx + 1];
+      const nextGanttIdx = proj.gantt.findIndex(i => i.id === next.id);
+      // Verificar se o check foi antes ou depois do planejado
+      const executedEnd = new Date(item.executed_end);
+      const plannedEnd = item.planned_end ? new Date(item.planned_end) : null;
+      if (plannedEnd && executedEnd > plannedEnd) {
+        const delta = Math.ceil((executedEnd - plannedEnd) / (1000 * 60 * 60 * 24));
+        cascadeDelay(proj.gantt, nextGanttIdx, delta);
+        addLog(`Atraso de ${delta} dia(s) cascateado a partir de "${item.title}"`);
+      }
     }
+  }
 
-    // Tooltip
-    g.addEventListener('mouseenter', e => showTip(e, t));
-    g.addEventListener('mousemove',  e => moveTip(e));
-    g.addEventListener('mouseleave', hideTip);
+  saveState();
+  renderGantt();
+}
 
-    svg.appendChild(g);
+function cascadeDelay(gantt, startIdx, deltaDays) {
+  const startItem = gantt[startIdx];
+  if (!startItem) return;
+  const startDate = startItem.planned_start ? new Date(startItem.planned_start) : null;
+  if (!startDate) return;
 
-    // Datas nas pontas
-    text(svg, x0, by - 2, formatDate(t.start), '#6b7280', 9, 'start');
-    text(svg, x0+bw, by - 2, formatDate(t.end), '#6b7280', 9, 'end');
+  for (let i = startIdx; i < gantt.length; i++) {
+    const item = gantt[i];
+    if (item.planned_start) {
+      const d = new Date(item.planned_start);
+      d.setDate(d.getDate() + deltaDays);
+      item.planned_start = d.toISOString().split('T')[0];
+    }
+    if (item.planned_end) {
+      const d = new Date(item.planned_end);
+      d.setDate(d.getDate() + deltaDays);
+      item.planned_end = d.toISOString().split('T')[0];
+    }
+  }
+}
+
+function removeGanttItem(idx) {
+  const proj = getProject();
+  if (!proj) return;
+  const item = proj.gantt[idx];
+  proj.gantt.splice(idx, 1);
+  // Remove filhos se era marco
+  if (!item.parentId) {
+    proj.gantt = proj.gantt.filter(i => i.parentId !== item.id);
+  }
+  saveState();
+  renderGantt();
+}
+
+function addMarco() {
+  const proj = getProject();
+  if (!proj) return;
+  if (!proj.gantt) proj.gantt = [];
+  const id = 'marco_' + Date.now();
+  proj.gantt.push({
+    id, title: 'Novo Marco', tipo: 'dev', responsavel: '', 
+    planned_start: '', planned_end: '', done: false
   });
-
-  // Linha divisória label/chart
-  line(svg, LABEL_W, 0, LABEL_W, SVG_H, '#e5e7eb', 1.5);
+  saveState();
+  renderGantt();
 }
 
-// SVG helpers
-function rect(parent, x, y, w, h, fill) {
-  const el = document.createElementNS('http://www.w3.org/2000/svg','rect');
-  el.setAttribute('x',x); el.setAttribute('y',y);
-  el.setAttribute('width',w); el.setAttribute('height',h);
-  el.setAttribute('fill',fill);
-  parent.appendChild(el);
-}
-function line(parent, x1, y1, x2, y2, stroke, sw=1, dash='') {
-  const el = document.createElementNS('http://www.w3.org/2000/svg','line');
-  el.setAttribute('x1',x1); el.setAttribute('y1',y1);
-  el.setAttribute('x2',x2); el.setAttribute('y2',y2);
-  el.setAttribute('stroke',stroke);
-  el.setAttribute('stroke-width',sw);
-  if (dash) el.setAttribute('stroke-dasharray',dash);
-  parent.appendChild(el);
-}
-function text(parent, x, y, str, fill, size, anchor='start') {
-  const el = document.createElementNS('http://www.w3.org/2000/svg','text');
-  el.setAttribute('x',x); el.setAttribute('y',y);
-  el.setAttribute('fill',fill);
-  el.setAttribute('font-size',size);
-  el.setAttribute('text-anchor',anchor);
-  el.textContent = str;
-  parent.appendChild(el);
+function addFeriado() {
+  const proj = getProject();
+  if (!proj) return;
+  const data = prompt('Data do feriado (DD/MM/AAAA):');
+  if (data) {
+    if (!proj.feriados) proj.feriados = [];
+    proj.feriados.push(data);
+    saveState();
+    addLog('Feriado adicionado: ' + data);
+  }
 }
 
-// Tooltip
-const tip = document.getElementById('tooltip');
-function showTip(e, t) {
-  tip.style.display = 'block';
-  tip.innerHTML = `
-    <strong>${t.label}</strong><br>
-    ⏱ ${t.hours.toFixed(1)}h · ${t.days}d úteis<br>
-    📅 ${formatDate(t.start)} → ${formatDate(t.end)}
+// ══════════════════════════════════════════
+// CALCULADORA
+// ══════════════════════════════════════════
+function updateConsultorCalcSelect() {
+  const sel = document.getElementById('calc_consultor');
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="">— Selecione —</option>';
+  state.team.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.nome + ' (' + c.senioridade + ')';
+    if (c.id === currentVal) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function toggleMarco(m) {
+  state.calcMarcos[m] = !state.calcMarcos[m];
+  document.getElementById('mtog-' + m).classList.toggle('active', state.calcMarcos[m]);
+  document.getElementById('cb-' + m).checked = state.calcMarcos[m];
+  recalculate();
+}
+
+function recalculate() {
+  const proj = getProject();
+  const consultorId = document.getElementById('calc_consultor')?.value;
+  const consultor = state.team.find(c => c.id === consultorId);
+  if (!consultor) {
+    document.getElementById('calcResultContent').innerHTML = '<div style="color:var(--text3);font-size:13px">Selecione um consultor para calcular.</div>';
+    return;
+  }
+
+  const seniority = consultor.senioridade; // senior, pleno, junior
+  const complexity = (proj && proj.complexity) || 'low';
+  const comp = complexity === 'high' ? 'high' : complexity === 'mid' ? 'mid' : 'low';
+  const pipes = parseInt(document.getElementById('calc_pipes')?.value) || 1;
+  const integracoes = parseInt(document.getElementById('calc_integracoes')?.value) || 0;
+  const simultaneos = parseInt(document.getElementById('calc_simultaneos')?.value) || 1;
+  const peso4 = parseInt(document.getElementById('calc_peso4')?.value) || 0;
+
+  let total = 0;
+  let breakdown = [];
+
+  if (state.calcMarcos.m1) { const h = HOURS.m1.fixed; total += h; breakdown.push({label:'M1 — Kick-off', h}); }
+  if (state.calcMarcos.m2) { const h = HOURS.m2.fixed; total += h; breakdown.push({label:'M2 — AS-IS', h}); }
+  if (state.calcMarcos.m3) { const h = HOURS.m3.fixed; total += h; breakdown.push({label:'M3 — TO-BE', h}); }
+  if (state.calcMarcos.m4) { const h = HOURS.m4[seniority][comp] * pipes; total += h; breakdown.push({label:`M4 — Construção (${pipes} pipe${pipes>1?'s':''})`, h}); }
+  if (state.calcMarcos.m5) { const h = HOURS.m5[seniority][comp] * pipes; total += h; breakdown.push({label:`M5 — Automações (${pipes} pipe${pipes>1?'s':''})`, h}); }
+  if (state.calcMarcos.m6 && integracoes > 0) { const h = HOURS.m6[seniority][comp] * integracoes; total += h; breakdown.push({label:`M6 — Integrações (${integracoes})`, h}); }
+  if (state.calcMarcos.m7) { const h = HOURS.m7[comp]; total += h; breakdown.push({label:'M7 — Testes', h}); }
+  if (state.calcMarcos.m8) { const h = HOURS.m8[comp]; total += h; breakdown.push({label:'M8 — Treinamento + Go-live', h}); }
+  if (state.calcMarcos.m9) { const h = HOURS.m9[comp]; total += h; breakdown.push({label:'M9 — Hypercare', h}); }
+  if (state.calcMarcos.m10) { const h = HOURS.m10[comp]; total += h; breakdown.push({label:'M10 — Documentação', h}); }
+
+  let totalComPeso4 = total;
+  if (peso4) { totalComPeso4 = total * 1.3; }
+
+  const dedicado = totalComPeso4 / simultaneos;
+  const diasUteis = Math.ceil(dedicado / 6);
+
+  // Fast Feedback Loop: 0.5h por semana
+  const semanas = Math.ceil(diasUteis / 5);
+  const ffhoras = semanas * 0.5;
+  const totalFinal = dedicado + ffhoras;
+  const diasFinal = Math.ceil(totalFinal / 6);
+
+  const complexLabels = { low: 'BAIXA', mid: 'MÉDIA', high: 'ALTA' };
+
+  document.getElementById('calcResultContent').innerHTML = `
+    <div style="margin-bottom:16px;padding:10px 14px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border)">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Breakdown por Marco</div>
+      ${breakdown.map(b => `
+        <div class="calc-result-row">
+          <span class="label">${b.label}</span>
+          <span class="val">${b.h}h</span>
+        </div>
+      `).join('')}
+    </div>
+    <div class="calc-result-row">
+      <span class="label">Complexidade detectada</span>
+      <span class="val">${complexLabels[comp]}</span>
+    </div>
+    <div class="calc-result-row">
+      <span class="label">Total bruto de horas</span>
+      <span class="val">${total}h</span>
+    </div>
+    ${peso4 ? `<div class="calc-result-row">
+      <span class="label">Peso 4 — dependência outro dev (+30%)</span>
+      <span class="val">+${Math.round(total*0.3)}h</span>
+    </div>` : ''}
+    <div class="calc-result-row">
+      <span class="label">Total com Peso 4</span>
+      <span class="val">${Math.round(totalComPeso4)}h</span>
+    </div>
+    <div class="calc-result-row">
+      <span class="label">Dedicação (÷ ${simultaneos} projeto${simultaneos>1?'s':''})</span>
+      <span class="val">${Math.round(dedicado)}h</span>
+    </div>
+    <div class="calc-result-row">
+      <span class="label">Fast Feedback Loop (${semanas} semanas × 0,5h)</span>
+      <span class="val">+${ffhoras}h</span>
+    </div>
+    <div class="calc-result-row" style="border-top:1px solid var(--border2);margin-top:8px;padding-top:12px">
+      <span class="label" style="font-weight:700;color:var(--text)">Total Final</span>
+      <span class="calc-total">${Math.round(totalFinal)}h / ${diasFinal} dias úteis</span>
+    </div>
   `;
-  moveTip(e);
-}
-function moveTip(e) {
-  tip.style.left = (e.clientX + 12) + 'px';
-  tip.style.top  = (e.clientY - 10) + 'px';
-}
-function hideTip() { tip.style.display = 'none'; }
 
-// ═══════════════════════════════════════════════════════
-//  EXPORT SVG
-// ═══════════════════════════════════════════════════════
-function exportSVG() {
-  const svg = document.getElementById('ganttChart');
-  const blob = new Blob([svg.outerHTML], {type:'image/svg+xml'});
+  // Guardar para aplicar ao gantt
+  window._calcResult = { totalFinal, diasFinal, breakdown, seniority, comp, pipes, integracoes, simultaneos };
+}
+
+function applyToGantt() {
+  if (!window._calcResult) { alert('Calcule primeiro.'); return; }
+  openModal('modalCalcApply');
+}
+
+function confirmApplyToGantt() {
+  closeModal('modalCalcApply');
+  const proj = getProject();
+  if (!proj) return;
+
+  const aceiteDate = document.getElementById('calc_aceite')?.value;
+  let startDate = aceiteDate ? new Date(aceiteDate) : new Date();
+
+  // Gerar marcos do Gantt com base no cálculo
+  const gantt = [];
+  const calc = window._calcResult;
+  const seniority = calc.seniority;
+  const comp = calc.comp;
+  const pipes = calc.pipes;
+
+  function nextWorkDay(d) {
+    let next = new Date(d);
+    next.setDate(next.getDate() + 1);
+    while (next.getDay() === 0 || next.getDay() === 6) next.setDate(next.getDate() + 1);
+    return next;
+  }
+
+  function addWorkDays(d, days) {
+    let cur = new Date(d);
+    let added = 0;
+    while (added < days) {
+      cur.setDate(cur.getDate() + 1);
+      if (cur.getDay() !== 0 && cur.getDay() !== 6) added++;
+    }
+    return cur;
+  }
+
+  function makeMarco(title, tipo, horasTotal, start, subs) {
+    const days = Math.max(1, Math.ceil(horasTotal / 6));
+    const end = addWorkDays(start, days);
+    const id = 'marco_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    gantt.push({ id, title, tipo, responsavel: '', planned_start: start.toISOString().split('T')[0], planned_end: end.toISOString().split('T')[0], done: false });
+    if (subs) {
+      let subStart = new Date(start);
+      subs.forEach(sub => {
+        const subDays = Math.max(1, Math.ceil(sub.h / 6));
+        const subEnd = addWorkDays(subStart, subDays);
+        const subId = 'sub_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+        gantt.push({ id: subId, parentId: id, title: sub.label, tipo, responsavel: '', planned_start: subStart.toISOString().split('T')[0], planned_end: subEnd.toISOString().split('T')[0], done: false });
+        subStart = nextWorkDay(subEnd);
+      });
+    }
+    return end;
+  }
+
+  let cur = new Date(startDate);
+
+  if (state.calcMarcos.m1) cur = nextWorkDay(makeMarco('M1 — Discovery Kick-off', 'discovery', HOURS.m1.fixed, cur, [{label:'Stakeholders e envolvidos', h:1},{label:'Apresentação Pipefy / documentos', h:1}]));
+  if (state.calcMarcos.m2) cur = nextWorkDay(makeMarco('M2 — Mapeamento AS-IS', 'discovery', HOURS.m2.fixed, cur, [{label:'Canais de entrada e volumetria', h:2},{label:'Regras e critérios de saída', h:2}]));
+  if (state.calcMarcos.m3) cur = nextWorkDay(makeMarco('M3 — TO-BE + Aceite Formal', 'discovery', HOURS.m3.fixed, cur, [{label:'BPMN / Kanban e SIPOC', h:2},{label:'RACI e campos por fase', h:2},{label:'Reunião de validação e aceite', h:2}]));
+
+  for (let p = 1; p <= pipes; p++) {
+    const pLabel = pipes > 1 ? ` — Pipe ${p}` : '';
+    if (state.calcMarcos.m4) {
+      const h = HOURS.m4[seniority][comp];
+      cur = nextWorkDay(makeMarco(`M4 — Construção Base${pLabel}`, 'dev', h, cur, [
+        {label:'Pipe, fases, SLA e campos', h: Math.round(h*0.4)},
+        {label:'Start Form e conexões', h: Math.round(h*0.2)},
+        {label:'Condicionais e templates', h: Math.round(h*0.2)},
+        {label:'Painéis, interfaces e DBs', h: Math.round(h*0.2)}
+      ]));
+    }
+    if (state.calcMarcos.m5) {
+      const h = HOURS.m5[seniority][comp];
+      cur = nextWorkDay(makeMarco(`M5 — Automações${pLabel}`, 'dev', h, cur, [
+        {label:'Movimentação de cards', h: Math.round(h*0.3)},
+        {label:'Alertas e e-mails', h: Math.round(h*0.3)},
+        {label:'Criação e atualização de campos', h: Math.round(h*0.4)}
+      ]));
+    }
+  }
+
+  if (state.calcMarcos.m6 && calc.integracoes > 0) {
+    const h = HOURS.m6[seniority][comp] * calc.integracoes;
+    cur = nextWorkDay(makeMarco('M6 — Integrações', 'dev', h, cur, [
+      {label:'Integrações nativas', h: Math.round(h*0.3)},
+      {label:'API / Webhook', h: Math.round(h*0.5)},
+      {label:'Testes de integração', h: Math.round(h*0.2)}
+    ]));
+  }
+
+  if (state.calcMarcos.m7) {
+    const h = HOURS.m7[comp];
+    // M7 tem dias de espera do cliente — adicionar 10 dias corridos de calendário
+    cur = nextWorkDay(makeMarco('M7 — Testes e Validação', 'test', h, cur, [
+      {label:'Segunda: instrução de teste ao cliente', h: 1},
+      {label:'Sexta: coleta de percepção', h: 1},
+      {label:'Segunda: execução de ajustes', h: Math.round(h*0.5)},
+      {label:'Terça: devolução ao cliente', h: 1},
+      {label:'Sexta: feedback final e validação', h: 1}
+    ]));
+    // Adicionar dias de espera do cliente (não conta como trabalho)
+    cur.setDate(cur.getDate() + 10);
+  }
+
+  if (state.calcMarcos.m8) {
+    cur = nextWorkDay(makeMarco('M8 — Treinamento + Go-live', 'train', HOURS.m8[comp], cur, [
+      {label:'Treinamento dos times', h: HOURS.m8[comp] * 0.5},
+      {label:'Liberação de acessos', h: HOURS.m8[comp] * 0.25},
+      {label:'Go-live', h: HOURS.m8[comp] * 0.25}
+    ]));
+  }
+
+  if (state.calcMarcos.m9) {
+    cur = nextWorkDay(makeMarco('M9 — Suporte / Hypercare', 'support', HOURS.m9[comp], cur, [
+      {label:'Disponibilidade para dúvidas', h: 5},
+      {label:'Pipe de suporte', h: HOURS.m9[comp] - 5}
+    ]));
+  }
+
+  if (state.calcMarcos.m10) {
+    cur = nextWorkDay(makeMarco('M10 — Documentação', 'support', HOURS.m10[comp], cur, [
+      {label:'Documentos do pipe', h: Math.round(HOURS.m10[comp]*0.4)},
+      {label:'Documentos de treinamento', h: Math.round(HOURS.m10[comp]*0.4)},
+      {label:'Entrega final', h: Math.round(HOURS.m10[comp]*0.2)}
+    ]));
+  }
+
+  proj.gantt = gantt;
+  saveState();
+  addLog('Calculadora aplicada ao Gantt — ' + gantt.filter(i=>!i.parentId).length + ' marcos gerados');
+  showPage('cronograma');
+}
+
+function clearCalc() {
+  document.getElementById('calc_consultor').value = '';
+  document.getElementById('calc_simultaneos').value = '1';
+  document.getElementById('calc_peso4').value = '0';
+  document.getElementById('calc_pipes').value = '1';
+  document.getElementById('calc_integracoes').value = '0';
+  document.getElementById('calcResultContent').innerHTML = '<div style="color:var(--text3);font-size:13px">Selecione um consultor e preencha os parâmetros para calcular.</div>';
+}
+
+// ══════════════════════════════════════════
+// REPORT
+// ══════════════════════════════════════════
+let reportMode = 'cliente';
+
+function setReport(mode) {
+  reportMode = mode;
+  document.getElementById('btn-report-cliente').classList.toggle('active', mode === 'cliente');
+  document.getElementById('btn-report-interna').classList.toggle('active', mode === 'interna');
+  generateReport();
+}
+
+function generateReport() {
+  const proj = getProject();
+  const el = document.getElementById('reportContent');
+  if (!proj) { el.innerHTML = '<span style="color:var(--text3)">Selecione um projeto para gerar o report.</span>'; return; }
+
+  const today = new Date();
+  const weekStart = getMonday(today);
+  const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 4);
+  const nextWeekStart = new Date(weekEnd); nextWeekStart.setDate(nextWeekStart.getDate() + 3);
+  const nextWeekEnd = new Date(nextWeekStart); nextWeekEnd.setDate(nextWeekStart.getDate() + 4);
+
+  const gantt = proj.gantt || [];
+  const marcos = gantt.filter(i => !i.parentId);
+  const subs = gantt.filter(i => i.parentId);
+
+  const totalSubs = subs.length;
+  const doneSubs = subs.filter(s => s.done).length;
+  const pctTotal = totalSubs > 0 ? Math.round((doneSubs / totalSubs) * 100) : 0;
+
+  const thisWeekDone = subs.filter(s => s.done && s.executed_end && isInRange(s.executed_end, weekStart, weekEnd));
+  const thisWeekPend = subs.filter(s => !s.done && s.planned_end && isInRange(s.planned_end, weekStart, weekEnd));
+  const nextWeekPend = subs.filter(s => !s.done && s.planned_start && isInRange(s.planned_start, nextWeekStart, nextWeekEnd));
+  const lateItems = subs.filter(s => !s.done && s.planned_end && new Date(s.planned_end) < today);
+
+  const week = formatDate(weekStart) + ' – ' + formatDate(weekEnd);
+  const nweek = formatDate(nextWeekStart) + ' – ' + formatDate(nextWeekEnd);
+
+  const bar = (pct) => {
+    const filled = Math.round(pct / 10);
+    return '█'.repeat(filled) + '░'.repeat(10 - filled);
+  };
+
+  let report = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROJETO: ${proj.empresa} — ${proj.processo}
+SEMANA: ${week}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+━━ PROGRESSO GERAL ━━
+${bar(pctTotal)} ${pctTotal}% concluído
+Marcos: ${doneSubs}/${totalSubs} sub-marcos concluídos
+
+━━ O QUE FOI ENTREGUE ESTA SEMANA (${week}) ━━
+${thisWeekDone.length > 0 ? thisWeekDone.map(s => `✅ ${s.title} — concluído em ${formatDate(s.executed_end)}`).join('\n') : '— Nenhuma entrega registrada esta semana'}
+
+━━ O QUE FAREMOS NA PRÓXIMA SEMANA (${nweek}) ━━
+${nextWeekPend.length > 0 ? nextWeekPend.map(s => `🔨 ${s.title} — previsto: ${formatDate(s.planned_start)} – ${formatDate(s.planned_end)}`).join('\n') : '— Aguardando conclusão desta semana'}
+
+━━ PENDÊNCIAS E RESPONSÁVEIS ━━
+${(proj.pendencias || []).length > 0 ? 
+  (proj.pendencias || []).map(p => `${p.impacta ? '⚠️' : '•'} ${p.descricao} — Resp: ${p.responsavel || 'N/D'}${p.impacta ? ' [IMPACTA CRONOGRAMA]' : ''}`).join('\n') 
+  : '— Sem pendências externas registradas'}`;
+
+  if (reportMode === 'interna') {
+    report += `
+
+━━ [INTERNO] MARCOS ATRASADOS ━━
+${lateItems.length > 0 ? 
+  lateItems.map(s => {
+    const delta = Math.ceil((today - new Date(s.planned_end)) / (1000*60*60*24));
+    return `🔴 ${s.title} — ${delta} dia(s) de atraso`;
+  }).join('\n') 
+  : '✅ Sem atrasos registrados'}
+
+━━ [INTERNO] RISCOS ━━
+${(proj.pendencias || []).filter(p => p.impacta).map(p => `⚠️ ${p.descricao} → Marco ${p.marco || 'N/D'}`).join('\n') || '— Sem riscos críticos identificados'}`;
+  }
+
+  report += `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Gerado em ${formatDate(today.toISOString())} — ProfixLab`;
+
+  el.textContent = report;
+}
+
+function copyReport() {
+  const text = document.getElementById('reportContent').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = '✓ Copiado!';
+    setTimeout(() => btn.textContent = '📋 Copiar', 2000);
+  });
+}
+
+function getMonday(d) {
+  const dt = new Date(d);
+  const day = dt.getDay();
+  const diff = dt.getDate() - day + (day === 0 ? -6 : 1);
+  dt.setDate(diff);
+  return dt;
+}
+
+function isInRange(dateStr, start, end) {
+  const d = new Date(dateStr);
+  return d >= start && d <= end;
+}
+
+// ══════════════════════════════════════════
+// LOG
+// ══════════════════════════════════════════
+function addLog(msg) {
+  const proj = getProject();
+  if (!proj) return;
+  if (!proj.log) proj.log = [];
+  proj.log.unshift({ ts: new Date().toISOString(), msg });
+  saveState();
+  renderLog();
+}
+
+function renderLog() {
+  const proj = getProject();
+  const container = document.getElementById('logContainer');
+  if (!container) return;
+  if (!proj || !proj.log || proj.log.length === 0) {
+    container.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:20px 0;text-align:center">Nenhuma mudança registrada ainda.</div>';
+    return;
+  }
+  container.innerHTML = proj.log.map(entry => `
+    <div class="log-entry">
+      <div class="log-dot"></div>
+      <div class="log-time">${formatDateTime(entry.ts)}</div>
+      <div class="log-text">${entry.msg}</div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════
+// TEAM
+// ══════════════════════════════════════════
+function addConsultor() {
+  const nome = document.getElementById('nc_nome').value.trim();
+  const cargo = document.getElementById('nc_cargo').value.trim();
+  const seniority = document.getElementById('nc_senioridade').value;
+  if (!nome) { alert('Preencha o nome.'); return; }
+
+  state.team.push({ id: Date.now().toString(), nome, cargo, senioridade: seniority });
+  closeModal('modalNewConsultor');
+  document.getElementById('nc_nome').value = '';
+  document.getElementById('nc_cargo').value = '';
+  saveState();
+  renderTeam();
+  updateConsultorSelects();
+}
+
+function removeConsultor(id) {
+  state.team = state.team.filter(c => c.id !== id);
+  saveState();
+  renderTeam();
+  updateConsultorSelects();
+}
+
+function renderTeam() {
+  const grid = document.getElementById('teamGrid');
+  if (!grid) return;
+  if (state.team.length === 0) {
+    grid.innerHTML = '<div style="color:var(--text3);font-size:13px;grid-column:1/-1">Nenhum consultor cadastrado. Adicione o primeiro.</div>';
+    return;
+  }
+  const seniorColors = { senior: 'badge-green', pleno: 'badge-blue', junior: 'badge-amber' };
+  const seniorLabels = { senior: 'Sênior', pleno: 'Pleno', junior: 'Júnior' };
+  grid.innerHTML = state.team.map(c => `
+    <div class="team-card">
+      <button class="tc-del" onclick="removeConsultor('${c.id}')">×</button>
+      <div class="tc-name">${c.nome}</div>
+      <div class="tc-role">${c.cargo || '—'}</div>
+      <span class="badge ${seniorColors[c.senioridade]}">${seniorLabels[c.senioridade]}</span>
+    </div>
+  `).join('');
+}
+
+function updateConsultorSelects() {
+  const sels = ['np_consultor'];
+  sels.forEach(selId => {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— Selecione —</option>';
+    state.team.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.nome + ' (' + (c.senioridade === 'senior' ? 'Sênior' : c.senioridade === 'pleno' ? 'Pleno' : 'Júnior') + ')';
+      if (c.id === cur) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return '—';
+  return d.toLocaleDateString('pt-BR');
+}
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return '—';
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+}
+
+function toggleGuide(id) {
+  const el = document.getElementById(id);
+  const icon = document.getElementById(id + '-icon');
+  if (el.classList.contains('open')) {
+    el.classList.remove('open');
+    if (icon) icon.textContent = '▼';
+  } else {
+    el.classList.add('open');
+    if (icon) icon.textContent = '▲';
+  }
+}
+
+// ══════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// ══════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════
+function saveState() {
+  try { localStorage.setItem('profixlab_state', JSON.stringify(state)); } catch(e) {}
+}
+
+function exportData() {
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = (ESTIMATE.projectName || 'gantt') + '.svg';
+  a.href = url;
+  a.download = 'profixlab_backup_' + new Date().toISOString().split('T')[0] + '.json';
   a.click();
+  URL.revokeObjectURL(url);
 }
 
-// ═══════════════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════════════
-document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (imported.projects && imported.team) {
+        state = imported;
+        saveState();
+        renderTeam();
+        renderProjectSelect();
+        updateConsultorSelects();
+        if (state.currentProjectId) selectProject(state.currentProjectId, true);
+        alert('Dados importados com sucesso!');
+      } else {
+        alert('Arquivo inválido. Verifique se é um backup do ProfixLab.');
+      }
+    } catch(err) {
+      alert('Erro ao importar: arquivo corrompido ou formato inválido.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function generateWord(phase) {
+  alert('Exportação para Word será implementada em breve. Por enquanto, use Ctrl+P para imprimir como PDF.');
+}
+
+// ══════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════
+init();
 </script>
 </body>
 </html>
