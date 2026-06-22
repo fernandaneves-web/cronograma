@@ -933,6 +933,31 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
   .two-col, .three-col, .calc-inputs, .team-grid, .complexity-grid { grid-template-columns: 1fr; }
   .marco-toggle-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* VIEW TOGGLE */
+.view-toggle{display:flex;gap:3px;background:var(--surface2);padding:3px;border-radius:var(--radius);border:1px solid var(--border);width:fit-content;margin-bottom:14px;}
+.view-btn{padding:6px 14px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;color:var(--text2);transition:all .12s;border:none;background:none;font-family:inherit;}
+.view-btn.active{background:var(--accent);color:white;}
+/* GANTT VISUAL */
+.gantt-bar{position:absolute;height:22px;top:7px;border-radius:4px;cursor:grab;display:flex;align-items:center;padding:0 6px;font-size:9px;font-weight:600;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;user-select:none;min-width:8px;transition:opacity .1s;}
+.gantt-bar:hover{opacity:.82;}
+.gantt-bar.dragging{cursor:grabbing;opacity:.65;z-index:100;}
+.gantt-bar.done-bar{opacity:.5;}
+.gantt-row-vis{display:flex;border-bottom:1px solid var(--border);min-height:36px;}
+.gantt-row-vis.is-marco-vis{background:var(--surface2);}
+.gantt-label-vis{min-width:220px;padding:7px 12px;font-size:11px;color:var(--text2);border-right:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:6px;}
+.gantt-label-vis.is-marco{font-weight:700;color:var(--text);font-size:12px;}
+.gantt-label-vis.is-sub{padding-left:26px;}
+.gantt-timeline-vis{flex:1;position:relative;height:36px;overflow:hidden;}
+.gantt-weekend-stripe{position:absolute;top:0;bottom:0;background:rgba(255,255,255,.025);pointer-events:none;}
+.gantt-today-line{position:absolute;top:0;bottom:0;width:2px;background:var(--amber);opacity:.7;z-index:5;pointer-events:none;}
+.gantt-date-header-cell{position:absolute;font-size:9px;color:var(--text3);padding:8px 4px;white-space:nowrap;border-right:1px solid var(--border);}
+/* Date input in list */
+.gantt-date-input{background:transparent;border:none;color:var(--text2);font-size:10px;font-family:'DM Mono',monospace;outline:none;cursor:pointer;width:90px;}
+.gantt-date-input:focus{color:var(--accent2);}
+.gantt-bar-mini{height:14px;background:var(--surface3);border-radius:3px;position:relative;overflow:hidden;}
+.gantt-fill-mini{height:100%;border-radius:3px;position:absolute;left:0;top:0;}
+
 </style>
 </head>
 <body>
@@ -1240,7 +1265,29 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
         <div class="field"><textarea id="p12" placeholder="Liste as fases validadas..." rows="3" oninput="autoSave()"></textarea></div>
       </div>
 
-      <div class="section-title">3.2 — RACI e Aprovações</div>
+      <div class="section-title" style="margin-top:20px">3.2 — Fluxogramas e Diagramas</div>
+      <div class="two-col" style="margin-bottom:16px">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><h2>📐 Fluxograma BPMN / AS-IS</h2></div>
+          <div id="zone-fluxograma" style="border:2px dashed var(--border2);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;transition:all .15s;position:relative" onclick="document.getElementById('img-fluxograma').click()" ondragover="event.preventDefault()" ondrop="handleImageDrop('fluxograma',event)">
+            <input type="file" id="img-fluxograma" accept="image/*" style="display:none" onchange="handleImageUpload('fluxograma',this)">
+            <div id="fluxograma-empty"><div style="font-size:28px;margin-bottom:6px">🗺️</div><div style="font-size:12px;color:var(--text2)">Clique ou arraste a imagem do fluxograma</div><div style="font-size:10px;color:var(--text3);margin-top:3px">PNG, JPG, SVG</div></div>
+            <img id="preview-fluxograma" style="display:none;width:100%;max-height:180px;object-fit:contain;border-radius:6px;border:1px solid var(--border)">
+          </div>
+          <button id="btn-del-fluxograma" style="display:none;margin-top:8px" class="btn btn-danger" onclick="removeImage('fluxograma')">🗑 Remover</button>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><h2>📋 Kanban TO-BE</h2></div>
+          <div id="zone-kanban" style="border:2px dashed var(--border2);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;transition:all .15s;position:relative" onclick="document.getElementById('img-kanban').click()" ondragover="event.preventDefault()" ondrop="handleImageDrop('kanban',event)">
+            <input type="file" id="img-kanban" accept="image/*" style="display:none" onchange="handleImageUpload('kanban',this)">
+            <div id="kanban-empty"><div style="font-size:28px;margin-bottom:6px">📌</div><div style="font-size:12px;color:var(--text2)">Clique ou arraste a imagem do Kanban</div><div style="font-size:10px;color:var(--text3);margin-top:3px">PNG, JPG, SVG</div></div>
+            <img id="preview-kanban" style="display:none;width:100%;max-height:180px;object-fit:contain;border-radius:6px;border:1px solid var(--border)">
+          </div>
+          <button id="btn-del-kanban" style="display:none;margin-top:8px" class="btn btn-danger" onclick="removeImage('kanban')">🗑 Remover</button>
+        </div>
+      </div>
+
+      <div class="section-title">3.3 — RACI e Aprovações</div>
 
       <div class="q-block">
         <div class="q-label"><span>P13</span></div>
@@ -1407,30 +1454,7 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
         <button class="btn-add-row" style="margin-top:10px" onclick="addSipocRow()">＋ Linha</button>
       </div>
 
-      <!-- RACI -->
-      <div class="section-title" style="margin-top:20px">Matriz RACI por Fase</div>
-      <div class="alert alert-blue" style="margin-bottom:14px">
-        <span>ℹ️</span>
-        <div><strong>R</strong> = Responsável (executa) · <strong>A</strong> = Aprovador (valida) · <strong>C</strong> = Consultado (dá input) · <strong>I</strong> = Informado (notificado)</div>
-      </div>
-      <div class="card">
-        <div style="overflow-x:auto">
-          <table class="dyn-table" id="raciTable">
-            <thead>
-              <tr>
-                <th>Fase</th>
-                <th>Responsável (R)</th>
-                <th>Aprovador (A)</th>
-                <th>Consultado (C)</th>
-                <th>Informado (I)</th>
-                <th style="width:40px"></th>
-              </tr>
-            </thead>
-            <tbody id="raciBody"></tbody>
-          </table>
-        </div>
-        <button class="btn-add-row" style="margin-top:10px" onclick="addRaciRow()">＋ Fase</button>
-      </div>
+      <!-- RACI está apenas dentro de cada Pipe acima -->
 
       <!-- PENDENCIAS -->
       <div class="section-title" style="margin-top:20px">Pendências Externas</div>
@@ -1502,7 +1526,7 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
       <div style="display:flex;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:10px">
         <button class="btn btn-secondary" onclick="showPhase('d4')">← SIPOC & RACI</button>
         <div style="display:flex;gap:10px">
-          <button class="btn btn-secondary" onclick="generateWord('d5')">📄 Gerar Word Completo</button>
+          <button class="btn btn-secondary" onclick="generateWordPhase('d5')">📄 Gerar Word Completo</button>
           <button class="btn btn-primary" onclick="showPage('cronograma')">🚀 Ir para Cronograma →</button>
         </div>
       </div>
@@ -1524,30 +1548,36 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
   </div>
 
   <div id="cronogramaContent" style="display:none">
-    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-      <button class="btn btn-secondary" onclick="openModal('modalCalcApply')">🧮 Aplicar Calculadora ao Gantt</button>
-      <button class="btn btn-secondary" onclick="addMarco()">＋ Marco Manual</button>
-      <button class="btn btn-secondary" onclick="addFeriado()">📅 Adicionar Feriado</button>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-secondary" onclick="openModal('modalCalcApply')">🧮 Aplicar Calculadora</button>
+      <button class="btn btn-secondary" onclick="addMarcoManual()">＋ Marco Manual</button>
+      <button class="btn btn-secondary" onclick="addFeriado()">📅 Feriado Regional</button>
     </div>
-
-    <div class="gantt-container">
-      <table class="gantt-table" id="ganttTable">
-        <thead>
-          <tr>
+    <div class="view-toggle">
+      <button class="view-btn active" onclick="setGanttView('visual')" id="btn-view-visual">📊 Gantt Visual</button>
+      <button class="view-btn" onclick="setGanttView('list')" id="btn-view-list">📋 Lista / Edição</button>
+    </div>
+    <!-- GANTT VISUAL com drag -->
+    <div id="ganttVisualDiv">
+      <div id="ganttVisualContainer"></div>
+    </div>
+    <!-- GANTT LIST -->
+    <div id="ganttListDiv" style="display:none">
+      <div style="overflow-x:auto">
+        <table class="gantt-table">
+          <thead><tr>
             <th style="min-width:200px">Marco / Sub-marco</th>
-            <th>Resp.</th>
-            <th>Planejado Início</th>
-            <th>Planejado Fim</th>
-            <th>Executado</th>
+            <th>Responsável</th>
+            <th>Início Planejado</th>
+            <th>Fim Planejado</th>
+            <th>Concluído?</th>
             <th>Status</th>
-            <th style="min-width:200px">Progresso</th>
-            <th style="width:40px"></th>
-          </tr>
-        </thead>
-        <tbody id="ganttBody">
-          <!-- Preenchido por JS -->
-        </tbody>
-      </table>
+            <th style="min-width:100px">Progresso</th>
+            <th style="width:36px"></th>
+          </tr></thead>
+          <tbody id="ganttBody"></tbody>
+        </table>
+      </div>
     </div>
 
     <div class="card" style="margin-top:20px">
@@ -1631,12 +1661,16 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
         </select>
       </div>
       <div class="field">
-        <label>Número de Pipes</label>
+        <label>Número de Pipes <span id="calc_pipes_badge" class="badge badge-blue" style="margin-left:4px"></span></label>
         <input type="number" id="calc_pipes" value="1" min="1" oninput="recalculate()">
       </div>
       <div class="field">
-        <label>Número de Integrações</label>
+        <label>Integrações Externas <span id="calc_int_badge" class="badge badge-blue" style="margin-left:4px"></span></label>
         <input type="number" id="calc_integracoes" value="0" min="0" oninput="recalculate()">
+      </div>
+      <div class="field">
+        <label>Automações (total) <span id="calc_auto_badge" class="badge badge-blue" style="margin-left:4px"></span></label>
+        <input type="number" id="calc_automacoes" value="0" min="0" oninput="recalculate()">
       </div>
       <div class="field">
         <label>Data do Aceite Formal</label>
@@ -1644,6 +1678,7 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
       </div>
     </div>
 
+    <div class="alert alert-blue" style="margin-top:4px"><span>ℹ️</span><div id="calcProjectInfo">Selecione um projeto para carregar automaticamente pipes, integrações e automações do Discovery.</div></div>
     <div class="section-title">Marcos Ativos</div>
     <div class="marco-toggle-grid">
       <div class="marco-toggle-item active" id="mtog-m1" onclick="toggleMarco('m1')">
@@ -1858,8 +1893,8 @@ function showPage(name) {
   document.getElementById('page-' + name).classList.add('active');
   document.getElementById('nav-' + name).classList.add('active');
   if (name === 'report') generateReport();
-  if (name === 'calculadora') updateConsultorCalcSelect();
-  if (name === 'cronograma') renderGantt();
+  if (name === 'calculadora') { updateConsultorCalcSelect(); loadCalcFromProject(); }
+  if (name === 'cronograma') { checkCronogramaGate(); renderGantt(); }
 }
 
 function showPhase(phase) {
@@ -1928,6 +1963,7 @@ function selectProject(id, silent) {
   document.getElementById('disc-proj-name').textContent = proj.empresa + ' — ' + proj.processo;
   document.getElementById('projectSelect').value = id;
   loadAnswers();
+  loadImages();
   checkCronogramaGate();
   updateComplexity();
   if (!silent) saveState();
@@ -2485,65 +2521,215 @@ function removePendencia(idx) {
 // ══════════════════════════════════════════
 // GANTT
 // ══════════════════════════════════════════
+
+let ganttViewMode = 'visual';
+
+function setGanttView(v) {
+  ganttViewMode = v;
+  document.getElementById('btn-view-visual').classList.toggle('active', v==='visual');
+  document.getElementById('btn-view-list').classList.toggle('active', v==='list');
+  document.getElementById('ganttVisualDiv').style.display = v==='visual' ? 'block' : 'none';
+  document.getElementById('ganttListDiv').style.display = v==='list' ? 'block' : 'none';
+  renderGantt();
+}
+
 function renderGantt() {
+  if (ganttViewMode === 'visual') renderGanttVisual();
+  else renderGanttList();
+}
+
+function renderGanttVisual() {
+  const proj = getProject();
+  const container = document.getElementById('ganttVisualContainer');
+  if (!container) return;
+  if (!proj || !proj.gantt || proj.gantt.length === 0) {
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3);font-size:12px">Nenhum marco. Use a Calculadora ou adicione manualmente.</div>';
+    return;
+  }
+  const gantt = proj.gantt;
+  const today = new Date();
+  // Compute date range
+  let minDate = null, maxDate = null;
+  gantt.forEach(item => {
+    if (item.planned_start) { const d=new Date(item.planned_start); if(!minDate||d<minDate) minDate=d; }
+    if (item.planned_end) { const d=new Date(item.planned_end); if(!maxDate||d>maxDate) maxDate=d; }
+  });
+  if (!minDate) minDate = new Date();
+  if (!maxDate) { maxDate = new Date(minDate); maxDate.setDate(maxDate.getDate()+30); }
+  const startDate = new Date(minDate); startDate.setDate(startDate.getDate()-3);
+  const endDate = new Date(maxDate); endDate.setDate(endDate.getDate()+7);
+  const totalDays = Math.ceil((endDate - startDate) / 86400000);
+  const PX = 26; // px per day
+  const timelineW = totalDays * PX;
+  const LABEL_W = 220;
+
+  // Build weekend stripes + today line for timeline
+  let stripes = '';
+  let dateHeaders = '';
+  for (let i = 0; i < totalDays; i++) {
+    const d = new Date(startDate); d.setDate(d.getDate() + i);
+    const isWE = d.getDay()===0 || d.getDay()===6;
+    if (isWE) stripes += `<div class="gantt-weekend-stripe" style="left:${i*PX}px;width:${PX}px"></div>`;
+    if (d.getDay()===1 || i===0) {
+      dateHeaders += `<div class="gantt-date-header-cell" style="left:${i*PX}px;width:${7*PX}px">${d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})}</div>`;
+    }
+  }
+  const todayOff = Math.ceil((today - startDate) / 86400000);
+  const todayLine = (todayOff>=0&&todayOff<=totalDays) ? `<div class="gantt-today-line" style="left:${todayOff*PX}px"><div style="position:absolute;top:0;left:-14px;background:var(--amber);color:white;font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;white-space:nowrap">HOJE</div></div>` : '';
+
+  const barColorMap = {discovery:'bar-discovery',dev:'bar-dev',test:'bar-test',train:'bar-train',support:'bar-support'};
+
+  // Build rows
+  let labelRows = '';
+  let timelineRows = '';
+  gantt.forEach((item, idx) => {
+    const isMarco = !item.parentId;
+    const isLate = item.planned_end && new Date(item.planned_end)<today && !item.done;
+    const pct = calcProgress(gantt, item.id);
+    const hasPend = (proj.pendencias||[]).some(p=>p.impacta&&p.marco&&item.title.toLowerCase().includes(p.marco.toLowerCase().slice(0,4)));
+    const barCls = (isLate&&!item.done) ? 'bar-late' : (barColorMap[item.tipo]||'bar-dev');
+
+    // Label col
+    labelRows += `<div class="gantt-row-vis ${isMarco?'is-marco-vis':''}">
+      <div class="gantt-label-vis ${isMarco?'is-marco':'is-sub'}">
+        ${hasPend?'<span style="font-size:11px">⚠️</span>':''}
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.title}</span>
+        ${isLate?'<span style="color:var(--red);font-size:9px;font-weight:700">▲</span>':''}
+        ${!isMarco?`<input type="checkbox" class="check-sub" ${item.done?'checked':''} onchange="checkGanttItem(${idx},this.checked)" style="margin-left:4px;flex-shrink:0">`:`<span style="font-size:9px;color:var(--text3);margin-left:4px">${pct}%</span>`}
+      </div>
+    </div>`;
+
+    // Timeline row
+    let barHtml = '';
+    if (item.planned_start && item.planned_end) {
+      const s = new Date(item.planned_start);
+      const e = new Date(item.planned_end);
+      const left = Math.max(0, Math.ceil((s - startDate) / 86400000)) * PX;
+      const width = Math.max(PX, Math.ceil((e - s) / 86400000 + 1) * PX);
+      const shortTitle = item.title.length > 14 ? item.title.substring(0,14)+'…' : item.title;
+      barHtml = `<div class="gantt-bar ${barCls} ${item.done?'done-bar':''}"
+        style="left:${left}px;width:${width}px"
+        data-idx="${idx}" data-orig-left="${left}" data-px="${PX}" data-start="${startDate.toISOString()}"
+        onmousedown="ganttDragStart(event,${idx},${left},${PX},'${startDate.toISOString()}')"
+        title="${item.title}: ${formatDate(item.planned_start)} → ${formatDate(item.planned_end)}"
+      >${shortTitle}</div>`;
+    }
+    timelineRows += `<div class="gantt-row-vis ${isMarco?'is-marco-vis':''}" style="position:relative">
+      <div class="gantt-timeline-vis">${stripes}${todayLine}${barHtml}</div>
+    </div>`;
+  });
+
+  container.innerHTML = `
+    <div style="display:flex;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;background:var(--surface)">
+      <div style="flex-shrink:0;width:${LABEL_W}px">
+        <div style="height:32px;background:var(--surface2);border-bottom:1px solid var(--border);border-right:1px solid var(--border);display:flex;align-items:center;padding:0 12px;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Marco / Sub-marco</div>
+        ${labelRows}
+      </div>
+      <div style="flex:1;overflow-x:auto" id="ganttScrollOuter">
+        <div style="position:relative;height:32px;background:var(--surface2);border-bottom:1px solid var(--border);min-width:${timelineW}px">${dateHeaders}</div>
+        <div id="ganttBarsArea" style="position:relative;min-width:${timelineW}px">${timelineRows}</div>
+      </div>
+    </div>`;
+}
+
+// DRAG STATE
+let _drag = null;
+
+function ganttDragStart(e, idx, origLeft, pxPerDay, startDateStr) {
+  e.preventDefault();
+  const bar = e.currentTarget;
+  _drag = { idx, startX: e.clientX, origLeft, pxPerDay, startDate: new Date(startDateStr), bar };
+  bar.classList.add('dragging');
+  document.addEventListener('mousemove', ganttDragMove);
+  document.addEventListener('mouseup', ganttDragEnd);
+}
+
+function ganttDragMove(e) {
+  if (!_drag) return;
+  const dx = e.clientX - _drag.startX;
+  const newLeft = Math.max(0, _drag.origLeft + dx);
+  _drag.bar.style.left = newLeft + 'px';
+}
+
+function ganttDragEnd(e) {
+  if (!_drag) return;
+  document.removeEventListener('mousemove', ganttDragMove);
+  document.removeEventListener('mouseup', ganttDragEnd);
+  const dx = e.clientX - _drag.startX;
+  const daysDelta = Math.round(dx / _drag.pxPerDay);
+  if (daysDelta !== 0) applyGanttDrag(_drag.idx, daysDelta);
+  _drag.bar.classList.remove('dragging');
+  _drag = null;
+}
+
+function applyGanttDrag(idx, deltaDays) {
+  const proj = getProject(); if (!proj || !proj.gantt[idx]) return;
+  const item = proj.gantt[idx];
+  const oldEnd = item.planned_end;
+
+  function shiftDate(d, days) {
+    if (!d) return d;
+    const dt = new Date(d); dt.setDate(dt.getDate() + days);
+    return dt.toISOString().split('T')[0];
+  }
+  item.planned_start = shiftDate(item.planned_start, deltaDays);
+  item.planned_end = shiftDate(item.planned_end, deltaDays);
+
+  // CASCADE: if delay (deltaDays > 0), shift subsequent items
+  if (deltaDays > 0 && oldEnd) {
+    const oldEndDate = new Date(oldEnd);
+    proj.gantt.forEach((other, i) => {
+      if (i === idx) return;
+      if (!other.planned_start) return;
+      if (new Date(other.planned_start) > oldEndDate) {
+        other.planned_start = shiftDate(other.planned_start, deltaDays);
+        other.planned_end = shiftDate(other.planned_end, deltaDays);
+      }
+    });
+    addLog('Atraso de ' + deltaDays + ' dia(s) cascateado de "' + item.title + '"');
+  }
+  saveState(); renderGantt();
+}
+
+function renderGanttList() {
   const proj = getProject();
   const tbody = document.getElementById('ganttBody');
   if (!tbody) return;
+  const today = new Date();
   if (!proj || !proj.gantt || proj.gantt.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">
-      Nenhum marco definido. Use a Calculadora para gerar o cronograma ou adicione marcos manualmente.
-    </td></tr>`;
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">Nenhum marco. Use a Calculadora ou adicione marcos manualmente.</td></tr>';
     return;
   }
-
-  const today = new Date();
-  tbody.innerHTML = proj.gantt.map((item, idx) => {
+  const gantt = proj.gantt;
+  const barColorMap = {discovery:'bar-discovery',dev:'bar-dev',test:'bar-test',train:'bar-train',support:'bar-support'};
+  tbody.innerHTML = gantt.map((item, idx) => {
     const isMarco = !item.parentId;
-    const planned_start = item.planned_start ? new Date(item.planned_start) : null;
-    const planned_end = item.planned_end ? new Date(item.planned_end) : null;
-    const isLate = planned_end && planned_end < today && !item.done;
-    const hasPend = (proj.pendencias || []).some(p => p.impacta && p.marco && item.title.includes(p.marco));
-
-    const pct = calcProgress(proj.gantt, item.id);
-
-    const barClass = {
-      'discovery': 'bar-discovery',
-      'dev': 'bar-dev',
-      'test': 'bar-test',
-      'train': 'bar-train',
-      'support': 'bar-support'
-    }[item.tipo] || 'bar-dev';
-
-    return `<tr class="${isMarco ? 'gantt-marco-row' : 'gantt-sub-row'}">
-      <td style="${!isMarco ? 'padding-left:28px' : ''}">
-        ${hasPend ? '<span class="warn-badge">⚠️</span> ' : ''}
-        ${item.title}
-        ${isLate ? '<span class="late-badge" style="margin-left:8px">ATRASADO</span>' : ''}
+    const isLate = item.planned_end && new Date(item.planned_end)<today && !item.done;
+    const hasPend = (proj.pendencias||[]).some(p=>p.impacta&&p.marco&&item.title.toLowerCase().includes(p.marco.toLowerCase().slice(0,4)));
+    const pct = calcProgress(gantt, item.id);
+    const barCls = (isLate&&!item.done)?'bar-late':(barColorMap[item.tipo]||'bar-dev');
+    return `<tr class="${isMarco?'gantt-marco-row':'gantt-sub-row'}">
+      <td style="${!isMarco?'padding-left:26px':''}">
+        ${hasPend?'<span style="font-size:11px">⚠️</span> ':''}${item.title}
+        ${isLate?'<span class="late-badge" style="color:var(--red);font-size:9px;font-weight:700;margin-left:6px">ATRASADO</span>':''}
       </td>
-      <td style="color:var(--text2)">${item.responsavel || '—'}</td>
-      <td style="font-family:'DM Mono',monospace;font-size:11px">${formatDate(item.planned_start)}</td>
-      <td style="font-family:'DM Mono',monospace;font-size:11px">${formatDate(item.planned_end)}</td>
-      <td style="text-align:center">
-        ${!isMarco ? `<input type="checkbox" class="check-sub" ${item.done?'checked':''} 
-          onchange="checkGanttItem(${idx},this.checked)" title="Marcar como concluído">` : ''}
-      </td>
-      <td>
-        ${item.done ? '<span class="badge badge-green">✓ Concluído</span>' : 
-          isLate ? '<span class="badge badge-red">Atrasado</span>' :
-          '<span class="badge badge-blue">Em andamento</span>'}
-      </td>
-      <td class="gantt-bar-cell">
-        <div class="gantt-bar-bg">
-          <div class="gantt-bar-fill ${isLate && !item.done ? 'bar-late' : barClass}" 
-            style="width:${pct}%">${pct > 15 ? pct+'%' : ''}</div>
-        </div>
-      </td>
-      <td>
-        <button class="btn-del-row" onclick="removeGanttItem(${idx})" title="Remover">×</button>
-      </td>
+      <td style="color:var(--text2)">${item.responsavel||'—'}</td>
+      <td><input type="date" class="gantt-date-input" value="${item.planned_start||''}" onchange="updateGanttDate(${idx},'planned_start',this.value)"></td>
+      <td><input type="date" class="gantt-date-input" value="${item.planned_end||''}" onchange="updateGanttDate(${idx},'planned_end',this.value)"></td>
+      <td style="text-align:center">${!isMarco?`<input type="checkbox" class="check-sub" ${item.done?'checked':''} onchange="checkGanttItem(${idx},this.checked)">`:''}</td>
+      <td>${item.done?'<span class="badge badge-green">✓ OK</span>':isLate?'<span class="badge badge-red">Atrasado</span>':'<span class="badge badge-blue">Em andamento</span>'}</td>
+      <td><div class="gantt-bar-mini"><div class="gantt-fill-mini ${barCls}" style="width:${pct}%"></div></div><div style="font-size:9px;color:var(--text3);margin-top:2px">${pct}%</div></td>
+      <td><button class="btn-del-row" onclick="removeGanttItem(${idx})">×</button></td>
     </tr>`;
   }).join('');
 }
+
+function updateGanttDate(idx, field, val) {
+  const proj = getProject(); if (!proj || !proj.gantt[idx]) return;
+  proj.gantt[idx][field] = val;
+  saveState(); renderGantt();
+}
+
 
 function calcProgress(gantt, id) {
   const item = gantt.find(i => i.id === id);
@@ -2627,6 +2813,27 @@ function removeGanttItem(idx) {
   renderGantt();
 }
 
+function addMarcoManual() {
+  const today=new Date().toISOString().split('T')[0];
+  const mm_s=document.getElementById('mm_start');const mm_e=document.getElementById('mm_end');
+  if(mm_s)mm_s.value=today;if(mm_e)mm_e.value=today;
+  const mt=document.getElementById('mm_title');if(mt)mt.value='';
+  const mr=document.getElementById('mm_responsavel');if(mr)mr.value='';
+  openModal('modalAddMarco');
+}
+function confirmAddMarco(){
+  const proj=getProject(); if(!proj)return;
+  const title=document.getElementById('mm_title').value.trim();
+  if(!title){alert('Preencha o título.');return;}
+  if(!proj.gantt)proj.gantt=[];
+  const id='marco_'+Date.now();
+  proj.gantt.push({id,title,tipo:document.getElementById('mm_tipo').value,
+    responsavel:document.getElementById('mm_responsavel').value,
+    planned_start:document.getElementById('mm_start').value,
+    planned_end:document.getElementById('mm_end').value,done:false});
+  closeModal('modalAddMarco');
+  saveState(); renderGantt(); addLog('Marco manual: '+title);
+}
 function addMarco() {
   const proj = getProject();
   if (!proj) return;
@@ -2672,6 +2879,38 @@ function toggleMarco(m) {
   state.calcMarcos[m] = !state.calcMarcos[m];
   document.getElementById('mtog-' + m).classList.toggle('active', state.calcMarcos[m]);
   document.getElementById('cb-' + m).checked = state.calcMarcos[m];
+  recalculate();
+}
+
+function loadCalcFromProject(){
+  const proj=getProject();
+  if(!proj){
+    const info=document.getElementById('calcProjectInfo');
+    if(info)info.textContent='Selecione um projeto para carregar automaticamente.';
+    return;
+  }
+  const pipes=(proj.pipes||[]).length;
+  let totalInt=0,totalAuto=0;
+  (proj.pipes||[]).forEach(p=>{totalInt+=parseInt(p.int_externas||0);totalAuto+=parseInt(p.automacoes||0);});
+  
+  const pipesEl=document.getElementById('calc_pipes');
+  const intEl=document.getElementById('calc_integracoes');
+  const autoEl=document.getElementById('calc_automacoes');
+  if(pipesEl)pipesEl.value=Math.max(1,pipes);
+  if(intEl)intEl.value=totalInt;
+  if(autoEl)autoEl.value=totalAuto;
+  
+  const pb=document.getElementById('calc_pipes_badge');
+  const ib=document.getElementById('calc_int_badge');
+  const ab=document.getElementById('calc_auto_badge');
+  if(pb)pb.textContent='Discovery';
+  if(ib)ib.textContent='Discovery';
+  if(ab)ab.textContent='Discovery';
+  
+  const comp=proj.complexity||'low';
+  const compLabels={low:'Baixa',mid:'Média',high:'Alta'};
+  const info=document.getElementById('calcProjectInfo');
+  if(info)info.innerHTML=`Carregado do Discovery: <strong>${pipes} pipe${pipes!==1?'s':''}</strong>, <strong>${totalInt} integração${totalInt!==1?'ões':''}</strong>, <strong>${totalAuto} automação${totalAuto!==1?'ões':''}</strong>. Complexidade: <strong>${compLabels[comp]}</strong>.`;
   recalculate();
 }
 
@@ -3122,6 +3361,48 @@ function formatDateTime(dateStr) {
   return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
 }
 
+function handleImageUpload(key, input) {
+  const proj = getProject(); if (!proj || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    if (!proj.images) proj.images = {};
+    proj.images[key] = e.target.result;
+    saveState(); renderImagePreview(key, e.target.result);
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+function handleImageDrop(key, event) {
+  event.preventDefault();
+  const file = event.dataTransfer.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  const input = { files: [file] };
+  handleImageUpload(key, input);
+}
+function renderImagePreview(key, src) {
+  const preview = document.getElementById('preview-' + key);
+  const btnDel = document.getElementById('btn-del-' + key);
+  const empty = document.getElementById(key + '-empty');
+  if (src) {
+    preview.src = src; preview.style.display = 'block';
+    if (btnDel) btnDel.style.display = 'inline-flex';
+    if (empty) empty.style.display = 'none';
+  } else {
+    preview.style.display = 'none';
+    if (btnDel) btnDel.style.display = 'none';
+    if (empty) empty.style.display = 'block';
+  }
+}
+function removeImage(key) {
+  const proj = getProject(); if (!proj) return;
+  if (!proj.images) proj.images = {};
+  proj.images[key] = null;
+  saveState(); renderImagePreview(key, null);
+}
+function loadImages() {
+  const proj = getProject(); if (!proj || !proj.images) return;
+  ['fluxograma', 'kanban'].forEach(key => renderImagePreview(key, proj.images[key] || null));
+}
+
 function toggleGuide(id) {
   const el = document.getElementById(id);
   const icon = document.getElementById(id + '-icon');
@@ -3196,14 +3477,174 @@ function importData(event) {
   event.target.value = '';
 }
 
-function generateWord(phase) {
-  alert('Exportação para Word será implementada em breve. Por enquanto, use Ctrl+P para imprimir como PDF.');
+
+function generateWordPhase(phase) {
+  const proj = getProject();
+  if (!proj) { alert('Selecione um projeto.'); return; }
+  const labels = {d1:'Kick-off',d2:'AS-IS',d3:'To-Be',d4:'SIPOC & Pipes',all:'Completo (TO-BE)'};
+  const phaseLabel = labels[phase] || phase;
+  const w = window.open('', '_blank');
+  if (!w) { alert('Pop-ups bloqueados. Permita pop-ups para gerar o documento.'); return; }
+  const ans = proj.answers || {};
+  const now = new Date().toLocaleDateString('pt-BR');
+  const consul = state.team.find(c => c.id === proj.consultor);
+  const consulNome = consul ? consul.nome : '—';
+  const imgs = proj.images || {};
+
+  let content = '';
+
+  if (phase === 'd1' || phase === 'all') {
+    content += `<h1 class="section-h">P1 a P6 — Kick-off</h1>
+    <div class="qa"><div class="q">P1 — O cliente já usou o Pipefy antes?</div><div class="a">${htmlE(ans.p1||'—')}</div></div>
+    <div class="qa"><div class="q">P2 — O dono do processo entende os conceitos básicos?</div><div class="a">${htmlE(ans.p2||'—')}</div></div>
+    <div class="qa"><div class="q">P3 — Objetivo do processo e definição de sucesso:</div><div class="a">${htmlE(ans.p3||'—')}</div></div>
+    <div class="qa"><div class="q">P4 — Dono do processo e executores:</div><div class="a">${htmlE(ans.p4||'—')}</div></div>
+    <div class="qa"><div class="q">P5 — Stakeholders presentes:</div><div class="a">${htmlE(ans.p5||'—')}</div></div>
+    <div class="qa"><div class="q">P6 — O processo já existe? Como é feito hoje?</div><div class="a">${htmlE(ans.p6||'—')}</div></div>
+    <div class="qa"><div class="q">Observações:</div><div class="a">${htmlE(ans.obs_d1||'—')}</div></div>
+    <div class="page-break"></div>`;
+  }
+
+  if (phase === 'd2' || phase === 'all') {
+    content += `<h1 class="section-h">P7 a P11 — Mapeamento AS-IS</h1>
+    <div class="qa"><div class="q">P7 — Como chegam as solicitações?</div><div class="a">${htmlE(ans.p7||'—')}</div></div>
+    <div class="qa"><div class="q">P8 — Quem faz as solicitações?</div><div class="a">${htmlE(ans.p8||'—')}</div></div>
+    <div class="qa"><div class="q">P9 — Que informações chegam no início?</div><div class="a">${htmlE(ans.p9||'—')}</div></div>
+    <div class="qa"><div class="q">P10 — O que você faz com as informações? Quais as regras?</div><div class="a">${htmlE(ans.p10||'—')}</div></div>
+    <div class="qa"><div class="q">P11 — O que precisa acontecer para avançar ou encerrar?</div><div class="a">${htmlE(ans.p11||'—')}</div></div>
+    <div class="qa"><div class="q">Observações:</div><div class="a">${htmlE(ans.obs_d2||'—')}</div></div>
+    <div class="page-break"></div>`;
+  }
+
+  if (phase === 'd3' || phase === 'all') {
+    content += `<h1 class="section-h">P12 a P21 — To-Be</h1>
+    <div class="qa"><div class="q">P12 — Fases validadas do processo:</div><div class="a">${htmlE(ans.p12||'—')}</div></div>`;
+    if (imgs.fluxograma) content += `<div class="img-section"><div class="img-label">Fluxograma BPMN</div><img src="${imgs.fluxograma}" class="doc-img"></div>`;
+    if (imgs.kanban) content += `<div class="img-section"><div class="img-label">Kanban TO-BE</div><img src="${imgs.kanban}" class="doc-img"></div>`;
+    content += `
+    <div class="qa"><div class="q">P13 — RACI por fase:</div><div class="a">${htmlE(ans.p13||'—')}</div></div>
+    <div class="qa"><div class="q">P14 — Fases de aprovação:</div><div class="a">${htmlE(ans.p14||'—')}</div></div>
+    <div class="qa"><div class="q">P15 — SLA por fase:</div><div class="a">${htmlE(ans.p15||'—')}</div></div>
+    <div class="qa"><div class="q">P16 — Integrações com sistemas externos:</div><div class="a">${htmlE(ans.p16||'—')}</div></div>
+    <div class="qa"><div class="q">P17 — Emissão ou validação de documentos:</div><div class="a">${htmlE(ans.p17||'—')}</div></div>
+    <div class="qa"><div class="q">P18 — Campos da fase e regras:</div><div class="a">${htmlE(ans.p18||'—')}</div></div>
+    <div class="qa"><div class="q">P19 — Réguas de comunicação:</div><div class="a">${htmlE(ans.p19||'—')}</div></div>
+    <div class="qa"><div class="q">P20 — Etiquetas e alertas visuais:</div><div class="a">${htmlE(ans.p20||'—')}</div></div>
+    <div class="qa"><div class="q">P21 — Atividades paralelas e sub-processos:</div><div class="a">${htmlE(ans.p21||'—')}</div></div>
+    <div class="qa"><div class="q">Observações:</div><div class="a">${htmlE(ans.obs_d3||'—')}</div></div>
+    <div class="page-break"></div>`;
+  }
+
+  if (phase === 'd4' || phase === 'all') {
+    content += `<h1 class="section-h">SIPOC & Pipes</h1>`;
+    (proj.pipes || []).forEach((pipe, i) => {
+      content += `<h2 style="color:#4f46e5;margin:20px 0 10px;font-size:15px">Pipe ${i+1}: ${htmlE(pipe.nome)}</h2>`;
+      if (pipe.raci && pipe.raci.length > 0) {
+        content += `<h3 style="color:#333;font-size:13px;margin-bottom:8px">Matriz RACI</h3>
+        <table><thead><tr><th>Fase</th><th>R — Responsável</th><th>A — Aprovador</th><th>C — Consultado</th><th>I — Informado</th></tr></thead><tbody>
+        ${pipe.raci.map(r=>`<tr><td>${htmlE(r.fase||'—')}</td><td>${htmlE(r.r||'—')}</td><td>${htmlE(r.a||'—')}</td><td>${htmlE(r.c||'—')}</td><td>${htmlE(r.i||'—')}</td></tr>`).join('')}
+        </tbody></table>`;
+      }
+      if (pipe.campos && pipe.campos.length > 0) {
+        content += `<h3 style="color:#333;font-size:13px;margin:14px 0 8px">Campos por Fase</h3>
+        <table><thead><tr><th>Fase</th><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Condicional</th></tr></thead><tbody>
+        ${pipe.campos.map(c=>`<tr><td>${htmlE(c.fase||'—')}</td><td>${htmlE(c.nome||'—')}</td><td>${htmlE(c.tipo||'—')}</td><td>${htmlE(c.obrigatorio||'—')}</td><td>${htmlE(c.condicional||'—')}</td></tr>`).join('')}
+        </tbody></table>`;
+      }
+    });
+    if (proj.sipoc && proj.sipoc.length > 0) {
+      content += `<h2 style="color:#4f46e5;margin:20px 0 10px;font-size:15px">SIPOC</h2>
+      <table><thead><tr><th>Fornecedor (S)</th><th>Entrada (I)</th><th>Processo (P)</th><th>Saída (O)</th><th>Cliente (C)</th></tr></thead><tbody>
+      ${proj.sipoc.map(r=>`<tr><td>${htmlE(r.s||'—')}</td><td>${htmlE(r.i||'—')}</td><td>${htmlE(r.p||'—')}</td><td>${htmlE(r.o||'—')}</td><td>${htmlE(r.c||'—')}</td></tr>`).join('')}
+      </tbody></table>`;
+    }
+    if (proj.pendencias && proj.pendencias.length > 0) {
+      content += `<h2 style="color:#4f46e5;margin:20px 0 10px;font-size:15px">Pendências Externas</h2>
+      <table><thead><tr><th>Descrição</th><th>Responsável</th><th>Impacta Cronograma?</th><th>Marco Afetado</th></tr></thead><tbody>
+      ${proj.pendencias.map(p=>`<tr><td>${htmlE(p.descricao||'—')}</td><td>${htmlE(p.responsavel||'—')}</td><td>${p.impacta?'<strong style="color:#dc2626">Sim</strong>':'Não'}</td><td>${htmlE(p.marco||'—')}</td></tr>`).join('')}
+      </tbody></table>`;
+    }
+    content += '<div class="page-break"></div>';
+  }
+
+  if (phase === 'all') {
+    content += `<h1 class="section-h">Documentação Final</h1>
+    <div class="qa"><div class="q">Integrações a Desenvolver:</div><div class="a">${htmlE(ans.doc_integracoes||'—')}</div></div>
+    <div class="qa"><div class="q">Templates de E-mail e Comunicações:</div><div class="a">${htmlE(ans.doc_templates||'—')}</div></div>
+    <div class="qa"><div class="q">Observações Finais e Itens Fora do Escopo:</div><div class="a">${htmlE(ans.doc_fora_escopo||'—')}</div></div>`;
+  }
+
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Discovery TO-BE — ${htmlE(proj.empresa)} — ${phaseLabel}</title>
+  <style>
+    @page{margin:2.5cm 2cm;}
+    *{box-sizing:border-box;}
+    body{font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#141b2e;line-height:1.6;max-width:800px;margin:0 auto;padding:20px;}
+    .doc-header{background:#141b2e;color:white;padding:24px 32px;border-radius:8px;margin-bottom:28px;}
+    .doc-header .company{font-size:20pt;font-weight:700;color:#9d7ffe;margin-bottom:4px;}
+    .doc-header .subtitle{font-size:12pt;color:rgba(255,255,255,.7);}
+    .doc-header .meta{font-size:10pt;color:rgba(255,255,255,.5);margin-top:8px;}
+    .section-h{color:#4f46e5;font-size:16pt;font-weight:700;border-bottom:2px solid #4f46e5;padding-bottom:8px;margin:28px 0 16px;}
+    .qa{margin-bottom:14px;padding:12px 14px;background:#f8f9ff;border-left:3px solid #7c5cfc;border-radius:4px;}
+    .q{font-weight:700;font-size:10pt;color:#4f46e5;margin-bottom:5px;}
+    .a{font-size:11pt;color:#1e293b;white-space:pre-wrap;}
+    table{width:100%;border-collapse:collapse;margin:10px 0;}
+    th{background:#4f46e5;color:white;padding:8px 10px;font-size:9pt;text-align:left;}
+    td{padding:7px 10px;border:1px solid #e2e8f0;font-size:10pt;}
+    tr:nth-child(even) td{background:#f8f9ff;}
+    .img-section{margin:16px 0;padding:14px;background:#f8f9ff;border-radius:6px;}
+    .img-label{font-weight:700;font-size:10pt;color:#4f46e5;margin-bottom:8px;}
+    .doc-img{max-width:100%;border:1px solid #e2e8f0;border-radius:4px;}
+    .page-break{page-break-after:always;margin:24px 0;border-top:1px solid #e2e8f0;}
+    .no-print{display:block;margin-bottom:20px;}
+    @media print{.no-print{display:none!important;}body{max-width:none;padding:0;}}
+  </style></head><body>
+  <div class="doc-header">
+    <div class="company">${htmlE(proj.empresa)}</div>
+    <div class="subtitle">Documento TO-BE — ${phaseLabel}</div>
+    <div class="meta">Processo: ${htmlE(proj.processo)} &nbsp;·&nbsp; ${now} &nbsp;·&nbsp; ${htmlE(consulNome)}</div>
+  </div>
+  <button class="no-print" onclick="window.print()" style="background:#4f46e5;color:white;border:none;padding:10px 22px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🖨 Imprimir / Salvar como PDF</button>
+  ${content}
+  </body></html>`);
+  w.document.close();
 }
+
+function htmlE(s) {
+  if (!s) return '—';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 
 // ══════════════════════════════════════════
 // BOOT
 // ══════════════════════════════════════════
 init();
 </script>
+
+<div class="modal-overlay" id="modalAddMarco">
+  <div class="modal">
+    <h2>＋ Marco Manual</h2>
+    <div class="field"><label>Título do Marco</label><input type="text" id="mm_title" placeholder="Ex: Reunião de alinhamento intermediária..."></div>
+    <div class="field"><label>Tipo</label>
+      <select id="mm_tipo">
+        <option value="discovery">Discovery</option>
+        <option value="dev">Desenvolvimento</option>
+        <option value="test">Testes</option>
+        <option value="train">Treinamento / Go-live</option>
+        <option value="support">Suporte</option>
+      </select>
+    </div>
+    <div class="field"><label>Responsável</label><input type="text" id="mm_responsavel" placeholder="Nome do responsável..."></div>
+    <div class="two-col">
+      <div class="field"><label>Data de Início</label><input type="date" id="mm_start"></div>
+      <div class="field"><label>Data de Fim</label><input type="date" id="mm_end"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalAddMarco')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmAddMarco()">Adicionar Marco →</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
