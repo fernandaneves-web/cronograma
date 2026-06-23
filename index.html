@@ -1633,42 +1633,51 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
   <!-- ── DIÁRIO ── -->
   <div id="report-diario-panel" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-      <div style="font-size:11px;color:var(--text2)" id="diario-date-label"></div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-secondary" onclick="navDiario(-1)">← Dia anterior</button>
-        <button class="btn btn-secondary" onclick="navDiario(1)">Dia seguinte →</button>
+      <div style="font-size:12px;font-weight:600;color:var(--text2)" id="diario-date-label"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="navDiario(-1)">← Anterior</button>
         <button class="btn btn-secondary" onclick="navDiario(0)">Hoje</button>
+        <button class="btn btn-secondary" onclick="navDiario(1)">Seguinte →</button>
         <button class="btn btn-secondary" id="btn-copy-diario" onclick="copyDiario()">📋 Copiar</button>
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:12px">
-      <div class="card-header">
-        <h2 style="color:var(--green)">✅ Feito hoje</h2>
+    <!-- FEITOS -->
+    <div class="card" style="margin-bottom:12px;border-color:rgba(61,214,140,0.3)">
+      <div class="card-header" style="margin-bottom:10px">
+        <h2 style="color:var(--green)">✅ FEITOS</h2>
+        <span style="font-size:10px;color:var(--text3);margin-left:auto">do Gantt + manual</span>
       </div>
-      <textarea id="diario-feito" rows="5"
-        style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:var(--radius);font-size:13px;font-family:inherit;outline:none;resize:vertical;line-height:1.7"
-        placeholder="• O que você concluiu hoje?&#10;• Tarefas finalizadas, entregas feitas, reuniões realizadas..."
+      <div id="diario-feitos-gantt" style="margin-bottom:8px"></div>
+      <textarea id="diario-feito" rows="3"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:var(--radius);font-size:12px;font-family:inherit;outline:none;resize:vertical;line-height:1.7"
+        placeholder="+ Adicione aqui feitos que não estão no Gantt..."
         oninput="saveDiario()"></textarea>
     </div>
 
-    <div class="card" style="margin-bottom:12px">
-      <div class="card-header">
-        <h2 style="color:var(--blue)">🔜 Fazer amanhã</h2>
+    <!-- A FAZER -->
+    <div class="card" style="margin-bottom:12px;border-color:rgba(79,163,247,0.3)">
+      <div class="card-header" style="margin-bottom:10px">
+        <h2 style="color:var(--blue)">🔜 A FAZER</h2>
+        <span style="font-size:10px;color:var(--text3);margin-left:auto">do Gantt + manual</span>
       </div>
-      <textarea id="diario-amanha" rows="5"
-        style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:var(--radius);font-size:13px;font-family:inherit;outline:none;resize:vertical;line-height:1.7"
-        placeholder="• O que você vai fazer amanhã?&#10;• Próximas tarefas, reuniões agendadas, entregas pendentes..."
+      <div id="diario-afazer-gantt" style="margin-bottom:8px"></div>
+      <textarea id="diario-amanha" rows="3"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:var(--radius);font-size:12px;font-family:inherit;outline:none;resize:vertical;line-height:1.7"
+        placeholder="+ Adicione aqui tarefas que não estão no Gantt..."
         oninput="saveDiario()"></textarea>
     </div>
 
-    <div class="card">
-      <div class="card-header">
-        <h2 style="color:var(--red)">🚧 Travas</h2>
+    <!-- TRAVAS -->
+    <div class="card" style="border-color:rgba(240,84,90,0.3)">
+      <div class="card-header" style="margin-bottom:10px">
+        <h2 style="color:var(--red)">🚧 TRAVAS</h2>
+        <span style="font-size:10px;color:var(--text3);margin-left:auto">pendências externas + manual</span>
       </div>
-      <textarea id="diario-travas" rows="4"
-        style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:var(--radius);font-size:13px;font-family:inherit;outline:none;resize:vertical;line-height:1.7"
-        placeholder="• O que está travando o seu progresso?&#10;• Pendências externas, decisões aguardando, bloqueios técnicos..."
+      <div id="diario-travas-gantt" style="margin-bottom:8px"></div>
+      <textarea id="diario-travas" rows="3"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:var(--radius);font-size:12px;font-family:inherit;outline:none;resize:vertical;line-height:1.7"
+        placeholder="+ Adicione aqui travas que não estão registradas..."
         oninput="saveDiario()"></textarea>
     </div>
   </div>
@@ -3239,7 +3248,7 @@ function setReportTab(tab) {
 }
 
 // ── DIÁRIO ──
-let diarioDate = null; // ISO date string YYYY-MM-DD
+let diarioDate = null;
 
 function todayISO() {
   return new Date().toISOString().split('T')[0];
@@ -3254,16 +3263,106 @@ function loadDiario(dateStr) {
   const el = document.getElementById('diario-date-label');
   if (el) el.textContent = '📅 ' + label.charAt(0).toUpperCase() + label.slice(1);
 
+  // ── Puxar do Gantt ──
   const proj = getProject();
+  const gantt = (proj && proj.gantt) || [];
+  const today = new Date(dateStr + 'T00:00:00');
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+  const todayEnd = new Date(dateStr + 'T23:59:59');
+
+  // FEITOS: concluídos (done=true) cujo executed_end é hoje OU planned_end é hoje/anterior
+  const feitos = gantt.filter(item => {
+    if (!item.done) return false;
+    if (item.executed_end) {
+      const d = new Date(item.executed_end + 'T12:00:00');
+      return d >= today && d <= todayEnd;
+    }
+    // fallback: concluídos sem data de execução — mostrar todos
+    return true;
+  });
+
+  // A FAZER: não concluídos cujo planned_start é hoje ou amanhã
+  // OU cujo planned_end é hoje (vence hoje) OU em andamento agora
+  const aFazer = gantt.filter(item => {
+    if (item.done) return false;
+    const start = item.planned_start ? new Date(item.planned_start + 'T00:00:00') : null;
+    const end   = item.planned_end   ? new Date(item.planned_end   + 'T23:59:59') : null;
+    if (!start && !end) return false;
+    // Em andamento hoje
+    if (start && end && start <= todayEnd && end >= today) return true;
+    // Começa amanhã
+    const tomEnd = new Date(tomorrow); tomEnd.setHours(23,59,59);
+    if (start && start >= tomorrow && start <= tomEnd) return true;
+    return false;
+  });
+
+  // TRAVAS: pendências externas + itens atrasados
+  const travas = [];
+  (proj && proj.pendencias || []).forEach(p => {
+    if (p.descricao) travas.push({ tipo:'pendencia', texto: p.descricao + (p.responsavel ? ' — Resp: ' + p.responsavel : '') + (p.impacta ? ' ⚠️' : '') });
+  });
+  // Atrasados: planejados para antes de hoje, não concluídos
+  gantt.filter(item => {
+    if (item.done) return false;
+    return item.planned_end && new Date(item.planned_end + 'T23:59:59') < today;
+  }).forEach(item => {
+    const delta = Math.ceil((today - new Date(item.planned_end + 'T00:00:00')) / 86400000);
+    travas.push({ tipo:'atraso', texto: item.title + ' — ' + delta + ' dia(s) atrasado' });
+  });
+
+  // ── Renderizar seções do Gantt ──
+  renderDiarioSection('diario-feitos-gantt', feitos, 'feito');
+  renderDiarioSection('diario-afazer-gantt', aFazer, 'afazer');
+  renderDiarioTravas('diario-travas-gantt', travas);
+
+  // ── Carregar anotações manuais salvas ──
   const key = 'diario_' + (proj ? proj.id : 'global') + '_' + dateStr;
   const saved = JSON.parse(localStorage.getItem(key) || '{}');
+  const feitoEl = document.getElementById('diario-feito');
+  const amanhaEl = document.getElementById('diario-amanha');
+  const travasEl = document.getElementById('diario-travas');
+  if (feitoEl) feitoEl.value = saved.feito || '';
+  if (amanhaEl) amanhaEl.value = saved.amanha || '';
+  if (travasEl) travasEl.value = saved.travas || '';
+}
 
-  const feito = document.getElementById('diario-feito');
-  const amanha = document.getElementById('diario-amanha');
-  const travas = document.getElementById('diario-travas');
-  if (feito) feito.value = saved.feito || '';
-  if (amanha) amanha.value = saved.amanha || '';
-  if (travas) travas.value = saved.travas || '';
+function renderDiarioSection(containerId, items, tipo) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!items || items.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+  const color = tipo === 'feito' ? 'var(--green)' : 'var(--blue)';
+  const icon  = tipo === 'feito' ? '✅' : '🔜';
+  el.innerHTML = items.map(item => {
+    const parent = item.parentId ? '' : '';
+    const isLate = tipo === 'afazer' && item.planned_end && new Date(item.planned_end + 'T23:59:59') < new Date();
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--surface2);border-radius:8px;margin-bottom:6px;border-left:3px solid ${color}">
+      <span style="flex-shrink:0;font-size:13px">${icon}</span>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:600;color:var(--text)">${item.title}</div>
+        ${item.planned_end ? `<div style="font-size:10px;color:${isLate?'var(--red)':'var(--text3)'};margin-top:2px">${isLate?'⚠️ Atrasado — ':''}Prazo: ${formatDate(item.planned_end)}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderDiarioTravas(containerId, travas) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!travas || travas.length === 0) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--green);padding:4px 0">✅ Sem travas registradas</div>';
+    return;
+  }
+  el.innerHTML = travas.map(t => {
+    const icon = t.tipo === 'atraso' ? '🔴' : '⚠️';
+    const color = t.tipo === 'atraso' ? 'var(--red)' : 'var(--amber)';
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--surface2);border-radius:8px;margin-bottom:6px;border-left:3px solid ${color}">
+      <span style="flex-shrink:0">${icon}</span>
+      <div style="font-size:12px;color:var(--text);flex:1">${t.texto}</div>
+    </div>`;
+  }).join('');
 }
 
 function saveDiario() {
@@ -3271,7 +3370,7 @@ function saveDiario() {
   const dateStr = diarioDate || todayISO();
   const key = 'diario_' + (proj ? proj.id : 'global') + '_' + dateStr;
   const data = {
-    feito: (document.getElementById('diario-feito') || {}).value || '',
+    feito:  (document.getElementById('diario-feito')  || {}).value || '',
     amanha: (document.getElementById('diario-amanha') || {}).value || '',
     travas: (document.getElementById('diario-travas') || {}).value || '',
     savedAt: new Date().toISOString()
@@ -3295,10 +3394,48 @@ function copyDiario() {
   const dateStr = diarioDate || todayISO();
   const d = new Date(dateStr + 'T12:00:00');
   const label = d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
-  const feito = (document.getElementById('diario-feito') || {}).value || '(nada registrado)';
-  const amanha = (document.getElementById('diario-amanha') || {}).value || '(nada registrado)';
-  const travas = (document.getElementById('diario-travas') || {}).value || '(nenhuma)';
   const projNome = proj ? proj.empresa + ' — ' + proj.processo : 'Projeto';
+
+  // Coletar feitos do Gantt
+  const gantt = (proj && proj.gantt) || [];
+  const today = new Date(dateStr + 'T00:00:00');
+  const todayEnd = new Date(dateStr + 'T23:59:59');
+
+  const ganttFeitos = gantt.filter(i => {
+    if (!i.done) return false;
+    if (i.executed_end) { const dt = new Date(i.executed_end+'T12:00:00'); return dt>=today && dt<=todayEnd; }
+    return true;
+  }).map(i => '• ' + i.title);
+
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+  const tomEnd = new Date(tomorrow); tomEnd.setHours(23,59,59);
+  const ganttAfazer = gantt.filter(i => {
+    if (i.done) return false;
+    const s = i.planned_start ? new Date(i.planned_start+'T00:00:00') : null;
+    const e = i.planned_end   ? new Date(i.planned_end+'T23:59:59')   : null;
+    if (!s && !e) return false;
+    if (s && e && s <= todayEnd && e >= today) return true;
+    if (s && s >= tomorrow && s <= tomEnd) return true;
+    return false;
+  }).map(i => '• ' + i.title + (i.planned_end ? ' — ' + formatDate(i.planned_end) : ''));
+
+  const ganttTravas = [];
+  (proj && proj.pendencias || []).forEach(p => {
+    if (p.descricao) ganttTravas.push('• ' + p.descricao + (p.responsavel ? ' [' + p.responsavel + ']' : '') + (p.impacta ? ' ⚠️' : ''));
+  });
+  gantt.filter(i => !i.done && i.planned_end && new Date(i.planned_end+'T23:59:59') < today)
+    .forEach(i => {
+      const delta = Math.ceil((today - new Date(i.planned_end+'T00:00:00'))/86400000);
+      ganttTravas.push('• ' + i.title + ' — ' + delta + ' dia(s) atrasado 🔴');
+    });
+
+  const manualFeito  = (document.getElementById('diario-feito')  || {}).value || '';
+  const manualAmanha = (document.getElementById('diario-amanha') || {}).value || '';
+  const manualTravas = (document.getElementById('diario-travas') || {}).value || '';
+
+  const feitosAll  = [...ganttFeitos,  ...(manualFeito.trim()  ? manualFeito.split('\n').filter(Boolean)  : [])];
+  const afazerAll  = [...ganttAfazer,  ...(manualAmanha.trim() ? manualAmanha.split('\n').filter(Boolean) : [])];
+  const travasAll  = [...ganttTravas,  ...(manualTravas.trim() ? manualTravas.split('\n').filter(Boolean) : [])];
 
   const text = [
     '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
@@ -3306,27 +3443,30 @@ function copyDiario() {
     'Projeto: ' + projNome,
     '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
     '',
-    '✅ FEITO HOJE',
-    feito,
+    '✅ FEITOS',
+    feitosAll.length > 0 ? feitosAll.join('\n') : '(nenhum feito registrado)',
     '',
-    '🔜 FAZER AMANHÃ',
-    amanha,
+    '🔜 A FAZER',
+    afazerAll.length > 0 ? afazerAll.join('\n') : '(nada planejado para hoje/amanhã)',
     '',
     '🚧 TRAVAS',
-    travas,
+    travasAll.length > 0 ? travasAll.join('\n') : '(sem travas)',
     '',
     '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
   ].join('\n');
 
   const btn = document.getElementById('btn-copy-diario');
-  navigator.clipboard.writeText(text).then(() => {
-    if(btn){btn.textContent='✓ Copiado!';setTimeout(()=>btn.textContent='📋 Copiar',2000);}
-  }).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
-    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
-    document.body.removeChild(ta);
-    if(btn){btn.textContent='✓ Copiado!';setTimeout(()=>btn.textContent='📋 Copiar',2000);}
+  const doFeedback = () => {
+    if (btn) { btn.textContent = '✓ Copiado!'; btn.style.color = 'var(--green)'; setTimeout(() => { btn.textContent = '📋 Copiar'; btn.style.color = ''; }, 2500); }
+  };
+  navigator.clipboard.writeText(text).then(doFeedback).catch(() => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.cssText = 'position:fixed;top:-999px;opacity:0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      doFeedback();
+    } catch(e) { alert('Não foi possível copiar. Selecione o texto manualmente.'); }
   });
 }
 
