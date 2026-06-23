@@ -959,7 +959,6 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 .gantt-fill-mini{height:100%;border-radius:3px;position:absolute;left:0;top:0;}
 
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/9.0.3/docx.umd.min.js" defer onerror="console.warn('docx CDN não carregou - Word geração indisponível')"></script>
 </head>
 <body>
 
@@ -1900,6 +1899,12 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 </div>
 
 <script>
+// pako deflate (embedded, no CDN needed)
+/*! pako 2.2.0 https://github.com/nodeca/pako @license (MIT AND Zlib) */
+!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"function"==typeof define&&define.amd?define(["exports"],e):e((t="undefined"!=typeof globalThis?globalThis:t||self).pako={})}(this,(function(t){"use strict";function e(t){let e=t.length;for(;--e>=0;)t[e]=0}const a=256,s=286,r=30,n=15,i=new Uint8Array([0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0]),_=new Uint8Array([0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13]),l=new Uint8Array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,7]),h=new Uint8Array([16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15]),o=new Array(576);e(o);const d=new Array(60);e(d);const u=new Array(512);e(u);const f=new Array(256);e(f);const c=new Array(29);e(c);const p=new Array(r);function g(t,e,a,s,r){this.static_tree=t,this.extra_bits=e,this.extra_base=a,this.elems=s,this.max_length=r,this.has_stree=t&&t.length}let w,m,b;function y(t,e){this.dyn_tree=t,this.max_code=0,this.stat_desc=e}e(p);const v=t=>t<256?u[t]:u[256+(t>>>7)],z=(t,e)=>{t.pending_buf[t.pending++]=255&e,t.pending_buf[t.pending++]=e>>>8&255},k=(t,e,a)=>{t.bi_valid>16-a?(t.bi_buf|=e<<t.bi_valid&65535,z(t,t.bi_buf),t.bi_buf=e>>16-t.bi_valid,t.bi_valid+=a-16):(t.bi_buf|=e<<t.bi_valid&65535,t.bi_valid+=a)},x=(t,e,a)=>{k(t,a[2*e],a[2*e+1])},A=(t,e)=>{let a=0;do{a|=1&t,t>>>=1,a<<=1}while(--e>0);return a>>>1},E=(t,e,a)=>{const s=new Array(16);let r,i,_=0;for(r=1;r<=n;r++)_=_+a[r-1]<<1,s[r]=_;for(i=0;i<=e;i++){let e=t[2*i+1];0!==e&&(t[2*i]=A(s[e]++,e))}},Z=t=>{let e;for(e=0;e<s;e++)t.dyn_ltree[2*e]=0;for(e=0;e<r;e++)t.dyn_dtree[2*e]=0;for(e=0;e<19;e++)t.bl_tree[2*e]=0;t.dyn_ltree[512]=1,t.opt_len=t.static_len=0,t.sym_next=t.matches=0},U=t=>{t.bi_valid>8?z(t,t.bi_buf):t.bi_valid>0&&(t.pending_buf[t.pending++]=t.bi_buf),t.bi_buf=0,t.bi_valid=0},R=(t,e,a,s)=>{const r=2*e,n=2*a;return t[r]<t[n]||t[r]===t[n]&&s[e]<=s[a]},S=(t,e,a)=>{const s=t.heap[a];let r=a<<1;for(;r<=t.heap_len&&(r<t.heap_len&&R(e,t.heap[r+1],t.heap[r],t.depth)&&r++,!R(e,s,t.heap[r],t.depth));)t.heap[a]=t.heap[r],a=r,r<<=1;t.heap[a]=s},T=(t,e,s)=>{let r,n,l,h,o=0;if(0!==t.sym_next)do{r=255&t.pending_buf[t.sym_buf+o++],r+=(255&t.pending_buf[t.sym_buf+o++])<<8,n=t.pending_buf[t.sym_buf+o++],0===r?x(t,n,e):(l=f[n],x(t,l+a+1,e),h=i[l],0!==h&&(n-=c[l],k(t,n,h)),r--,l=v(r),x(t,l,s),h=_[l],0!==h&&(r-=p[l],k(t,r,h)))}while(o<t.sym_next);x(t,256,e)},L=(t,e)=>{const a=e.dyn_tree,s=e.stat_desc.static_tree,r=e.stat_desc.has_stree,i=e.stat_desc.elems;let _,l,h,o=-1;for(t.heap_len=0,t.heap_max=573,_=0;_<i;_++)0!==a[2*_]?(t.heap[++t.heap_len]=o=_,t.depth[_]=0):a[2*_+1]=0;for(;t.heap_len<2;)h=t.heap[++t.heap_len]=o<2?++o:0,a[2*h]=1,t.depth[h]=0,t.opt_len--,r&&(t.static_len-=s[2*h+1]);for(e.max_code=o,_=t.heap_len>>1;_>=1;_--)S(t,a,_);h=i;do{_=t.heap[1],t.heap[1]=t.heap[t.heap_len--],S(t,a,1),l=t.heap[1],t.heap[--t.heap_max]=_,t.heap[--t.heap_max]=l,a[2*h]=a[2*_]+a[2*l],t.depth[h]=(t.depth[_]>=t.depth[l]?t.depth[_]:t.depth[l])+1,a[2*_+1]=a[2*l+1]=h,t.heap[1]=h++,S(t,a,1)}while(t.heap_len>=2);t.heap[--t.heap_max]=t.heap[1],((t,e)=>{const a=e.dyn_tree,s=e.max_code,r=e.stat_desc.static_tree,i=e.stat_desc.has_stree,_=e.stat_desc.extra_bits,l=e.stat_desc.extra_base,h=e.stat_desc.max_length;let o,d,u,f,c,p,g=0;for(f=0;f<=n;f++)t.bl_count[f]=0;for(a[2*t.heap[t.heap_max]+1]=0,o=t.heap_max+1;o<573;o++)d=t.heap[o],f=a[2*a[2*d+1]+1]+1,f>h&&(f=h,g++),a[2*d+1]=f,d>s||(t.bl_count[f]++,c=0,d>=l&&(c=_[d-l]),p=a[2*d],t.opt_len+=p*(f+c),i&&(t.static_len+=p*(r[2*d+1]+c)));if(0!==g){do{for(f=h-1;0===t.bl_count[f];)f--;t.bl_count[f]--,t.bl_count[f+1]+=2,t.bl_count[h]--,g-=2}while(g>0);for(f=h;0!==f;f--)for(d=t.bl_count[f];0!==d;)u=t.heap[--o],u>s||(a[2*u+1]!==f&&(t.opt_len+=(f-a[2*u+1])*a[2*u],a[2*u+1]=f),d--)}})(t,e),E(a,o,t.bl_count)},F=(t,e,a)=>{let s,r,n=-1,i=e[1],_=0,l=7,h=4;for(0===i&&(l=138,h=3),e[2*(a+1)+1]=65535,s=0;s<=a;s++)r=i,i=e[2*(s+1)+1],++_<l&&r===i||(_<h?t.bl_tree[2*r]+=_:0!==r?(r!==n&&t.bl_tree[2*r]++,t.bl_tree[32]++):_<=10?t.bl_tree[34]++:t.bl_tree[36]++,_=0,n=r,0===i?(l=138,h=3):r===i?(l=6,h=3):(l=7,h=4))},O=(t,e,a)=>{let s,r,n=-1,i=e[1],_=0,l=7,h=4;for(0===i&&(l=138,h=3),s=0;s<=a;s++)if(r=i,i=e[2*(s+1)+1],!(++_<l&&r===i)){if(_<h)do{x(t,r,t.bl_tree)}while(0!=--_);else 0!==r?(r!==n&&(x(t,r,t.bl_tree),_--),x(t,16,t.bl_tree),k(t,_-3,2)):_<=10?(x(t,17,t.bl_tree),k(t,_-3,3)):(x(t,18,t.bl_tree),k(t,_-11,7));_=0,n=r,0===i?(l=138,h=3):r===i?(l=6,h=3):(l=7,h=4)}};let D=!1;const N=(t,e,a,s)=>{k(t,0+(s?1:0),3),U(t),z(t,a),z(t,~a),a&&t.pending_buf.set(t.window.subarray(e,e+a),t.pending),t.pending+=a};var I=(t,e,s,r)=>{let n,i,_=0;t.level>0?(2===t.strm.data_type&&(t.strm.data_type=(t=>{let e,s=4093624447;for(e=0;e<=31;e++,s>>>=1)if(1&s&&0!==t.dyn_ltree[2*e])return 0;if(0!==t.dyn_ltree[18]||0!==t.dyn_ltree[20]||0!==t.dyn_ltree[26])return 1;for(e=32;e<a;e++)if(0!==t.dyn_ltree[2*e])return 1;return 0})(t)),L(t,t.l_desc),L(t,t.d_desc),_=(t=>{let e;for(F(t,t.dyn_ltree,t.l_desc.max_code),F(t,t.dyn_dtree,t.d_desc.max_code),L(t,t.bl_desc),e=18;e>=3&&0===t.bl_tree[2*h[e]+1];e--);return t.opt_len+=3*(e+1)+5+5+4,e})(t),n=t.opt_len+3+7>>>3,i=t.static_len+3+7>>>3,i<=n&&(n=i)):n=i=s+5,s+4<=n&&-1!==e?N(t,e,s,r):4===t.strategy||i===n?(k(t,2+(r?1:0),3),T(t,o,d)):(k(t,4+(r?1:0),3),((t,e,a,s)=>{let r;for(k(t,e-257,5),k(t,a-1,5),k(t,s-4,4),r=0;r<s;r++)k(t,t.bl_tree[2*h[r]+1],3);O(t,t.dyn_ltree,e-1),O(t,t.dyn_dtree,a-1)})(t,t.l_desc.max_code+1,t.d_desc.max_code+1,_+1),T(t,t.dyn_ltree,t.dyn_dtree)),Z(t),r&&U(t)},H={_tr_init:t=>{D||((()=>{let t,e,a,h,y;const v=new Array(16);for(a=0,h=0;h<28;h++)for(c[h]=a,t=0;t<1<<i[h];t++)f[a++]=h;for(f[a-1]=h,y=0,h=0;h<16;h++)for(p[h]=y,t=0;t<1<<_[h];t++)u[y++]=h;for(y>>=7;h<r;h++)for(p[h]=y<<7,t=0;t<1<<_[h]-7;t++)u[256+y++]=h;for(e=0;e<=n;e++)v[e]=0;for(t=0;t<=143;)o[2*t+1]=8,t++,v[8]++;for(;t<=255;)o[2*t+1]=9,t++,v[9]++;for(;t<=279;)o[2*t+1]=7,t++,v[7]++;for(;t<=287;)o[2*t+1]=8,t++,v[8]++;for(E(o,287,v),t=0;t<r;t++)d[2*t+1]=5,d[2*t]=A(t,5);w=new g(o,i,257,s,n),m=new g(d,_,0,r,n),b=new g(new Array(0),l,0,19,7)})(),D=!0),t.l_desc=new y(t.dyn_ltree,w),t.d_desc=new y(t.dyn_dtree,m),t.bl_desc=new y(t.bl_tree,b),t.bi_buf=0,t.bi_valid=0,Z(t)},_tr_stored_block:N,_tr_flush_block:I,_tr_tally:(t,e,s)=>(t.pending_buf[t.sym_buf+t.sym_next++]=e,t.pending_buf[t.sym_buf+t.sym_next++]=e>>8,t.pending_buf[t.sym_buf+t.sym_next++]=s,0===e?t.dyn_ltree[2*s]++:(t.matches++,e--,t.dyn_ltree[2*(f[s]+a+1)]++,t.dyn_dtree[2*v(e)]++),t.sym_next===t.sym_end),_tr_align:t=>{k(t,2,3),x(t,256,o),(t=>{16===t.bi_valid?(z(t,t.bi_buf),t.bi_buf=0,t.bi_valid=0):t.bi_valid>=8&&(t.pending_buf[t.pending++]=255&t.bi_buf,t.bi_buf>>=8,t.bi_valid-=8)})(t)}};var C=(t,e,a,s)=>{let r=65535&t|0,n=t>>>16&65535|0,i=0;for(;0!==a;){i=a>2e3?2e3:a,a-=i;do{r=r+e[s++]|0,n=n+r|0}while(--i);r%=65521,n%=65521}return r|n<<16|0};const B=new Uint32Array((()=>{let t,e=[];for(var a=0;a<256;a++){t=a;for(var s=0;s<8;s++)t=1&t?3988292384^t>>>1:t>>>1;e[a]=t}return e})());var M=(t,e,a,s)=>{const r=B,n=s+a;t^=-1;for(let a=s;a<n;a++)t=t>>>8^r[255&(t^e[a])];return-1^t},P={2:"need dictionary",1:"stream end",0:"","-1":"file error","-2":"stream error","-3":"data error","-4":"insufficient memory","-5":"buffer error","-6":"incompatible version"},j={Z_NO_FLUSH:0,Z_PARTIAL_FLUSH:1,Z_SYNC_FLUSH:2,Z_FULL_FLUSH:3,Z_FINISH:4,Z_BLOCK:5,Z_TREES:6,Z_OK:0,Z_STREAM_END:1,Z_NEED_DICT:2,Z_ERRNO:-1,Z_STREAM_ERROR:-2,Z_DATA_ERROR:-3,Z_MEM_ERROR:-4,Z_BUF_ERROR:-5,Z_NO_COMPRESSION:0,Z_BEST_SPEED:1,Z_BEST_COMPRESSION:9,Z_DEFAULT_COMPRESSION:-1,Z_FILTERED:1,Z_HUFFMAN_ONLY:2,Z_RLE:3,Z_FIXED:4,Z_DEFAULT_STRATEGY:0,Z_BINARY:0,Z_TEXT:1,Z_UNKNOWN:2,Z_DEFLATED:8};const{_tr_init:K,_tr_stored_block:Y,_tr_flush_block:G,_tr_tally:X,_tr_align:W}=H,{Z_NO_FLUSH:q,Z_PARTIAL_FLUSH:J,Z_FULL_FLUSH:Q,Z_FINISH:V,Z_BLOCK:$,Z_OK:tt,Z_STREAM_END:et,Z_STREAM_ERROR:at,Z_DATA_ERROR:st,Z_BUF_ERROR:rt,Z_DEFAULT_COMPRESSION:nt,Z_FILTERED:it,Z_HUFFMAN_ONLY:_t,Z_RLE:lt,Z_FIXED:ht,Z_DEFAULT_STRATEGY:ot,Z_UNKNOWN:dt,Z_DEFLATED:ut}=j,ft=258,ct=262,pt=42,gt=113,wt=666,mt=(t,e)=>(t.msg=P[e],e),bt=t=>2*t-(t>4?9:0),yt=t=>{let e=t.length;for(;--e>=0;)t[e]=0},vt=t=>{let e,a,s,r=t.w_size;e=t.hash_size,s=e;do{a=t.head[--s],t.head[s]=a>=r?a-r:0}while(--e);e=r,s=e;do{a=t.prev[--s],t.prev[s]=a>=r?a-r:0}while(--e)};let zt=(t,e,a)=>(e<<t.hash_shift^a)&t.hash_mask;const kt=(t,e)=>{let a;if(t.legacy_hash)a=t.ins_h=zt(t,t.ins_h,t.window[e+3-1]);else{const s=t.window,r=s[e]|s[e+1]<<8|s[e+2]<<16|s[e+3]<<24;a=t.ins_h=Math.imul(r,66521)+66521>>>16&t.hash_mask}const s=t.prev[e&t.w_mask]=t.head[a];return t.head[a]=e,s},xt=t=>{const e=t.state;let a=e.pending;a>t.avail_out&&(a=t.avail_out),0!==a&&(t.output.set(e.pending_buf.subarray(e.pending_out,e.pending_out+a),t.next_out),t.next_out+=a,e.pending_out+=a,t.total_out+=a,t.avail_out-=a,e.pending-=a,0===e.pending&&(e.pending_out=0))},At=(t,e)=>{G(t,t.block_start>=0?t.block_start:-1,t.strstart-t.block_start,e),t.block_start=t.strstart,xt(t.strm)},Et=(t,e)=>{t.pending_buf[t.pending++]=e},Zt=(t,e)=>{t.pending_buf[t.pending++]=e>>>8&255,t.pending_buf[t.pending++]=255&e},Ut=(t,e,a,s)=>{let r=t.avail_in;return r>s&&(r=s),0===r?0:(t.avail_in-=r,e.set(t.input.subarray(t.next_in,t.next_in+r),a),1===t.state.wrap?t.adler=C(t.adler,e,r,a):2===t.state.wrap&&(t.adler=M(t.adler,e,r,a)),t.next_in+=r,t.total_in+=r,r)},Rt=(t,e)=>{let a,s,r=t.max_chain_length,n=t.strstart,i=t.prev_length,_=t.nice_match;const l=t.strstart>t.w_size-ct?t.strstart-(t.w_size-ct):0,h=t.window,o=t.w_mask,d=t.prev,u=t.strstart+ft;let f=h[n+i-1],c=h[n+i];t.prev_length>=t.good_match&&(r>>=2),_>t.lookahead&&(_=t.lookahead);do{if(a=e,h[a+i]===c&&h[a+i-1]===f&&h[a]===h[n]&&h[++a]===h[n+1]){n+=2,a++;do{}while(h[++n]===h[++a]&&h[++n]===h[++a]&&h[++n]===h[++a]&&h[++n]===h[++a]&&h[++n]===h[++a]&&h[++n]===h[++a]&&h[++n]===h[++a]&&h[++n]===h[++a]&&n<u);if(s=ft-(u-n),n=u-ft,s>i){if(t.match_start=e,i=s,s>=_)break;f=h[n+i-1],c=h[n+i]}}}while((e=d[e&o])>l&&0!=--r);return i<=t.lookahead?i:t.lookahead},St=t=>{const e=t.w_size;let a,s,r;do{if(s=t.window_size-t.lookahead-t.strstart,t.strstart>=e+(e-ct)&&(t.window.set(t.window.subarray(e,e+e-s),0),t.match_start-=e,t.strstart-=e,t.block_start-=e,t.insert>t.strstart&&(t.insert=t.strstart),vt(t),s+=e),0===t.strm.avail_in)break;if(a=Ut(t.strm,t.window,t.strstart+t.lookahead,s),t.lookahead+=a,t.legacy_hash){if(t.lookahead+t.insert>=3)for(r=t.strstart-t.insert,t.ins_h=t.window[r],t.ins_h=zt(t,t.ins_h,t.window[r+1]);t.insert&&(kt(t,r),r++,t.insert--,!(t.lookahead+t.insert<3)););}else if(t.lookahead+t.insert>3)for(r=t.strstart-t.insert;t.insert&&(kt(t,r),r++,t.insert--,!(t.lookahead+t.insert<=3)););}while(t.lookahead<ct&&0!==t.strm.avail_in)},Tt=(t,e)=>{let a,s,r,n=t.pending_buf_size-5>t.w_size?t.w_size:t.pending_buf_size-5,i=0,_=t.strm.avail_in;do{if(a=65535,r=t.bi_valid+42>>3,t.strm.avail_out<r)break;if(r=t.strm.avail_out-r,s=t.strstart-t.block_start,a>s+t.strm.avail_in&&(a=s+t.strm.avail_in),a>r&&(a=r),a<n&&(0===a&&e!==V||e===q||a!==s+t.strm.avail_in))break;i=e===V&&a===s+t.strm.avail_in?1:0,Y(t,0,0,i),t.pending_buf[t.pending-4]=a,t.pending_buf[t.pending-3]=a>>8,t.pending_buf[t.pending-2]=~a,t.pending_buf[t.pending-1]=~a>>8,xt(t.strm),s&&(s>a&&(s=a),t.strm.output.set(t.window.subarray(t.block_start,t.block_start+s),t.strm.next_out),t.strm.next_out+=s,t.strm.avail_out-=s,t.strm.total_out+=s,t.block_start+=s,a-=s),a&&(Ut(t.strm,t.strm.output,t.strm.next_out,a),t.strm.next_out+=a,t.strm.avail_out-=a,t.strm.total_out+=a)}while(0===i);return _-=t.strm.avail_in,_&&(_>=t.w_size?(t.matches=2,t.window.set(t.strm.input.subarray(t.strm.next_in-t.w_size,t.strm.next_in),0),t.strstart=t.w_size,t.insert=t.strstart):(t.window_size-t.strstart<=_&&(t.strstart-=t.w_size,t.window.set(t.window.subarray(t.w_size,t.w_size+t.strstart),0),t.matches<2&&t.matches++,t.insert>t.strstart&&(t.insert=t.strstart)),t.window.set(t.strm.input.subarray(t.strm.next_in-_,t.strm.next_in),t.strstart),t.strstart+=_,t.insert+=_>t.w_size-t.insert?t.w_size-t.insert:_),t.block_start=t.strstart),t.high_water<t.strstart&&(t.high_water=t.strstart),i?4:e!==q&&e!==V&&0===t.strm.avail_in&&t.strstart===t.block_start?2:(r=t.window_size-t.strstart,t.strm.avail_in>r&&t.block_start>=t.w_size&&(t.block_start-=t.w_size,t.strstart-=t.w_size,t.window.set(t.window.subarray(t.w_size,t.w_size+t.strstart),0),t.matches<2&&t.matches++,r+=t.w_size,t.insert>t.strstart&&(t.insert=t.strstart)),r>t.strm.avail_in&&(r=t.strm.avail_in),r&&(Ut(t.strm,t.window,t.strstart,r),t.strstart+=r,t.insert+=r>t.w_size-t.insert?t.w_size-t.insert:r),t.high_water<t.strstart&&(t.high_water=t.strstart),r=t.bi_valid+42>>3,r=t.pending_buf_size-r>65535?65535:t.pending_buf_size-r,n=r>t.w_size?t.w_size:r,s=t.strstart-t.block_start,(s>=n||(s||e===V)&&e!==q&&0===t.strm.avail_in&&s<=r)&&(a=s>r?r:s,i=e===V&&0===t.strm.avail_in&&a===s?1:0,Y(t,t.block_start,a,i),t.block_start+=a,xt(t.strm)),i?3:1)},Lt=(t,e)=>{let a,s;for(;;){if(t.lookahead<ct){if(St(t),t.lookahead<ct&&e===q)return 1;if(0===t.lookahead)break}if(a=0,t.lookahead>=3&&(a=kt(t,t.strstart)),0!==a&&t.strstart-a<=t.w_size-ct&&(t.match_length=Rt(t,a)),t.match_length>=3)if(s=X(t,t.strstart-t.match_start,t.match_length-3),t.lookahead-=t.match_length,t.match_length<=t.max_lazy_match&&t.lookahead>=3){t.match_length--;do{t.strstart++,a=kt(t,t.strstart)}while(0!=--t.match_length);t.strstart++}else t.strstart+=t.match_length,t.match_length=0,t.legacy_hash&&(t.ins_h=t.window[t.strstart],t.ins_h=zt(t,t.ins_h,t.window[t.strstart+1]));else s=X(t,0,t.window[t.strstart]),t.lookahead--,t.strstart++;if(s&&(At(t,!1),0===t.strm.avail_out))return 1}return t.insert=t.strstart<2?t.strstart:2,e===V?(At(t,!0),0===t.strm.avail_out?3:4):t.sym_next&&(At(t,!1),0===t.strm.avail_out)?1:2},Ft=(t,e)=>{let a,s,r;for(;;){if(t.lookahead<ct){if(St(t),t.lookahead<ct&&e===q)return 1;if(0===t.lookahead)break}if(a=0,t.lookahead>=3&&(a=kt(t,t.strstart)),t.prev_length=t.match_length,t.prev_match=t.match_start,t.match_length=2,0!==a&&t.prev_length<t.max_lazy_match&&t.strstart-a<=t.w_size-ct&&(t.match_length=Rt(t,a),t.match_length<=5&&(t.strategy===it||3===t.match_length&&t.strstart-t.match_start>4096)&&(t.match_length=2)),t.prev_length>=3&&t.match_length<=t.prev_length){r=t.strstart+t.lookahead-3,s=X(t,t.strstart-1-t.prev_match,t.prev_length-3),t.lookahead-=t.prev_length-1,t.prev_length-=2;do{++t.strstart<=r&&(a=kt(t,t.strstart))}while(0!=--t.prev_length);if(t.match_available=0,t.match_length=2,t.strstart++,s&&(At(t,!1),0===t.strm.avail_out))return 1}else if(t.match_available){if(s=X(t,0,t.window[t.strstart-1]),s&&At(t,!1),t.strstart++,t.lookahead--,0===t.strm.avail_out)return 1}else t.match_available=1,t.strstart++,t.lookahead--}return t.match_available&&(s=X(t,0,t.window[t.strstart-1]),t.match_available=0),t.insert=t.strstart<2?t.strstart:2,e===V?(At(t,!0),0===t.strm.avail_out?3:4):t.sym_next&&(At(t,!1),0===t.strm.avail_out)?1:2};function Ot(t,e,a,s,r){this.good_length=t,this.max_lazy=e,this.nice_length=a,this.max_chain=s,this.func=r}const Dt=[new Ot(0,0,0,0,Tt),new Ot(4,4,8,4,Lt),new Ot(4,5,16,8,Lt),new Ot(4,6,32,32,Lt),new Ot(4,4,16,16,Ft),new Ot(8,16,32,32,Ft),new Ot(8,16,128,128,Ft),new Ot(8,32,128,256,Ft),new Ot(32,128,258,1024,Ft),new Ot(32,258,258,4096,Ft)];function Nt(){this.strm=null,this.status=0,this.pending_buf=null,this.pending_buf_size=0,this.pending_out=0,this.pending=0,this.wrap=0,this.gzhead=null,this.gzindex=0,this.method=ut,this.last_flush=-1,this.w_size=0,this.w_bits=0,this.w_mask=0,this.window=null,this.window_size=0,this.prev=null,this.head=null,this.ins_h=0,this.legacy_hash=0,this.hash_size=0,this.hash_bits=0,this.hash_mask=0,this.hash_shift=0,this.block_start=0,this.match_length=0,this.prev_match=0,this.match_available=0,this.strstart=0,this.match_start=0,this.lookahead=0,this.prev_length=0,this.max_chain_length=0,this.max_lazy_match=0,this.level=0,this.strategy=0,this.good_match=0,this.nice_match=0,this.dyn_ltree=new Uint16Array(1146),this.dyn_dtree=new Uint16Array(122),this.bl_tree=new Uint16Array(78),yt(this.dyn_ltree),yt(this.dyn_dtree),yt(this.bl_tree),this.l_desc=null,this.d_desc=null,this.bl_desc=null,this.bl_count=new Uint16Array(16),this.heap=new Uint16Array(573),yt(this.heap),this.heap_len=0,this.heap_max=0,this.depth=new Uint16Array(573),yt(this.depth),this.sym_buf=0,this.lit_bufsize=0,this.sym_next=0,this.sym_end=0,this.opt_len=0,this.static_len=0,this.matches=0,this.insert=0,this.bi_buf=0,this.bi_valid=0}const It=t=>{if(!t)return 1;const e=t.state;return!e||e.strm!==t||e.status!==pt&&57!==e.status&&69!==e.status&&73!==e.status&&91!==e.status&&103!==e.status&&e.status!==gt&&e.status!==wt?1:0},Ht=t=>{if(It(t))return mt(t,at);t.total_in=t.total_out=0,t.data_type=dt;const e=t.state;return e.pending=0,e.pending_out=0,e.wrap<0&&(e.wrap=-e.wrap),e.status=2===e.wrap?57:e.wrap?pt:gt,t.adler=2===e.wrap?0:1,e.last_flush=-2,K(e),tt},Ct=t=>{const e=Ht(t);var a;return e===tt&&((a=t.state).window_size=2*a.w_size,yt(a.head),a.max_lazy_match=Dt[a.level].max_lazy,a.good_match=Dt[a.level].good_length,a.nice_match=Dt[a.level].nice_length,a.max_chain_length=Dt[a.level].max_chain,a.strstart=0,a.block_start=0,a.lookahead=0,a.insert=0,a.match_length=a.prev_length=2,a.match_available=0,a.ins_h=0),e},Bt=(t,e,a,s,r,n,i)=>{if(!t)return at;let _=1;if(e===nt&&(e=6),s<0?(_=0,s=-s):s>15&&(_=2,s-=16),r<1||r>9||a!==ut||s<8||s>15||e<0||e>9||n<0||n>ht||8===s&&1!==_)return mt(t,at);8===s&&(s=9);const l=new Nt;return t.state=l,l.strm=t,l.status=pt,l.wrap=_,l.gzhead=null,l.w_bits=s,l.w_size=1<<l.w_bits,l.w_mask=l.w_size-1,l.legacy_hash=i?1:0,l.hash_bits=r+7,!l.legacy_hash&&l.hash_bits<15&&(l.hash_bits=15),l.hash_size=1<<l.hash_bits,l.hash_mask=l.hash_size-1,l.hash_shift=~~((l.hash_bits+3-1)/3),l.window=new Uint8Array(2*l.w_size),l.head=new Uint16Array(l.hash_size),l.prev=new Uint16Array(l.w_size),l.lit_bufsize=1<<r+6,l.pending_buf_size=4*l.lit_bufsize,l.pending_buf=new Uint8Array(l.pending_buf_size),l.sym_buf=l.lit_bufsize,l.sym_end=3*(l.lit_bufsize-1),l.level=e,l.strategy=n,l.method=a,Ct(t)};var Mt={deflateInit:(t,e)=>Bt(t,e,ut,15,8,ot),deflateInit2:Bt,deflateReset:Ct,deflateResetKeep:Ht,deflateSetHeader:(t,e)=>It(t)||2!==t.state.wrap?at:(t.state.gzhead=e,tt),deflate:(t,e)=>{if(It(t)||e>$||e<0)return t?mt(t,at):at;const a=t.state;if(!t.output||0!==t.avail_in&&!t.input||a.status===wt&&e!==V)return mt(t,0===t.avail_out?rt:at);const s=a.last_flush;if(a.last_flush=e,0!==a.pending){if(xt(t),0===t.avail_out)return a.last_flush=-1,tt}else if(0===t.avail_in&&bt(e)<=bt(s)&&e!==V)return mt(t,rt);if(a.status===wt&&0!==t.avail_in)return mt(t,rt);if(a.status===pt&&0===a.wrap&&(a.status=gt),a.status===pt){let e=ut+(a.w_bits-8<<4)<<8,s=-1;if(s=a.strategy>=_t||a.level<2?0:a.level<6?1:6===a.level?2:3,e|=s<<6,0!==a.strstart&&(e|=32),e+=31-e%31,Zt(a,e),0!==a.strstart&&(Zt(a,t.adler>>>16),Zt(a,65535&t.adler)),t.adler=1,a.status=gt,xt(t),0!==a.pending)return a.last_flush=-1,tt}if(57===a.status)if(t.adler=0,Et(a,31),Et(a,139),Et(a,8),a.gzhead)Et(a,(a.gzhead.text?1:0)+(a.gzhead.hcrc?2:0)+(a.gzhead.extra?4:0)+(a.gzhead.name?8:0)+(a.gzhead.comment?16:0)),Et(a,255&a.gzhead.time),Et(a,a.gzhead.time>>8&255),Et(a,a.gzhead.time>>16&255),Et(a,a.gzhead.time>>24&255),Et(a,9===a.level?2:a.strategy>=_t||a.level<2?4:0),Et(a,255&a.gzhead.os),a.gzhead.extra&&a.gzhead.extra.length&&(Et(a,255&a.gzhead.extra.length),Et(a,a.gzhead.extra.length>>8&255)),a.gzhead.hcrc&&(t.adler=M(t.adler,a.pending_buf,a.pending,0)),a.gzindex=0,a.status=69;else if(Et(a,0),Et(a,0),Et(a,0),Et(a,0),Et(a,0),Et(a,9===a.level?2:a.strategy>=_t||a.level<2?4:0),Et(a,3),a.status=gt,xt(t),0!==a.pending)return a.last_flush=-1,tt;if(69===a.status){if(a.gzhead.extra){let e=a.pending,s=(65535&a.gzhead.extra.length)-a.gzindex;for(;a.pending+s>a.pending_buf_size;){let r=a.pending_buf_size-a.pending;if(a.pending_buf.set(a.gzhead.extra.subarray(a.gzindex,a.gzindex+r),a.pending),a.pending=a.pending_buf_size,a.gzhead.hcrc&&a.pending>e&&(t.adler=M(t.adler,a.pending_buf,a.pending-e,e)),a.gzindex+=r,xt(t),0!==a.pending)return a.last_flush=-1,tt;e=0,s-=r}let r=new Uint8Array(a.gzhead.extra);a.pending_buf.set(r.subarray(a.gzindex,a.gzindex+s),a.pending),a.pending+=s,a.gzhead.hcrc&&a.pending>e&&(t.adler=M(t.adler,a.pending_buf,a.pending-e,e)),a.gzindex=0}a.status=73}if(73===a.status){if(a.gzhead.name){let e,s=a.pending;do{if(a.pending===a.pending_buf_size){if(a.gzhead.hcrc&&a.pending>s&&(t.adler=M(t.adler,a.pending_buf,a.pending-s,s)),xt(t),0!==a.pending)return a.last_flush=-1,tt;s=0}e=a.gzindex<a.gzhead.name.length?255&a.gzhead.name.charCodeAt(a.gzindex++):0,Et(a,e)}while(0!==e);a.gzhead.hcrc&&a.pending>s&&(t.adler=M(t.adler,a.pending_buf,a.pending-s,s)),a.gzindex=0}a.status=91}if(91===a.status){if(a.gzhead.comment){let e,s=a.pending;do{if(a.pending===a.pending_buf_size){if(a.gzhead.hcrc&&a.pending>s&&(t.adler=M(t.adler,a.pending_buf,a.pending-s,s)),xt(t),0!==a.pending)return a.last_flush=-1,tt;s=0}e=a.gzindex<a.gzhead.comment.length?255&a.gzhead.comment.charCodeAt(a.gzindex++):0,Et(a,e)}while(0!==e);a.gzhead.hcrc&&a.pending>s&&(t.adler=M(t.adler,a.pending_buf,a.pending-s,s))}a.status=103}if(103===a.status){if(a.gzhead.hcrc){if(a.pending+2>a.pending_buf_size&&(xt(t),0!==a.pending))return a.last_flush=-1,tt;Et(a,255&t.adler),Et(a,t.adler>>8&255),t.adler=0}if(a.status=gt,xt(t),0!==a.pending)return a.last_flush=-1,tt}if(0!==t.avail_in||0!==a.lookahead||e!==q&&a.status!==wt){let s=0===a.level?Tt(a,e):a.strategy===_t?((t,e)=>{let a;for(;;){if(0===t.lookahead&&(St(t),0===t.lookahead)){if(e===q)return 1;break}if(t.match_length=0,a=X(t,0,t.window[t.strstart]),t.lookahead--,t.strstart++,a&&(At(t,!1),0===t.strm.avail_out))return 1}return t.insert=0,e===V?(At(t,!0),0===t.strm.avail_out?3:4):t.sym_next&&(At(t,!1),0===t.strm.avail_out)?1:2})(a,e):a.strategy===lt?((t,e)=>{let a,s,r,n;const i=t.window;for(;;){if(t.lookahead<=ft){if(St(t),t.lookahead<=ft&&e===q)return 1;if(0===t.lookahead)break}if(t.match_length=0,t.lookahead>=3&&t.strstart>0&&(r=t.strstart-1,s=i[r],s===i[++r]&&s===i[++r]&&s===i[++r])){n=t.strstart+ft;do{}while(s===i[++r]&&s===i[++r]&&s===i[++r]&&s===i[++r]&&s===i[++r]&&s===i[++r]&&s===i[++r]&&s===i[++r]&&r<n);t.match_length=ft-(n-r),t.match_length>t.lookahead&&(t.match_length=t.lookahead)}if(t.match_length>=3?(a=X(t,1,t.match_length-3),t.lookahead-=t.match_length,t.strstart+=t.match_length,t.match_length=0):(a=X(t,0,t.window[t.strstart]),t.lookahead--,t.strstart++),a&&(At(t,!1),0===t.strm.avail_out))return 1}return t.insert=0,e===V?(At(t,!0),0===t.strm.avail_out?3:4):t.sym_next&&(At(t,!1),0===t.strm.avail_out)?1:2})(a,e):Dt[a.level].func(a,e);if(3!==s&&4!==s||(a.status=wt),1===s||3===s)return 0===t.avail_out&&(a.last_flush=-1),tt;if(2===s&&(e===J?W(a):e!==$&&(Y(a,0,0,!1),e===Q&&(yt(a.head),0===a.lookahead&&(a.strstart=0,a.block_start=0,a.insert=0))),xt(t),0===t.avail_out))return a.last_flush=-1,tt}return e!==V?tt:a.wrap<=0?et:(2===a.wrap?(Et(a,255&t.adler),Et(a,t.adler>>8&255),Et(a,t.adler>>16&255),Et(a,t.adler>>24&255),Et(a,255&t.total_in),Et(a,t.total_in>>8&255),Et(a,t.total_in>>16&255),Et(a,t.total_in>>24&255)):(Zt(a,t.adler>>>16),Zt(a,65535&t.adler)),xt(t),a.wrap>0&&(a.wrap=-a.wrap),0!==a.pending?tt:et)},deflateEnd:t=>{if(It(t))return at;const e=t.state.status;return t.state=null,e===gt?mt(t,st):tt},deflateSetDictionary:(t,e)=>{let a=e.length;if(It(t))return at;const s=t.state,r=s.wrap;if(2===r||1===r&&s.status!==pt||s.lookahead)return at;if(1===r&&(t.adler=C(t.adler,e,a,0)),s.wrap=0,a>=s.w_size){0===r&&(yt(s.head),s.strstart=0,s.block_start=0,s.insert=0);let t=new Uint8Array(s.w_size);t.set(e.subarray(a-s.w_size,a),0),e=t,a=s.w_size}const n=t.avail_in,i=t.next_in,_=t.input;for(t.avail_in=a,t.next_in=0,t.input=e,St(s);s.lookahead>=3;){let t=s.strstart,e=s.lookahead-2;do{kt(s,t),t++}while(--e);s.strstart=t,s.lookahead=2,St(s)}return s.strstart+=s.lookahead,s.block_start=s.strstart,s.insert=s.lookahead,s.lookahead=0,s.match_length=s.prev_length=2,s.match_available=0,t.next_in=i,t.input=_,t.avail_in=n,s.wrap=r,tt},deflateInfo:"pako deflate (from Nodeca project)"};const Pt=(t,e)=>Object.prototype.hasOwnProperty.call(t,e);var jt=function(t){const e=Array.prototype.slice.call(arguments,1);for(;e.length;){const a=e.shift();if(a){if("object"!=typeof a)throw new TypeError(a+"must be non-object");for(const e in a)Pt(a,e)&&(t[e]=a[e])}}return t},Kt=t=>{let e=0;for(let a=0,s=t.length;a<s;a++)e+=t[a].length;const a=new Uint8Array(e);for(let e=0,s=0,r=t.length;e<r;e++){let r=t[e];a.set(r,s),s+=r.length}return a};let Yt=!0;try{String.fromCharCode.apply(null,new Uint8Array(1))}catch(t){Yt=!1}const Gt=new Uint8Array(256);for(let t=0;t<256;t++)Gt[t]=t>=252?6:t>=248?5:t>=240?4:t>=224?3:t>=192?2:1;Gt[254]=Gt[255]=1;var Xt=t=>{if("function"==typeof TextEncoder&&TextEncoder.prototype.encode)return(new TextEncoder).encode(t);let e,a,s,r,n,i=t.length,_=0;for(r=0;r<i;r++)a=t.charCodeAt(r),55296==(64512&a)&&r+1<i&&(s=t.charCodeAt(r+1),56320==(64512&s)&&(a=65536+(a-55296<<10)+(s-56320),r++)),_+=a<128?1:a<2048?2:a<65536?3:4;for(e=new Uint8Array(_),n=0,r=0;n<_;r++)a=t.charCodeAt(r),55296==(64512&a)&&r+1<i&&(s=t.charCodeAt(r+1),56320==(64512&s)&&(a=65536+(a-55296<<10)+(s-56320),r++)),a<128?e[n++]=a:a<2048?(e[n++]=192|a>>>6,e[n++]=128|63&a):a<65536?(e[n++]=224|a>>>12,e[n++]=128|a>>>6&63,e[n++]=128|63&a):(e[n++]=240|a>>>18,e[n++]=128|a>>>12&63,e[n++]=128|a>>>6&63,e[n++]=128|63&a);return e};var Wt=function(){this.input=null,this.next_in=0,this.avail_in=0,this.total_in=0,this.output=null,this.next_out=0,this.avail_out=0,this.total_out=0,this.msg="",this.state=null,this.data_type=2,this.adler=0};const qt=Object.prototype.toString,{Z_NO_FLUSH:Jt,Z_SYNC_FLUSH:Qt,Z_FULL_FLUSH:Vt,Z_FINISH:$t,Z_OK:te,Z_STREAM_END:ee,Z_DEFAULT_COMPRESSION:ae,Z_DEFAULT_STRATEGY:se,Z_DEFLATED:re}=j,ne={level:ae,method:re,chunkSize:16384,windowBits:15,memLevel:8,strategy:se,legacyHash:!0};function ie(t){this.options=jt({},ne,t||{});let e=this.options;e.raw&&e.windowBits>0?e.windowBits=-e.windowBits:e.gzip&&e.windowBits>0&&e.windowBits<16&&(e.windowBits+=16),this.err=0,this.msg="",this.ended=!1,this.chunks=[],this.strm=new Wt,this.strm.avail_out=0;let a=Mt.deflateInit2(this.strm,e.level,e.method,e.windowBits,e.memLevel,e.strategy,e.legacyHash);if(a!==te)throw new Error(P[a]);if(e.header&&Mt.deflateSetHeader(this.strm,e.header),e.dictionary){let t;if(t="string"==typeof e.dictionary?Xt(e.dictionary):"[object ArrayBuffer]"===qt.call(e.dictionary)?new Uint8Array(e.dictionary):e.dictionary,a=Mt.deflateSetDictionary(this.strm,t),a!==te)throw new Error(P[a]);this._dict_set=!0}}function _e(t,e){const a=new ie(e);if(a.push(t,!0),a.err)throw a.msg||P[a.err];return a.result}ie.prototype.push=function(t,e){const a=this.strm,s=this.options.chunkSize;let r,n;if(this.ended)return!1;for(n=e===~~e?e:!0===e?$t:Jt,"string"==typeof t?a.input=Xt(t):"[object ArrayBuffer]"===qt.call(t)?a.input=new Uint8Array(t):a.input=t,a.next_in=0,a.avail_in=a.input.length;;)if(0===a.avail_out&&(a.output=new Uint8Array(s),a.next_out=0,a.avail_out=s),(n===Qt||n===Vt)&&a.avail_out<=6)this.onData(a.output.subarray(0,a.next_out)),a.avail_out=0;else{if(r=Mt.deflate(a,n),r===ee)return a.next_out>0&&this.onData(a.output.subarray(0,a.next_out)),r=Mt.deflateEnd(this.strm),this.onEnd(r),this.ended=!0,r===te;if(0!==a.avail_out){if(n>0&&a.next_out>0)this.onData(a.output.subarray(0,a.next_out)),a.avail_out=0;else if(0===a.avail_in)break}else this.onData(a.output)}return!0},ie.prototype.onData=function(t){this.chunks.push(t)},ie.prototype.onEnd=function(t){t===te&&(this.result=Kt(this.chunks)),this.chunks=[],this.err=t,this.msg=this.strm.msg};var le=ie,he=_e,oe=function(t,e){return(e=e||{}).raw=!0,_e(t,e)},de=function(t,e){return(e=e||{}).gzip=!0,_e(t,e)},ue=j,fe={Deflate:le,deflate:he,deflateRaw:oe,gzip:de,constants:ue};t.Deflate=le,t.constants=ue,t.default=fe,t.deflate=he,t.deflateRaw=oe,t.gzip=de,Object.defineProperty(t,"__esModule",{value:!0})}));
+
+</script>
+<script>
 // ══════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════
@@ -2137,78 +2142,73 @@ function updateComplexity() {
   const proj = getProject();
   if (!proj) return;
 
+  // ── Ler métricas DIRETO dos pipes (fonte correta) ──
   const pipes = (proj.pipes || []).length || 1;
-  const integracoes = (proj.pendencias || []).filter(p => p.tipo === 'integracao').length;
-  const campos = getMaxCamposPorFase(proj);
-  const automacoes = parseInt(proj.automacoes || 0);
-  const templates = parseInt(proj.templates_email || 0);
-  const bancos = parseInt(proj.bancos_dados || 0);
-  const portal = proj.portal_externo || false;
-  const intExternas = parseInt(proj.int_externas || 0);
-  const novaIntegracao = proj.nova_integracao || false;
+  let totalIntExternas = 0;
+  let totalAutomacoes  = 0;
+  let totalBancos      = 0;
+  let totalTemplates   = 0;
+  let hasPortal        = false;
+  let hasNovaInt       = false;
+  let maxCamposFase    = 0;
+
+  (proj.pipes || []).forEach(pipe => {
+    totalIntExternas += parseInt(pipe.int_externas  || 0);
+    totalAutomacoes  += parseInt(pipe.automacoes    || 0);
+    totalBancos      += parseInt(pipe.bancos        || 0);
+    totalTemplates   += parseInt(pipe.templates     || 0);
+    if (pipe.portal)          hasPortal   = true;
+    if (pipe.nova_integracao) hasNovaInt  = true;
+    const camposPipe = (pipe.campos || []).filter(c => c.nome && c.nome.trim()).length;
+    if (camposPipe > maxCamposFase) maxCamposFase = camposPipe;
+  });
 
   let level = 'low';
   let reasons = [];
 
-  // Avaliar cada critério
-  if (pipes === 1) {
-    if (campos <= 15 && automacoes <= 10 && templates <= 5 && bancos <= 1 && intExternas === 0 && !portal) {
-      level = 'low';
-    }
-  }
+  // ── Regras BAIXA → MÉDIA ──
+  if (pipes >= 2 && pipes <= 3)               { level = 'mid'; reasons.push(pipes + ' pipes'); }
+  if (totalIntExternas >= 1 && totalIntExternas <= 2 && !hasNovaInt) { if (level === 'low') level = 'mid'; }
+  if (totalAutomacoes >= 11 && totalAutomacoes <= 20) { if (level === 'low') level = 'mid'; }
+  if (totalBancos >= 2 && totalBancos <= 4)   { if (level === 'low') level = 'mid'; }
+  if (maxCamposFase > 15 && maxCamposFase <= 25) { if (level === 'low') level = 'mid'; }
 
-  if (pipes >= 2 && pipes <= 3) { level = 'mid'; reasons.push(pipes + ' pipes'); }
-  if (pipes >= 2 && campos >= 15 && campos <= 25) { level = 'mid'; }
-  if (intExternas >= 1 && intExternas <= 2 && !novaIntegracao) { level = 'mid'; }
-  if (automacoes >= 11 && automacoes <= 20) { level = 'mid'; }
-  if (bancos >= 2 && bancos <= 4) { level = 'mid'; }
+  // ── Regras → ALTA (qualquer critério abaixo = ALTA, independente do resto) ──
+  if (pipes >= 4)                   { level = 'high'; reasons.push('4+ pipes'); }
+  if (maxCamposFase > 25)           { level = 'high'; reasons.push(maxCamposFase + ' campos/fase'); }
+  if (totalIntExternas >= 3)        { level = 'high'; reasons.push(totalIntExternas + ' integrações externas'); }
+  if (hasNovaInt)                   { level = 'high'; reasons.push('nova integração (nunca usada)'); }
+  if (totalAutomacoes > 20)         { level = 'high'; reasons.push(totalAutomacoes + ' automações'); }
+  if (totalBancos > 4)              { level = 'high'; reasons.push(totalBancos + ' bancos de dados'); }
+  if (hasPortal)                    { level = 'high'; reasons.push('portal externo'); }
 
-  if (pipes >= 4) { level = 'high'; reasons.push('4+ pipes'); }
-  if (campos > 25) { level = 'high'; reasons.push('26+ campos/fase'); }
-  if (intExternas >= 3 || novaIntegracao) { level = 'high'; reasons.push('3+ integrações ou nova integração'); }
-  if (automacoes > 20) { level = 'high'; reasons.push('21+ automações'); }
-  if (bancos > 4) { level = 'high'; reasons.push('5+ bancos de dados'); }
-  if (portal) { level = 'high'; reasons.push('portal externo'); }
+  // ── Regra especial: 2 pipes com critérios médios → ALTA ──
+  if (pipes >= 2 && level === 'mid') { level = 'high'; reasons.push(pipes + ' pipes com complexidade média = Alta'); }
 
-  // Regra: 2 pipes médios → Alta
-  if (pipes === 2 && level === 'mid') { level = 'high'; reasons.push('2 pipes médios = Alta'); }
-
-  // Guardar no projeto
   proj.complexity = level;
   saveState();
 
-  // Atualizar UI
+  const labels = { low:'BAIXA', mid:'MÉDIA', high:'ALTA' };
+  const classes = { low:'complexity-low', mid:'complexity-mid', high:'complexity-high' };
+  const bcls    = { low:'cnb-low', mid:'cnb-mid', high:'cnb-high' };
+
   const display = document.getElementById('complexityDisplay');
   const levelEl = document.getElementById('complexityLevel');
-  const justEl = document.getElementById('complexityJustification');
-  const badge = document.getElementById('complexityNavBadge');
+  const justEl  = document.getElementById('complexityJustification');
+  const badge   = document.getElementById('complexityNavBadge');
+  const grid    = document.getElementById('complexityGrid');
 
-  const labels = { low: 'BAIXA', mid: 'MÉDIA', high: 'ALTA' };
-  const classes = { low: 'complexity-low', mid: 'complexity-mid', high: 'complexity-high' };
-  const badgeClasses = { low: 'cnb-low', mid: 'cnb-mid', high: 'cnb-high' };
-
-  display.classList.add('visible');
-  levelEl.className = 'complexity-level ' + classes[level];
-  levelEl.textContent = labels[level];
-  justEl.textContent = reasons.length > 0 ? 'Motivo: ' + reasons.join(', ') : 'Calculado com base nos dados do Discovery';
-
-  badge.style.display = 'flex';
-  badge.className = 'complexity-nav-badge ' + badgeClasses[level];
-  badge.textContent = labels[level];
-
-  // Grid de métricas
-  const grid = document.getElementById('complexityGrid');
-  grid.innerHTML = [
-    { val: pipes, label: 'Pipes' },
-    { val: intExternas, label: 'Int. Externas' },
-    { val: automacoes, label: 'Automações' },
-    { val: campos, label: 'Campos/Fase' }
-  ].map(item => `
-    <div class="complexity-item">
-      <div class="ci-val">${item.val}</div>
-      <div class="ci-label">${item.label}</div>
-    </div>
-  `).join('');
+  if (display) display.classList.add('visible');
+  if (levelEl) { levelEl.className = 'complexity-level ' + classes[level]; levelEl.textContent = labels[level]; }
+  if (justEl)  justEl.textContent = reasons.length ? 'Motivo: ' + reasons.join(' · ') : 'Dentro dos parâmetros de baixa complexidade';
+  if (badge)   { badge.style.display = 'flex'; badge.className = 'cnb ' + bcls[level]; badge.textContent = labels[level]; }
+  if (grid) grid.innerHTML = [
+    { val: pipes,            label: 'Pipes'        },
+    { val: totalIntExternas, label: 'Int. Externas'},
+    { val: totalAutomacoes,  label: 'Automações'   },
+    { val: maxCamposFase,    label: 'Campos/Fase'  },
+    { val: totalBancos,      label: 'Bancos DB'    },
+  ].map(i => `<div class="complexity-item"><div class="ci-val">${i.val}</div><div class="ci-label">${i.label}</div></div>`).join('');
 }
 
 function getMaxCamposPorFase(proj) {
@@ -3725,360 +3725,415 @@ function importData(event) {
 // ═══════════════════════════════════════════
 // WORD DOCUMENT GENERATION (real .docx)
 // ═══════════════════════════════════════════
-async function generateWordPhase(phase) {
+function generateWordPhase(phase) {
   const proj = getProject();
   if (!proj) { alert('Selecione um projeto primeiro.'); return; }
-
-  // d5 = documento completo
   if (phase === 'd5') phase = 'all';
 
-  // Check docx library
-  // Check if docx library loaded
-  if (!window.docx) {
-    // Try to show an informative message
-    if (confirm('A biblioteca de geração Word (docx.js) não carregou.\n\nIsso acontece quando:\n• Sem conexão com internet\n• Pop-ups/scripts bloqueados\n\nClique OK para tentar recarregar a página.')) {
-      location.reload();
-    }
-    return;
-  }
-
-  const {
-    Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-    HeadingLevel, BorderStyle, WidthType, ShadingType, PageBreak, ImageRun, AlignmentType
-  } = window.docx;
-
-  const ans   = proj.answers || {};
-  const imgs  = proj.images  || {};
+  const ans  = proj.answers || {};
   const consul = state.team.find(c => c.id === proj.consultor);
   const consulNome = consul ? consul.nome : '—';
-  const now = new Date().toLocaleDateString('pt-BR');
-  const phaseLabels = { d1:'Kick-off', d2:'AS-IS', d3:'To-Be', d4:'SIPOC & Pipes', all:'Documento TO-BE Completo' };
+  const phaseLabels = {d1:'Kick-off',d2:'AS-IS',d3:'To-Be',d4:'SIPOC & Pipes',all:'TO-BE Completo'};
   const phaseLabel  = phaseLabels[phase] || phase;
 
-  // ── COLORS ──
-  const C_PURPLE = '4F46E5';
-  const C_DARK   = '141B2E';
-  const C_GRAY   = 'EEF0F8';
-  const C_WHITE  = 'FFFFFF';
-  const C_ACCENT = '7C5CFC';
-  const C_GREEN  = '059669';
-  const C_RED    = 'DC2626';
+  // ── Minimal docx builder (no CDN needed) ──
+  const W  = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+  const ns = `xmlns:w="${W}"`;
 
-  // Content width A4 with 2cm margins each side (in DXA: 1440 = 1 inch)
-  const W = 8748; // ~15.24cm
+  function e(v) { return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-  const bdr  = { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' };
-  const bdrs = { top: bdr, bottom: bdr, left: bdr, right: bdr };
-  const noBdr  = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
-  const noBdrs = { top: noBdr, bottom: noBdr, left: noBdr, right: noBdr };
+  function rPr(opts={}) {
+    let s='<w:rPr>';
+    if(opts.bold)       s+='<w:b/>';
+    if(opts.italic)     s+='<w:i/>';
+    if(opts.size)       s+=`<w:sz w:val="${opts.size}"/><w:szCs w:val="${opts.size}"/>`;
+    if(opts.color)      s+=`<w:color w:val="${opts.color}"/>`;
+    if(opts.highlight)  s+=`<w:highlight w:val="${opts.highlight}"/>`;
+    s+=`<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>`;
+    return s+'</w:rPr>';
+  }
 
-  // ── HELPERS ──
-  const txt = (t, opts={}) => new TextRun({ text: String(t||''), font: 'Arial', size: 20, ...opts });
+  function pPr(opts={}) {
+    let s='<w:pPr>';
+    if(opts.styleId)    s+=`<w:pStyle w:val="${opts.styleId}"/>`;
+    if(opts.spacing)    s+=`<w:spacing w:before="${opts.spacing.before||0}" w:after="${opts.spacing.after||0}"/>`;
+    if(opts.indent)     s+=`<w:ind w:left="${opts.indent.left||0}"/>`;
+    if(opts.borderLeft) s+=`<w:pBdr><w:left w:val="single" w:sz="14" w:space="6" w:color="${opts.borderLeft}"/></w:pBdr>`;
+    if(opts.borderBot)  s+=`<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="4" w:color="${opts.borderBot}"/></w:pBdr>`;
+    s+='<w:jc w:val="left"/>';
+    return s+'</w:pPr>';
+  }
 
-  const h1 = text => new Paragraph({
-    spacing: { before: 320, after: 120 },
-    border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: C_PURPLE, space: 4 } },
-    children: [ txt(text, { bold: true, size: 28, color: C_PURPLE }) ]
-  });
+  function run(text, opts={}) {
+    return `<w:r>${rPr(opts)}<w:t xml:space="preserve">${e(text)}</w:t></w:r>`;
+  }
 
-  const h2 = text => new Paragraph({
-    spacing: { before: 240, after: 80 },
-    children: [ txt(text, { bold: true, size: 22, color: C_DARK }) ]
-  });
+  function para(runs, opts={}) {
+    return `<w:p>${pPr(opts)}${Array.isArray(runs)?runs.join(''):runs}</w:p>`;
+  }
 
-  const h3 = text => new Paragraph({
-    spacing: { before: 180, after: 60 },
-    children: [ txt(text, { bold: true, size: 20, color: C_ACCENT }) ]
-  });
+  function h1(text) {
+    return para(run(text,{bold:true,size:28,color:'4F46E5'}),
+      {spacing:{before:320,after:120}, borderBot:'4F46E5'});
+  }
+  function h2(text) {
+    return para(run(text,{bold:true,size:22,color:'141B2E'}),
+      {spacing:{before:240,after:80}});
+  }
+  function h3(text) {
+    return para(run(text,{bold:true,size:20,color:'7C5CFC'}),
+      {spacing:{before:180,after:60}});
+  }
+  function spacer() {
+    return para(run(' ',{size:16}), {spacing:{before:0,after:60}});
+  }
+  function pgBreak() {
+    return `<w:p><w:r><w:rPr></w:rPr><w:br w:type="page"/></w:r></w:p>`;
+  }
 
-  const spacer = (pts=80) => new Paragraph({ spacing: { before: 0, after: pts }, children: [txt(' ')] });
-
-  // QA block: purple left border + label + answer lines
-  const qa = (question, answer) => {
+  function qa(question, answer) {
     const text = (answer && answer.trim()) ? answer : '(não informado)';
     const lines = text.split('\n');
-    return [
-      new Paragraph({
-        spacing: { before: 140, after: 40 },
-        border: { left: { style: BorderStyle.SINGLE, size: 14, color: C_PURPLE, space: 6 } },
-        indent: { left: 300 },
-        children: [ txt(question, { bold: true, size: 19, color: C_PURPLE }) ]
-      }),
-      ...lines.map(line => new Paragraph({
-        spacing: { before: 0, after: 36 },
-        indent: { left: 380 },
-        children: [ txt(line || ' ', { size: 19, color: '1E293B' }) ]
-      })),
-      spacer(60)
-    ];
-  };
-
-  const pgBreak = () => new Paragraph({ children: [ new PageBreak() ] });
-
-  // Cover block as dark table
-  const coverBlock = () => new Table({
-    width: { size: W, type: WidthType.DXA }, columnWidths: [W],
-    rows: [ new TableRow({ children: [ new TableCell({
-      borders: noBdrs,
-      shading: { fill: C_DARK, type: ShadingType.CLEAR },
-      margins: { top: 500, bottom: 500, left: 600, right: 600 },
-      width: { size: W, type: WidthType.DXA },
-      children: [
-        new Paragraph({ children: [ txt(proj.empresa || '—', { bold: true, size: 44, color: '9D7FFE' }) ] }),
-        new Paragraph({ spacing:{before:80}, children: [ txt('PROCESSO: ' + (proj.processo || '—'), { size: 22, color: 'AAAACC' }) ] }),
-        new Paragraph({ spacing:{before:60}, children: [ txt('Documento TO-BE — ' + phaseLabel, { size: 20, color: 'DDDDFF' }) ] }),
-        new Paragraph({ spacing:{before:120}, children: [
-          txt(now + '  ·  ' + consulNome, { size: 18, color: '888899' })
-        ]})
-      ]
-    }) ] }) ]
-  });
-
-  // Table builder
-  const makeTable = (headers, rows, colW) => new Table({
-    width: { size: colW.reduce((a,b)=>a+b,0), type: WidthType.DXA },
-    columnWidths: colW,
-    rows: [
-      new TableRow({ tableHeader: true, children: headers.map((h, i) => new TableCell({
-        borders: bdrs,
-        shading: { fill: C_PURPLE, type: ShadingType.CLEAR },
-        margins: { top: 80, bottom: 80, left: 120, right: 120 },
-        width: { size: colW[i], type: WidthType.DXA },
-        children: [ new Paragraph({ children: [ txt(h, { bold: true, size: 18, color: C_WHITE }) ] }) ]
-      }))}),
-      ...rows.map((row, ri) => new TableRow({ children: row.map((cell, ci) => new TableCell({
-        borders: bdrs,
-        shading: { fill: ri%2===0 ? C_WHITE : C_GRAY, type: ShadingType.CLEAR },
-        margins: { top: 72, bottom: 72, left: 120, right: 120 },
-        width: { size: colW[ci], type: WidthType.DXA },
-        children: [ new Paragraph({ children: [ txt(String(cell||'—'), { size: 18, color: C_DARK }) ] }) ]
-      }))}))
-    ]
-  });
-
-  // Image (base64 → ImageRun)
-  const imgBlock = async (src, caption) => {
-    if (!src) return [];
-    try {
-      const match = src.match(/^data:image\/([^;]+);base64,(.+)$/);
-      if (!match) return [];
-      const type = match[1].toLowerCase().replace('jpeg','jpg');
-      const binary = atob(match[2]);
-      const bytes = new Uint8Array(binary.length);
-      for (let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
-      const docxType = ['png','jpg','gif','bmp'].includes(type) ? type : 'png';
-      const imgW = Math.round(W * 0.0278 * 96);   // DXA→pt→px (approx)
-      const imgH = Math.round(imgW * 0.55);
-      return [
-        ...(caption ? [new Paragraph({ spacing:{before:120,after:40}, children:[txt(caption,{bold:true,size:18,color:'555555'})] })] : []),
-        new Paragraph({ spacing:{before:60,after:80}, children:[
-          new ImageRun({ data: bytes, transformation:{width:imgW,height:imgH}, type: docxType })
-        ]}),
-      ];
-    } catch(e) {
-      return [ new Paragraph({ children:[txt('[Imagem não disponível: ' + (caption||'') + ']',{italics:true,color:'999999'})] }) ];
+    let xml = '';
+    if(question) {
+      xml += para(run(question,{bold:true,size:19,color:'4F46E5'}),
+        {spacing:{before:140,after:40}, borderLeft:'4F46E5', indent:{left:300}});
     }
-  };
-
-  // ── BUILD CONTENT ──
-  const children = [];
-
-  children.push(coverBlock());
-  children.push(pgBreak());
-
-  // ──────── D1: KICK-OFF ────────
-  if (phase === 'd1' || phase === 'all') {
-    children.push(h1('Seção 1 — Kick-off (P1 a P6)'));
-    children.push(h2('1.1 — Conhecimento do Cliente em Pipefy'));
-    children.push(...qa('P1 — O cliente já usou o Pipefy antes?', ans.p1));
-    children.push(...qa('P2 — O dono do processo entende os conceitos básicos da ferramenta?', ans.p2));
-    children.push(h2('1.2 — Maturidade do Processo e Stakeholders'));
-    children.push(...qa('P3 — Qual é o objetivo desse processo e o que define sucesso?', ans.p3));
-    children.push(...qa('P4 — Quem é o dono do processo e quem o executa no dia a dia?', ans.p4));
-    children.push(...qa('P5 — Todos os stakeholders estão presentes nesta reunião?', ans.p5));
-    children.push(...qa('P6 — O processo já existe e é executado hoje? Como?', ans.p6));
-    if (ans.obs_d1) { children.push(h3('Observações — Kick-off')); children.push(...(ans.obs_d1||'').split('\n').map(l=>new Paragraph({indent:{left:240},children:[txt(l,{size:19,color:'1E293B'})]}))); }
-    if (phase !== 'all') children.push(pgBreak());
+    lines.forEach(line => {
+      xml += para(run(line||' ',{size:19,color:'1E293B'}),
+        {spacing:{before:0,after:36}, indent:{left:question?380:200}});
+    });
+    xml += spacer();
+    return xml;
   }
 
-  // ──────── D2: AS-IS ────────
-  if (phase === 'd2' || phase === 'all') {
-    if (phase==='all') children.push(pgBreak());
-    children.push(h1('Seção 2 — Mapeamento AS-IS (P7 a P11)'));
-    children.push(h2('2.1 — Entradas do Processo'));
-    children.push(...qa('P7 — Como chegam as solicitações para esse processo?', ans.p7));
-    children.push(...qa('P8 — Quem faz essas solicitações?', ans.p8));
-    children.push(...qa('P9 — Que informações chegam no início do processo?', ans.p9));
-    children.push(h2('2.2 — Regras, Fluxo e Critérios de Saída'));
-    children.push(...qa('P10 — O que você faz com as informações que recebe? Quais são as regras?', ans.p10));
-    children.push(...qa('P11 — O que precisa acontecer para o processo avançar ou ser encerrado?', ans.p11));
-    if (ans.obs_d2) { children.push(h3('Observações — AS-IS')); children.push(...(ans.obs_d2||'').split('\n').map(l=>new Paragraph({indent:{left:240},children:[txt(l,{size:19,color:'1E293B'})]}))); }
+  // Table: headers (array), rows (array of arrays), colWidths (array of DXA numbers)
+  function table(headers, rows, colWidths) {
+    const totalW = colWidths.reduce((a,b)=>a+b,0);
+    let xml = `<w:tbl><w:tblPr><w:tblW w:w="${totalW}" w:type="dxa"/>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="2" w:color="CCCCCC"/>
+        <w:left w:val="single" w:sz="2" w:color="CCCCCC"/>
+        <w:bottom w:val="single" w:sz="2" w:color="CCCCCC"/>
+        <w:right w:val="single" w:sz="2" w:color="CCCCCC"/>
+        <w:insideH w:val="single" w:sz="2" w:color="CCCCCC"/>
+        <w:insideV w:val="single" w:sz="2" w:color="CCCCCC"/>
+      </w:tblBorders>
+      <w:tblLook w:val="0000"/>
+    </w:tblPr>
+    <w:tblGrid>${colWidths.map(w=>`<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>`;
+
+    // Header row
+    xml += '<w:tr><w:trPr><w:tblHeader/></w:trPr>';
+    headers.forEach((h,i) => {
+      xml += `<w:tc><w:tcPr><w:tcW w:w="${colWidths[i]}" w:type="dxa"/>
+        <w:shd w:val="clear" w:color="auto" w:fill="4F46E5"/>
+        <w:tcMar><w:top w:w="80" w:type="dxa"/><w:left w:w="120" w:type="dxa"/><w:bottom w:w="80" w:type="dxa"/><w:right w:w="120" w:type="dxa"/></w:tcMar>
+      </w:tcPr>${para(run(h,{bold:true,size:18,color:'FFFFFF'}))}</w:tc>`;
+    });
+    xml += '</w:tr>';
+
+    // Data rows
+    rows.forEach((row,ri) => {
+      const fill = ri%2===0 ? 'FFFFFF' : 'EEF0F8';
+      xml += '<w:tr>';
+      row.forEach((cell,ci) => {
+        xml += `<w:tc><w:tcPr><w:tcW w:w="${colWidths[ci]}" w:type="dxa"/>
+          <w:shd w:val="clear" w:color="auto" w:fill="${fill}"/>
+          <w:tcMar><w:top w:w="72" w:type="dxa"/><w:left w:w="120" w:type="dxa"/><w:bottom w:w="72" w:type="dxa"/><w:right w:w="120" w:type="dxa"/></w:tcMar>
+        </w:tcPr>${para(run(String(cell||'—'),{size:18,color:'141B2E'}))}</w:tc>`;
+      });
+      xml += '</w:tr>';
+    });
+    xml += '</w:tbl>';
+    xml += spacer();
+    return xml;
   }
 
-  // ──────── D3: TO-BE ────────
-  if (phase === 'd3' || phase === 'all') {
-    if (phase==='all') children.push(pgBreak());
-    children.push(h1('Seção 3 — To-Be Detalhado (P12 a P21)'));
-    children.push(h2('3.1 — Fases Validadas do Processo'));
-    children.push(...qa('P12 — Quais são as fases do processo no Pipefy?', ans.p12));
-
-    if (imgs.fluxograma) { const n = await imgBlock(imgs.fluxograma, 'Fluxograma BPMN / AS-IS'); children.push(...n); }
-    if (imgs.kanban)     { const n = await imgBlock(imgs.kanban, 'Kanban TO-BE');                children.push(...n); }
-
-    children.push(h2('3.2 — RACI e Aprovações'));
-    children.push(...qa('P13 — Quem é responsável por esta fase e quem precisa ser informado?', ans.p13));
-    children.push(...qa('P14 — Esta fase é de aprovação? Como funciona?', ans.p14));
-    children.push(h2('3.3 — SLA e Integrações'));
-    children.push(...qa('P15 — Esta fase tem SLA? O que acontece quando vence?', ans.p15));
-    children.push(...qa('P16 — Esta fase precisa integrar com algum sistema externo?', ans.p16));
-    children.push(...qa('P17 — Esta fase tem emissão ou validação de documento?', ans.p17));
-    children.push(h2('3.4 — Campos, Comunicações e Atividades Paralelas'));
-    children.push(...qa('P18 — Quais são os campos desta fase e quais são as regras deles?', ans.p18));
-    children.push(...qa('P19 — Quais são as réguas de comunicação desta fase?', ans.p19));
-    children.push(...qa('P20 — Esta fase precisa de etiquetas ou alertas visuais?', ans.p20));
-    children.push(...qa('P21 — Esta fase gera alguma atividade paralela ou sub-processo?', ans.p21));
-    if (ans.obs_d3) { children.push(h3('Observações — To-Be')); children.push(...(ans.obs_d3||'').split('\n').map(l=>new Paragraph({indent:{left:240},children:[txt(l,{size:19,color:'1E293B'})]}))); }
+  function coverBlock() {
+    return `<w:tbl><w:tblPr>
+      <w:tblW w:w="8748" w:type="dxa"/>
+      <w:tblBorders><w:top w:val="none"/><w:left w:val="none"/><w:bottom w:val="none"/><w:right w:val="none"/><w:insideH w:val="none"/><w:insideV w:val="none"/></w:tblBorders>
+      <w:shd w:val="clear" w:color="auto" w:fill="141B2E"/>
+    </w:tblPr>
+    <w:tblGrid><w:gridCol w:w="8748"/></w:tblGrid>
+    <w:tr><w:tc><w:tcPr>
+      <w:tcW w:w="8748" w:type="dxa"/>
+      <w:shd w:val="clear" w:color="auto" w:fill="141B2E"/>
+      <w:tcMar><w:top w:w="500" w:type="dxa"/><w:left w:w="600" w:type="dxa"/><w:bottom w:w="500" w:type="dxa"/><w:right w:w="600" w:type="dxa"/></w:tcMar>
+    </w:tcPr>
+      ${para(run(proj.empresa||'—',{bold:true,size:44,color:'9D7FFE'}))}
+      ${para(run('PROCESSO: '+(proj.processo||'—'),{size:22,color:'AAAACC'}),{spacing:{before:80,after:0}})}
+      ${para(run('Documento TO-BE — '+phaseLabel,{size:20,color:'DDDDFF'}),{spacing:{before:60,after:0}})}
+      ${para(run(new Date().toLocaleDateString('pt-BR')+'  ·  '+consulNome,{size:18,color:'888899'}),{spacing:{before:120,after:0}})}
+    </w:tc></w:tr></w:tbl>`;
   }
 
-  // ──────── D4: SIPOC & PIPES ────────
-  if (phase === 'd4' || phase === 'all') {
-    if (phase==='all') children.push(pgBreak());
-    children.push(h1('Seção 4 — SIPOC & Pipes'));
+  // ── BUILD BODY ──
+  let body = coverBlock() + pgBreak();
 
-    (proj.pipes || []).forEach((pipe, pi) => {
-      children.push(h2(`Pipe ${pi+1}: ${pipe.nome || '—'}`));
+  // D1
+  if(phase==='d1'||phase==='all'){
+    body += h1('Seção 1 — Kick-off (P1 a P6)');
+    body += h2('1.1 — Conhecimento do Cliente em Pipefy');
+    body += qa('P1 — O cliente já usou o Pipefy antes?', ans.p1);
+    body += qa('P2 — O dono do processo entende os conceitos básicos?', ans.p2);
+    body += h2('1.2 — Maturidade do Processo e Stakeholders');
+    body += qa('P3 — Qual é o objetivo desse processo e o que define sucesso?', ans.p3);
+    body += qa('P4 — Quem é o dono do processo e quem o executa no dia a dia?', ans.p4);
+    body += qa('P5 — Todos os stakeholders estão presentes nesta reunião?', ans.p5);
+    body += qa('P6 — O processo já existe e é executado hoje? Como?', ans.p6);
+    if(ans.obs_d1){body+=h3('Observações');body+=qa('',ans.obs_d1);}
+    if(phase!=='all') body+=pgBreak();
+  }
 
-      // Métricas
-      children.push(h3('Configuração'));
-      children.push(makeTable(
-        ['Parâmetro','Valor'],
-        [
-          ['Automações', String(pipe.automacoes||0)],
-          ['Templates de E-mail', String(pipe.templates||0)],
-          ['Bancos de Dados', String(pipe.bancos||0)],
-          ['Integrações Externas', String(pipe.int_externas||0)],
-          ['Portal Externo / Interface', pipe.portal ? 'Sim' : 'Não'],
-          ['Nova Integração', pipe.nova_integracao ? 'Sim' : 'Não'],
-        ],
-        [4000, 4748]
-      ));
-      children.push(spacer(80));
+  // D2
+  if(phase==='d2'||phase==='all'){
+    if(phase==='all') body+=pgBreak();
+    body += h1('Seção 2 — Mapeamento AS-IS (P7 a P11)');
+    body += h2('2.1 — Entradas do Processo');
+    body += qa('P7 — Como chegam as solicitações para esse processo?', ans.p7);
+    body += qa('P8 — Quem faz essas solicitações?', ans.p8);
+    body += qa('P9 — Que informações chegam no início do processo?', ans.p9);
+    body += h2('2.2 — Regras, Fluxo e Critérios de Saída');
+    body += qa('P10 — O que você faz com as informações que recebe? Quais são as regras?', ans.p10);
+    body += qa('P11 — O que precisa acontecer para o processo avançar ou ser encerrado?', ans.p11);
+    if(ans.obs_d2){body+=h3('Observações');body+=qa('',ans.obs_d2);}
+  }
 
-      // RACI
-      if ((pipe.raci||[]).length > 0) {
-        children.push(h3('Matriz RACI — ' + pipe.nome));
-        children.push(makeTable(
+  // D3
+  if(phase==='d3'||phase==='all'){
+    if(phase==='all') body+=pgBreak();
+    body += h1('Seção 3 — To-Be Detalhado (P12 a P21)');
+    body += h2('3.1 — Fases Validadas do Processo');
+    body += qa('P12 — Quais são as fases do processo no Pipefy?', ans.p12);
+    body += h2('3.2 — RACI e Aprovações');
+    body += qa('P13 — Quem é responsável por esta fase e quem precisa ser informado?', ans.p13);
+    body += qa('P14 — Esta fase é de aprovação? Como funciona?', ans.p14);
+    body += h2('3.3 — SLA e Integrações');
+    body += qa('P15 — Esta fase tem SLA? O que acontece quando vence?', ans.p15);
+    body += qa('P16 — Esta fase precisa integrar com algum sistema externo?', ans.p16);
+    body += qa('P17 — Esta fase tem emissão ou validação de documento?', ans.p17);
+    body += h2('3.4 — Campos, Comunicações e Atividades Paralelas');
+    body += qa('P18 — Quais são os campos desta fase e quais são as regras deles?', ans.p18);
+    body += qa('P19 — Quais são as réguas de comunicação desta fase?', ans.p19);
+    body += qa('P20 — Esta fase precisa de etiquetas ou alertas visuais?', ans.p20);
+    body += qa('P21 — Esta fase gera alguma atividade paralela ou sub-processo?', ans.p21);
+    if(ans.obs_d3){body+=h3('Observações');body+=qa('',ans.obs_d3);}
+  }
+
+  // D4
+  if(phase==='d4'||phase==='all'){
+    if(phase==='all') body+=pgBreak();
+    body += h1('Seção 4 — SIPOC & Pipes');
+    (proj.pipes||[]).forEach((pipe,pi)=>{
+      body += h2(`Pipe ${pi+1}: ${pipe.nome||'—'}`);
+      body += h3('Configuração');
+      body += table(['Parâmetro','Valor'],[
+        ['Automações',String(pipe.automacoes||0)],
+        ['Templates de E-mail',String(pipe.templates||0)],
+        ['Bancos de Dados',String(pipe.bancos||0)],
+        ['Integrações Externas',String(pipe.int_externas||0)],
+        ['Portal Externo',pipe.portal?'Sim':'Não'],
+        ['Nova Integração',pipe.nova_integracao?'Sim':'Não'],
+      ],[4000,4748]);
+      if((pipe.raci||[]).length>0){
+        body+=h3('Matriz RACI — '+pipe.nome);
+        body+=table(
           ['Fase','R — Responsável','A — Aprovador','C — Consultado','I — Informado'],
-          pipe.raci.map(r => [r.fase||'—',r.r||'—',r.a||'—',r.c||'—',r.i||'—']),
-          [1600, 1787, 1787, 1787, 1787]
-        ));
-        children.push(spacer(80));
+          pipe.raci.map(r=>[r.fase||'—',r.r||'—',r.a||'—',r.c||'—',r.i||'—']),
+          [1600,1787,1787,1787,1787]
+        );
       }
-
-      // Campos
-      if ((pipe.campos||[]).length > 0) {
-        children.push(h3('Campos por Fase — ' + pipe.nome));
-        children.push(makeTable(
+      if((pipe.campos||[]).length>0){
+        body+=h3('Campos por Fase — '+pipe.nome);
+        body+=table(
           ['Fase','Campo','Tipo','Obrigatório','Condicional'],
-          pipe.campos.map(c => [c.fase||'—',c.nome||'—',c.tipo||'—',c.obrigatorio||'—',c.condicional||'—']),
-          [1400, 2000, 1800, 1274, 2274]
-        ));
-        children.push(spacer(80));
+          pipe.campos.map(c=>[c.fase||'—',c.nome||'—',c.tipo||'—',c.obrigatorio||'—',c.condicional||'—']),
+          [1400,2000,1800,1274,2274]
+        );
       }
     });
-
-    // SIPOC
-    if ((proj.sipoc||[]).length > 0) {
-      children.push(h2('SIPOC — Visão Geral do Processo'));
-      children.push(makeTable(
+    if((proj.sipoc||[]).length>0){
+      body+=h2('SIPOC — Visão Geral do Processo');
+      body+=table(
         ['Fornecedor (S)','Entrada (I)','Processo (P)','Saída (O)','Cliente (C)'],
-        proj.sipoc.map(r => [r.s||'—',r.i||'—',r.p||'—',r.o||'—',r.c||'—']),
+        proj.sipoc.map(r=>[r.s||'—',r.i||'—',r.p||'—',r.o||'—',r.c||'—']),
         [1748,1750,1750,1750,1750]
-      ));
-      children.push(spacer(80));
+      );
     }
-
-    // Pendências
-    if ((proj.pendencias||[]).length > 0) {
-      children.push(h2('Pendências Externas'));
-      children.push(makeTable(
+    if((proj.pendencias||[]).length>0){
+      body+=h2('Pendências Externas');
+      body+=table(
         ['Descrição','Responsável','Impacta?','Marco Afetado'],
-        proj.pendencias.map(p => [p.descricao||'—', p.responsavel||'—', p.impacta?'Sim ⚠️':'Não', p.marco||'—']),
-        [3000, 1748, 1000, 3000]
-      ));
+        proj.pendencias.map(p=>[p.descricao||'—',p.responsavel||'—',p.impacta?'Sim':'Não',p.marco||'—']),
+        [3000,1748,1000,3000]
+      );
     }
   }
 
-  // ──────── D5: DOCUMENTAÇÃO FINAL ────────
-  if (phase === 'all') {
-    children.push(pgBreak());
-    children.push(h1('Seção 5 — Documentação Final e Aceite'));
-
-    if (ans.doc_integracoes) { children.push(h2('Integrações a Desenvolver')); children.push(...qa('', ans.doc_integracoes)); }
-    if (ans.doc_templates)   { children.push(h2('Templates de E-mail')); children.push(...qa('', ans.doc_templates)); }
-    if (ans.doc_fora_escopo) { children.push(h2('Itens Fora do Escopo')); children.push(...qa('', ans.doc_fora_escopo)); }
-
-    // Checklist de aceite
-    children.push(h2('Checklist de Aceite Formal'));
-    const aceiteItems = [
-      ['ac1','Fluxograma TO-BE validado e aprovado pelo cliente'],
-      ['ac2','SIPOC revisado e confirmado'],
-      ['ac3','Matriz RACI aprovada pelos responsáveis'],
-      ['ac4','Campos por fase definidos e aprovados'],
-      ['ac5','Escopo de integrações confirmado'],
-      ['ac6','Pendências externas identificadas e comunicadas'],
-      ['ac7','Cliente deu aceite formal (assinatura ou confirmação escrita)'],
-    ];
-    aceiteItems.forEach(([id, label]) => {
-      const checked = ans[id];
-      children.push(new Paragraph({
-        spacing: { before: 60, after: 40 },
-        children: [
-          txt(checked ? '☑  ' : '☐  ', { size: 20, color: checked ? C_GREEN : '888888' }),
-          txt(label, { size: 20, color: checked ? C_GREEN : '444444', bold: checked }),
-        ]
-      }));
+  // D5
+  if(phase==='all'){
+    body+=pgBreak();
+    body+=h1('Seção 5 — Documentação Final e Aceite');
+    if(ans.doc_integracoes){body+=h2('Integrações a Desenvolver');body+=qa('',ans.doc_integracoes);}
+    if(ans.doc_templates){body+=h2('Templates de E-mail');body+=qa('',ans.doc_templates);}
+    if(ans.doc_fora_escopo){body+=h2('Itens Fora do Escopo');body+=qa('',ans.doc_fora_escopo);}
+    body+=h2('Checklist de Aceite Formal');
+    [['ac1','Fluxograma TO-BE validado e aprovado pelo cliente'],
+     ['ac2','SIPOC revisado e confirmado'],
+     ['ac3','Matriz RACI aprovada pelos responsáveis'],
+     ['ac4','Campos por fase definidos e aprovados'],
+     ['ac5','Escopo de integrações confirmado'],
+     ['ac6','Pendências externas identificadas e comunicadas'],
+     ['ac7','Cliente deu aceite formal (assinatura ou confirmação escrita)'],
+    ].forEach(([id,label])=>{
+      const ok=ans[id];
+      body+=para(
+        run((ok?'☑  ':'☐  ')+label,{size:20,color:ok?'059669':'444444',bold:!!ok}),
+        {spacing:{before:60,after:40}}
+      );
     });
   }
 
-  // ── GENERATE & DOWNLOAD ──
-  const doc = new Document({
-    styles: {
-      default: { document: { run: { font: 'Arial', size: 20 } } },
-      paragraphStyles: [
-        { id:'Heading1', name:'Heading 1', basedOn:'Normal', next:'Normal', quickFormat:true,
-          run:{size:28,bold:true,font:'Arial',color:C_PURPLE},
-          paragraph:{spacing:{before:320,after:120},outlineLevel:0} },
-        { id:'Heading2', name:'Heading 2', basedOn:'Normal', next:'Normal', quickFormat:true,
-          run:{size:22,bold:true,font:'Arial',color:C_DARK},
-          paragraph:{spacing:{before:240,after:80},outlineLevel:1} },
-      ]
-    },
-    sections: [{
-      properties: {
-        page: {
-          size: { width: 11906, height: 16838 },        // A4
-          margin: { top: 1134, right: 1134, bottom: 1134, left: 1134 } // ~2cm
-        }
-      },
-      children
-    }]
+  // ── BUILD XML ──
+  const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:body>${body}
+<w:sectPr>
+  <w:pgSz w:w="11906" w:h="16838"/>
+  <w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134"/>
+</w:sectPr>
+</w:body></w:document>`;
+
+  const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:style w:type="paragraph" w:default="1" w:styleId="Normal">
+  <w:name w:val="Normal"/>
+  <w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr>
+</w:style>
+</w:styles>`;
+
+  const files = {
+    '[Content_Types].xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+</Types>`,
+    '_rels/.rels': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`,
+    'word/_rels/document.xml.rels': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`,
+    'word/styles.xml': stylesXml,
+    'word/document.xml': docXml,
+  };
+
+  // ── BUILD ZIP (using pako deflate) ──
+  function strToU8(str) {
+    return new TextEncoder().encode(str);
+  }
+  function crc32(data) {
+    const table = (() => {
+      const t = new Uint32Array(256);
+      for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c;}
+      return t;
+    })();
+    let crc = 0xFFFFFFFF;
+    for(let i=0;i<data.length;i++) crc=(crc>>>8)^table[(crc^data[i])&0xFF];
+    return (crc^0xFFFFFFFF)>>>0;
+  }
+  function u32le(v){ const b=new Uint8Array(4); b[0]=v&0xFF;b[1]=(v>>8)&0xFF;b[2]=(v>>16)&0xFF;b[3]=(v>>24)&0xFF; return b; }
+  function u16le(v){ const b=new Uint8Array(2); b[0]=v&0xFF;b[1]=(v>>8)&0xFF; return b; }
+
+  const entries = [];
+  let offset = 0;
+  for(const [name, content] of Object.entries(files)){
+    const nameBytes  = strToU8(name);
+    const rawBytes   = strToU8(content);
+    const compressed = pako.deflateRaw(rawBytes, {level:6});
+    const useComp    = compressed.length < rawBytes.length;
+    const fileData   = useComp ? compressed : rawBytes;
+    const method     = useComp ? 8 : 0;
+    const crc        = crc32(rawBytes);
+    // Local file header (30 + nameLen)
+    const lh = new Uint8Array(30 + nameBytes.length);
+    const lhv = new DataView(lh.buffer);
+    lhv.setUint32(0, 0x04034b50, true);
+    lhv.setUint16(4, 20, true);
+    lhv.setUint16(6, 0, true);
+    lhv.setUint16(8, method, true);
+    lhv.setUint16(10, 0, true); lhv.setUint16(12, 0, true);
+    lhv.setUint32(14, crc, true);
+    lhv.setUint32(18, fileData.length, true);
+    lhv.setUint32(22, rawBytes.length, true);
+    lhv.setUint16(26, nameBytes.length, true);
+    lhv.setUint16(28, 0, true);
+    lh.set(nameBytes, 30);
+    entries.push({nameBytes, lh, fileData, rawBytes, method, crc, offset});
+    offset += lh.length + fileData.length;
+  }
+
+  // Central directory
+  const cdParts = entries.map(en => {
+    const cd = new Uint8Array(46 + en.nameBytes.length);
+    const v  = new DataView(cd.buffer);
+    v.setUint32(0, 0x02014b50, true);
+    v.setUint16(4, 20, true); v.setUint16(6, 20, true);
+    v.setUint16(8, 0, true);
+    v.setUint16(10, en.method, true);
+    v.setUint16(12, 0, true); v.setUint16(14, 0, true);
+    v.setUint32(16, en.crc, true);
+    v.setUint32(20, en.fileData.length, true);
+    v.setUint32(24, en.rawBytes.length, true);
+    v.setUint16(28, en.nameBytes.length, true);
+    v.setUint16(30, 0, true); v.setUint16(32, 0, true);
+    v.setUint16(34, 0, true); v.setUint16(36, 0, true);
+    v.setUint32(38, 0, true);
+    v.setUint32(42, en.offset, true);
+    cd.set(en.nameBytes, 46);
+    return cd;
   });
 
-  try {
-    const blob = await Packer.toBlob(doc);
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    const name = `TO-BE_${(proj.empresa||'Projeto').replace(/\s+/g,'_')}_${phaseLabel.replace(/[^a-zA-Z0-9]/g,'_')}.docx`;
-    a.href = url; a.download = name;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a); URL.revokeObjectURL(url);
-    addLog('Word gerado: ' + name);
-  } catch(err) {
-    alert('Erro ao gerar o documento: ' + err.message + '\n\nVerifique se o navegador permite pop-ups e downloads.');
-    console.error(err);
-  }
+  const cdSize   = cdParts.reduce((a,b)=>a+b.length, 0);
+  const cdOffset = offset;
+  const eocd = new Uint8Array(22);
+  const ev = new DataView(eocd.buffer);
+  ev.setUint32(0, 0x06054b50, true);
+  ev.setUint16(4, 0, true); ev.setUint16(6, 0, true);
+  ev.setUint16(8, entries.length, true);
+  ev.setUint16(10, entries.length, true);
+  ev.setUint32(12, cdSize, true);
+  ev.setUint32(16, cdOffset, true);
+  ev.setUint16(20, 0, true);
+
+  const parts = [];
+  for(const en of entries){ parts.push(en.lh); parts.push(en.fileData); }
+  cdParts.forEach(cd => parts.push(cd));
+  parts.push(eocd);
+
+  const totalLen = parts.reduce((a,b)=>a+b.length,0);
+  const buf = new Uint8Array(totalLen);
+  let off = 0;
+  parts.forEach(p=>{ buf.set(p,off); off+=p.length; });
+
+  // ── DOWNLOAD ──
+  const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const fname= `TO-BE_${(proj.empresa||'Projeto').replace(/[^a-zA-Z0-9]/g,'_')}_${phaseLabel.replace(/[^a-zA-Z0-9]/g,'_')}.docx`;
+  a.href=url; a.download=fname;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+  addLog('Word gerado: '+fname);
 }
+
 
 
 
