@@ -4130,9 +4130,46 @@ function generateWordPhase(phase) {
   // D4
   if(phase==='d4'||phase==='all'){
     if(phase==='all') body+=pgBreak();
-    body += h1('Seção 4 — SIPOC & Pipes');
+    body += h1('Seção 4 — SIPOC, RACI & Pipes');
+
+    // ── SIPOC ──
+    if((proj.sipoc||[]).length>0){
+      body+=h2('SIPOC — Visão Geral do Processo');
+      body+=table(
+        ['Fornecedor (S)','Entrada (I)','Processo (P)','Saída (O)','Cliente (C)'],
+        proj.sipoc.map(r=>[r.s||'—',r.i||'—',r.p||'—',r.o||'—',r.c||'—']),
+        [1748,1750,1750,1750,1750]
+      );
+    }
+
+    // ── RACI CONSOLIDADA (todas as fases de todos os pipes numa tabela) ──
+    const allRaciRows = [];
+    (proj.pipes||[]).forEach((pipe,pi)=>{
+      (pipe.raci||[]).forEach(r=>{
+        allRaciRows.push([
+          pipe.nome||('Pipe '+(pi+1)),
+          r.fase||'—',
+          r.r||'—',
+          r.a||'—',
+          r.c||'—',
+          r.i||'—'
+        ]);
+      });
+    });
+    if(allRaciRows.length>0){
+      body+=h2('Matriz RACI — Visão Consolidada');
+      body+=table(
+        ['Pipe','Fase','R — Responsável','A — Aprovador','C — Consultado','I — Informado'],
+        allRaciRows,
+        [1400,1600,1349,1349,1349,1701]
+      );
+    }
+
+    // ── CAMPOS POR PIPE ──
     (proj.pipes||[]).forEach((pipe,pi)=>{
       body += h2(`Pipe ${pi+1}: ${pipe.nome||'—'}`);
+
+      // Configuração do pipe
       body += h3('Configuração');
       body += table(['Parâmetro','Valor'],[
         ['Automações',String(pipe.automacoes||0)],
@@ -4142,16 +4179,10 @@ function generateWordPhase(phase) {
         ['Portal Externo',pipe.portal?'Sim':'Não'],
         ['Nova Integração',pipe.nova_integracao?'Sim':'Não'],
       ],[4000,4748]);
-      if((pipe.raci||[]).length>0){
-        body+=h3('Matriz RACI — '+pipe.nome);
-        body+=table(
-          ['Fase','R — Responsável','A — Aprovador','C — Consultado','I — Informado'],
-          pipe.raci.map(r=>[r.fase||'—',r.r||'—',r.a||'—',r.c||'—',r.i||'—']),
-          [1600,1787,1787,1787,1787]
-        );
-      }
+
+      // Campos por fase
       if((pipe.campos||[]).length>0){
-        body+=h3('Campos por Fase — '+pipe.nome);
+        body+=h3('Campos por Fase');
         body+=table(
           ['Fase','Campo','Tipo','Obrigatório','Condicional'],
           pipe.campos.map(c=>[c.fase||'—',c.nome||'—',c.tipo||'—',c.obrigatorio||'—',c.condicional||'—']),
@@ -4159,19 +4190,13 @@ function generateWordPhase(phase) {
         );
       }
     });
-    if((proj.sipoc||[]).length>0){
-      body+=h2('SIPOC — Visão Geral do Processo');
-      body+=table(
-        ['Fornecedor (S)','Entrada (I)','Processo (P)','Saída (O)','Cliente (C)'],
-        proj.sipoc.map(r=>[r.s||'—',r.i||'—',r.p||'—',r.o||'—',r.c||'—']),
-        [1748,1750,1750,1750,1750]
-      );
-    }
+
+    // ── PENDÊNCIAS ──
     if((proj.pendencias||[]).length>0){
       body+=h2('Pendências Externas');
       body+=table(
         ['Descrição','Responsável','Impacta?','Marco Afetado'],
-        proj.pendencias.map(p=>[p.descricao||'—',p.responsavel||'—',p.impacta?'Sim':'Não',p.marco||'—']),
+        proj.pendencias.map(p=>[p.descricao||'—',p.responsavel||'—',p.impacta?'Sim ⚠':'Não',p.marco||'—']),
         [3000,1748,1000,3000]
       );
     }
