@@ -970,7 +970,7 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
   </div>
 
   <div class="project-selector">
-    <select id="projectSelect" onchange="selectProject(this.value)">
+    <select id="projectSelect" onchange="flushAndSelectProject(this.value)">
       <option value="">— Selecione um projeto —</option>
     </select>
     <button class="btn-new-project" onclick="openModal('modalNewProject')">＋ Novo Projeto</button>
@@ -2032,6 +2032,82 @@ function createProject() {
   addLog('Projeto criado: ' + emp + ' — ' + proc);
 }
 
+
+// ── Força salvar qualquer input com foco antes de trocar projeto ──
+function flushUnsaved() {
+  // Dispara blur no elemento ativo para forçar onchange/oninput
+  if (document.activeElement && document.activeElement !== document.body) {
+    document.activeElement.blur();
+  }
+  // Força salvar campos dinâmicos do D4 que podem ter valor não salvo
+  // (SIPOC, RACI, Campos, Pendências — lê diretamente do DOM)
+  const proj = getProject();
+  if (!proj) return;
+
+  // SIPOC — percorre inputs do tbody
+  const sipocBody = document.getElementById('sipocBody');
+  if (sipocBody && proj.sipoc) {
+    const rows = sipocBody.querySelectorAll('tr');
+    rows.forEach((tr, i) => {
+      if (!proj.sipoc[i]) return;
+      const inputs = tr.querySelectorAll('input');
+      const fields = ['s','i','p','o','c'];
+      inputs.forEach((inp, fi) => {
+        if (fields[fi]) proj.sipoc[i][fields[fi]] = inp.value;
+      });
+    });
+  }
+
+  // RACI dentro dos pipes — percorre cada pipe
+  (proj.pipes || []).forEach(pipe => {
+    const raciTbody = document.getElementById('raci-' + pipe.id);
+    if (raciTbody && pipe.raci) {
+      const rows = raciTbody.querySelectorAll('tr');
+      rows.forEach((tr, i) => {
+        if (!pipe.raci[i]) return;
+        const inputs = tr.querySelectorAll('input');
+        const fields = ['fase','r','a','c','i'];
+        inputs.forEach((inp, fi) => {
+          if (fields[fi]) pipe.raci[i][fields[fi]] = inp.value;
+        });
+      });
+    }
+
+    // Campos dentro dos pipes
+    const camposTbody = document.querySelector(`#pipebody-${pipe.id} tbody:last-of-type`);
+    if (camposTbody && pipe.campos) {
+      const rows = camposTbody.querySelectorAll('tr');
+      rows.forEach((tr, i) => {
+        if (!pipe.campos[i]) return;
+        const inputs = tr.querySelectorAll('input');
+        if (inputs[0]) pipe.campos[i].fase    = inputs[0].value;
+        if (inputs[1]) pipe.campos[i].nome    = inputs[1].value;
+        if (inputs[4]) pipe.campos[i].condicional = inputs[4].value;
+      });
+    }
+  });
+
+  // Pendências
+  const pendencias = document.getElementById('pendenciasContainer');
+  if (pendencias && proj.pendencias) {
+    const items = pendencias.querySelectorAll('.pendencia-item');
+    items.forEach((item, i) => {
+      if (!proj.pendencias[i]) return;
+      const inputs = item.querySelectorAll('input[type="text"]');
+      if (inputs[0]) proj.pendencias[i].descricao   = inputs[0].value;
+      if (inputs[1]) proj.pendencias[i].responsavel = inputs[1].value;
+      if (inputs[2]) proj.pendencias[i].marco       = inputs[2].value;
+    });
+  }
+
+  saveState();
+}
+
+function flushAndSelectProject(id) {
+  flushUnsaved();     // salva tudo que está no DOM agora
+  selectProject(id);  // troca de projeto
+}
+
 function selectProject(id, silent) {
   // ── Limpar tudo antes de carregar o novo projeto ──
   // Textos e checkboxes
@@ -2364,7 +2440,7 @@ function renderPipes() {
       <div class="pipe-header" onclick="togglePipe('${pipe.id}')">
         <span style="color:var(--accent2);font-size:12px;font-weight:700">PIPE ${idx+1}</span>
         <input type="text" value="${pipe.nome}" onclick="event.stopPropagation()" 
-          onchange="updatePipeName('${pipe.id}', this.value)" oninput="event.stopPropagation()">
+          oninput="updatePipeName('${pipe.id}', this.value)" oninput="event.stopPropagation()">
         <button class="btn-del-row" onclick="event.stopPropagation();removePipe('${pipe.id}')">🗑</button>
         <span style="color:var(--text3);font-size:12px">${pipe.collapsed ? '▼' : '▲'}</span>
       </div>
@@ -2395,12 +2471,12 @@ function renderPipes() {
 
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:13px;color:var(--text2)">
           <label class="toggle"><input type="checkbox" ${pipe.portal ? 'checked' : ''} 
-            onchange="updatePipeBool('${pipe.id}','portal',this.checked)">
+            oninput="updatePipeBool('${pipe.id}','portal',this.checked)">
             <span class="toggle-slider"></span></label>
           Portal Externo / Interface
           &nbsp;&nbsp;
           <label class="toggle"><input type="checkbox" ${pipe.nova_integracao ? 'checked' : ''} 
-            onchange="updatePipeBool('${pipe.id}','nova_integracao',this.checked)">
+            oninput="updatePipeBool('${pipe.id}','nova_integracao',this.checked)">
             <span class="toggle-slider"></span></label>
           Nova Integração (nunca usada antes)
         </div>
@@ -2439,8 +2515,8 @@ function renderCamposRows(pipe) {
   if (!pipe.campos || pipe.campos.length === 0) return '';
   return pipe.campos.map((c, i) => `
     <tr>
-      <td><input type="text" value="${c.fase||''}" placeholder="Nome da fase..." onchange="updateCampo('${pipe.id}',${i},'fase',this.value)"></td>
-      <td><input type="text" value="${c.nome||''}" placeholder="Nome do campo..." onchange="updateCampo('${pipe.id}',${i},'nome',this.value)"></td>
+      <td><input type="text" value="${c.fase||''}" placeholder="Nome da fase..." oninput="updateCampo('${pipe.id}',${i},'fase',this.value)"></td>
+      <td><input type="text" value="${c.nome||''}" placeholder="Nome do campo..." oninput="updateCampo('${pipe.id}',${i},'nome',this.value)"></td>
       <td><select onchange="updateCampo('${pipe.id}',${i},'tipo',this.value)">
         ${['Texto curto','Texto longo','Número','Moeda','Data','Data e hora','Seleção (dropdown)','Seleção múltipla','Checkbox','Telefone','E-mail','URL','Anexo','Conexão com pipe','Assinatura','Fórmula'].map(t => `<option ${c.tipo===t?'selected':''}>${t}</option>`).join('')}
       </select></td>
@@ -2448,7 +2524,7 @@ function renderCamposRows(pipe) {
         <option ${c.obrigatorio==='Sim'?'selected':''}>Sim</option>
         <option ${c.obrigatorio==='Não'?'selected':''}>Não</option>
       </select></td>
-      <td><input type="text" value="${c.condicional||''}" placeholder="Descreva..." onchange="updateCampo('${pipe.id}',${i},'condicional',this.value)"></td>
+      <td><input type="text" value="${c.condicional||''}" placeholder="Descreva..." oninput="updateCampo('${pipe.id}',${i},'condicional',this.value)"></td>
       <td><button class="btn-del-row" onclick="removeCampo('${pipe.id}',${i})">×</button></td>
     </tr>
   `).join('');
@@ -2458,11 +2534,11 @@ function renderRaciRows(pipe) {
   if (!pipe.raci || pipe.raci.length === 0) return '';
   return pipe.raci.map((r, i) => `
     <tr>
-      <td><input type="text" value="${r.fase||''}" placeholder="Nome da fase..." onchange="updatePipeRaciRow('${pipe.id}',${i},'fase',this.value)"></td>
-      <td><input type="text" value="${r.r||''}" placeholder="Quem executa..." onchange="updatePipeRaciRow('${pipe.id}',${i},'r',this.value)"></td>
-      <td><input type="text" value="${r.a||''}" placeholder="Quem valida..." onchange="updatePipeRaciRow('${pipe.id}',${i},'a',this.value)"></td>
-      <td><input type="text" value="${r.c||''}" placeholder="Quem consultar..." onchange="updatePipeRaciRow('${pipe.id}',${i},'c',this.value)"></td>
-      <td><input type="text" value="${r.i||''}" placeholder="Quem notificar..." onchange="updatePipeRaciRow('${pipe.id}',${i},'i',this.value)"></td>
+      <td><input type="text" value="${r.fase||''}" placeholder="Nome da fase..." oninput="updatePipeRaciRow('${pipe.id}',${i},'fase',this.value)"></td>
+      <td><input type="text" value="${r.r||''}" placeholder="Quem executa..." oninput="updatePipeRaciRow('${pipe.id}',${i},'r',this.value)"></td>
+      <td><input type="text" value="${r.a||''}" placeholder="Quem valida..." oninput="updatePipeRaciRow('${pipe.id}',${i},'a',this.value)"></td>
+      <td><input type="text" value="${r.c||''}" placeholder="Quem consultar..." oninput="updatePipeRaciRow('${pipe.id}',${i},'c',this.value)"></td>
+      <td><input type="text" value="${r.i||''}" placeholder="Quem notificar..." oninput="updatePipeRaciRow('${pipe.id}',${i},'i',this.value)"></td>
       <td><button class="btn-del-row" onclick="removePipeRaciRow('${pipe.id}',${i})">×</button></td>
     </tr>
   `).join('');
@@ -2553,11 +2629,11 @@ function renderSipoc() {
   if (!tbody || !proj) return;
   tbody.innerHTML = (proj.sipoc || []).map((row, idx) => `
     <tr>
-      <td><input type="text" value="${row.s||''}" onchange="updateSipoc(${idx},'s',this.value)" placeholder="Fornecedor..."></td>
-      <td><input type="text" value="${row.i||''}" onchange="updateSipoc(${idx},'i',this.value)" placeholder="Entrada..."></td>
-      <td><input type="text" value="${row.p||''}" onchange="updateSipoc(${idx},'p',this.value)" placeholder="Processo..."></td>
-      <td><input type="text" value="${row.o||''}" onchange="updateSipoc(${idx},'o',this.value)" placeholder="Saída..."></td>
-      <td><input type="text" value="${row.c||''}" onchange="updateSipoc(${idx},'c',this.value)" placeholder="Cliente..."></td>
+      <td><input type="text" value="${row.s||''}" oninput="updateSipoc(${idx},'s',this.value)" placeholder="Fornecedor..."></td>
+      <td><input type="text" value="${row.i||''}" oninput="updateSipoc(${idx},'i',this.value)" placeholder="Entrada..."></td>
+      <td><input type="text" value="${row.p||''}" oninput="updateSipoc(${idx},'p',this.value)" placeholder="Processo..."></td>
+      <td><input type="text" value="${row.o||''}" oninput="updateSipoc(${idx},'o',this.value)" placeholder="Saída..."></td>
+      <td><input type="text" value="${row.c||''}" oninput="updateSipoc(${idx},'c',this.value)" placeholder="Cliente..."></td>
       <td><button class="btn-del-row" onclick="removeSipoc(${idx})">×</button></td>
     </tr>
   `).join('');
@@ -2631,25 +2707,25 @@ function renderPendencias() {
         <div class="field" style="margin:0">
           <label>Descrição da Pendência</label>
           <input type="text" value="${pend.descricao||''}" placeholder="Ex: Token API Serasa, Acesso TI..." 
-            onchange="updatePendencia(${idx},'descricao',this.value)">
+            oninput="updatePendencia(${idx},'descricao',this.value)">
         </div>
         <div class="field" style="margin:0">
           <label>Responsável</label>
           <input type="text" value="${pend.responsavel||''}" placeholder="Quem deve resolver..." 
-            onchange="updatePendencia(${idx},'responsavel',this.value)">
+            oninput="updatePendencia(${idx},'responsavel',this.value)">
         </div>
         <button class="btn-del-row" style="margin-top:20px" onclick="removePendencia(${idx})">🗑</button>
       </div>
       <div class="toggle-row">
         <label class="toggle">
-          <input type="checkbox" ${pend.impacta?'checked':''} onchange="updatePendencia(${idx},'impacta',this.checked);togglePendImpacta(${idx})">
+          <input type="checkbox" ${pend.impacta?'checked':''} oninput="updatePendencia(${idx},'impacta',this.checked);togglePendImpacta(${idx})">
           <span class="toggle-slider"></span>
         </label>
         Impacta Cronograma?
         <div id="pend-marco-${idx}" style="${pend.impacta?'':'display:none'}">
           &nbsp;→ Marco afetado:
           <input type="text" value="${pend.marco||''}" placeholder="Ex: M4, M6..." style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:3px 8px;border-radius:4px;font-size:12px;width:80px" 
-            onchange="updatePendencia(${idx},'marco',this.value)">
+            oninput="updatePendencia(${idx},'marco',this.value)">
         </div>
       </div>
     </div>
