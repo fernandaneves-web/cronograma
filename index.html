@@ -1638,6 +1638,7 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
         <button class="btn btn-secondary" onclick="navDiario(-1)">← Anterior</button>
         <button class="btn btn-secondary" onclick="navDiario(0)">Hoje</button>
         <button class="btn btn-secondary" onclick="navDiario(1)">Seguinte →</button>
+        <button class="btn btn-primary" onclick="loadDiario()">↻ Gerar</button>
         <button class="btn btn-secondary" id="btn-copy-diario" onclick="copyDiario()">📋 Copiar</button>
       </div>
     </div>
@@ -4009,6 +4010,61 @@ function generateWordPhase(phase) {
     </w:tc></w:tr></w:tbl>`;
   }
 
+  // ── IMAGE BLOCK helper ──
+  // Converts base64 image to WML drawing using a data URI placeholder
+  // Since we build raw XML, we embed image as a linked relationship (external) 
+  // OR simply emit a paragraph with the label — real img embedding needs more XML
+  // For now: encode image dimensions and embed as base64 in a w:pict note
+  function imgBlock(src, caption) {
+    if (!src) return '';
+    // Extract dimensions via Image object for proper sizing
+    // We'll use a fixed ratio and emit the image as an <w:p> with a tag noting the image
+    // The actual base64 embedding in OOXML requires relationships + media files in the zip
+    // Since we're building a minimal zip, we'll store the image file and reference it
+
+    // Store image for later zip inclusion
+    if (!_imgFiles) _imgFiles = {};
+    const match = src.match(/^data:image\/([^;]+);base64,(.+)$/);
+    if (!match) return '';
+    const ext  = match[1].replace('jpeg','jpg');
+    const b64  = match[2];
+    const rId  = 'rImg' + (Object.keys(_imgFiles).length + 1);
+    const name = 'image' + (Object.keys(_imgFiles).length + 1) + '.' + ext;
+    _imgFiles[name] = { b64, ext, rId };
+
+    // Return WML for the image paragraph
+    const w = 5400000; // EMUs — ~15cm wide
+    const h = Math.round(w * 0.55);
+    let xml = '';
+    if (caption) xml += `<w:p><w:pPr><w:spacing w:before="160" w:after="40"/></w:pPr>
+      <w:r><w:rPr><w:b/><w:sz w:val="18"/><w:color w:val="555555"/><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/></w:rPr>
+      <w:t>${e(caption)}</w:t></w:r></w:p>`;
+    xml += `<w:p><w:pPr><w:spacing w:before="60" w:after="120"/></w:pPr><w:r><w:rPr></w:rPr>
+      <w:drawing><wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+        xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+        xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"
+        xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+        <wp:extent cx="${w}" cy="${h}"/>
+        <wp:effectExtent l="0" t="0" r="0" b="0"/>
+        <wp:docPr id="${Object.keys(_imgFiles).length}" name="${e(caption||'img')}"/>
+        <a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">
+          <pic:pic><pic:nvPicPr>
+            <pic:cNvPr id="${Object.keys(_imgFiles).length}" name="${e(name)}"/>
+            <pic:cNvPicPr/>
+          </pic:nvPicPr>
+          <pic:blipFill>
+            <a:blip r:embed="${rId}"/>
+            <a:stretch><a:fillRect/></a:stretch>
+          </pic:blipFill>
+          <pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${w}" cy="${h}"/></a:xfrm>
+            <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          </pic:spPr>
+        </pic:pic></a:graphicData></a:graphic>
+      </wp:inline></w:drawing></w:r></w:p>`;
+    return xml;
+  }
+  let _imgFiles = {};
+
   // ── BUILD BODY ──
   let body = coverBlock() + pgBreak();
 
@@ -4047,7 +4103,16 @@ function generateWordPhase(phase) {
     body += h1('Seção 3 — To-Be Detalhado (P12 a P21)');
     body += h2('3.1 — Fases Validadas do Processo');
     body += qa('P12 — Quais são as fases do processo no Pipefy?', ans.p12);
-    body += h2('3.2 — RACI e Aprovações');
+
+    // Imagens: Fluxograma e Kanban embutidos no documento
+    const imgs = proj.images || {};
+    if (imgs.fluxograma || imgs.kanban) {
+      body += h2('3.2 — Fluxogramas e Diagramas');
+      if (imgs.fluxograma) body += imgBlock(imgs.fluxograma, 'Fluxograma BPMN / AS-IS');
+      if (imgs.kanban)     body += imgBlock(imgs.kanban,     'Kanban TO-BE');
+    }
+
+    body += h2('3.3 — RACI e Aprovações');
     body += qa('P13 — Quem é responsável por esta fase e quem precisa ser informado?', ans.p13);
     body += qa('P14 — Esta fase é de aprovação? Como funciona?', ans.p14);
     body += h2('3.3 — SLA e Integrações');
@@ -4119,6 +4184,16 @@ function generateWordPhase(phase) {
     if(ans.doc_integracoes){body+=h2('Integrações a Desenvolver');body+=qa('',ans.doc_integracoes);}
     if(ans.doc_templates){body+=h2('Templates de E-mail');body+=qa('',ans.doc_templates);}
     if(ans.doc_fora_escopo){body+=h2('Itens Fora do Escopo');body+=qa('',ans.doc_fora_escopo);}
+    // Imagens no D5 (se não tiver passado pelo D3)
+    if (phase === 'all') {
+      const imgs5 = proj.images || {};
+      if (imgs5.fluxograma || imgs5.kanban) {
+        body += h2('Anexos — Fluxogramas e Diagramas');
+        if (imgs5.fluxograma) body += imgBlock(imgs5.fluxograma, 'Fluxograma BPMN / AS-IS');
+        if (imgs5.kanban)     body += imgBlock(imgs5.kanban,     'Kanban TO-BE');
+      }
+    }
+
     body+=h2('Checklist de Aceite Formal');
     [['ac1','Fluxograma TO-BE validado e aprovado pelo cliente'],
      ['ac2','SIPOC revisado e confirmado'],
@@ -4174,6 +4249,35 @@ function generateWordPhase(phase) {
     'word/document.xml': docXml,
   };
 
+  // ── Add image files to ZIP and update Content_Types + Relationships ──
+  if (_imgFiles && Object.keys(_imgFiles).length > 0) {
+    // Add each image binary
+    Object.entries(_imgFiles).forEach(([name, imgData]) => {
+      const binary = atob(imgData.b64);
+      const bytes  = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      files['word/media/' + name] = bytes; // raw Uint8Array
+    });
+
+    // Update Content_Types to add image defaults
+    const imgExts = [...new Set(Object.values(_imgFiles).map(i => i.ext))];
+    const imgTypes = { png:'image/png', jpg:'image/jpeg', jpeg:'image/jpeg', gif:'image/gif', bmp:'image/bmp' };
+    const extraTypes = imgExts.map(ext =>
+      `<Default Extension="${ext}" ContentType="${imgTypes[ext]||'image/png'}"/>`
+    ).join('\n');
+    files['[Content_Types].xml'] = files['[Content_Types].xml'].replace(
+      '</Types>', extraTypes + '\n</Types>'
+    );
+
+    // Update word/_rels/document.xml.rels to add image relationships
+    const imgRels = Object.entries(_imgFiles).map(([name, imgData]) =>
+      `<Relationship Id="${imgData.rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${name}"/>`
+    ).join('\n');
+    files['word/_rels/document.xml.rels'] = files['word/_rels/document.xml.rels'].replace(
+      '</Relationships>', imgRels + '\n</Relationships>'
+    );
+  }
+
   // ── BUILD ZIP (using pako deflate) ──
   function strToU8(str) {
     return new TextEncoder().encode(str);
@@ -4193,9 +4297,10 @@ function generateWordPhase(phase) {
 
   const entries = [];
   let offset = 0;
-  for(const [name, content] of Object.entries(files)){
+  for(const [name, fileContent] of Object.entries(files)){
     const nameBytes  = strToU8(name);
-    const rawBytes   = strToU8(content);
+    // Support both string and raw Uint8Array (for images)
+    const rawBytes   = (fileContent instanceof Uint8Array) ? fileContent : strToU8(fileContent);
     const compressed = pako.deflateRaw(rawBytes, {level:6});
     const useComp    = compressed.length < rawBytes.length;
     const fileData   = useComp ? compressed : rawBytes;
