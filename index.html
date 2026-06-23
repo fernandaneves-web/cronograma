@@ -1968,17 +1968,29 @@ function showPage(name) {
   if (name === 'report') { setReportTab('semanal'); }
   if (name === 'calculadora') { updateConsultorCalcSelect(); loadCalcFromProject(); }
   if (name === 'cronograma') { checkCronogramaGate(); renderGantt(); }
+  if (name === 'log') { renderLog(); }
+  // Ao voltar ao discovery, garantir que D4 está atualizado se estava sujo
+  if (name === 'discovery' && state._d4Dirty) {
+    const phaseD4 = document.getElementById('phase-d4');
+    if (phaseD4 && phaseD4.style.display !== 'none') {
+      renderPipes(); renderSipoc(); renderPendencias();
+      state._d4Dirty = false;
+    }
+  }
 }
 
 function showPhase(phase) {
   ['d1','d2','d3','d4','d5'].forEach(p => {
     document.getElementById('phase-' + p).style.display = (p === phase) ? 'block' : 'none';
     const tab = document.getElementById('tab-' + p);
-    tab.classList.toggle('active', p === phase);
+    if (tab) tab.classList.toggle('active', p === phase);
   });
+  // D4: sempre recarrega do projeto atual (garante que troca de projeto atualiza pipes/sipoc/pendências)
   if (phase === 'd4') {
     renderPipes();
+    renderSipoc();
     renderPendencias();
+    state._d4Dirty = false;
   }
 }
 
@@ -2021,6 +2033,56 @@ function createProject() {
 }
 
 function selectProject(id, silent) {
+  // ── Limpar tudo antes de carregar o novo projeto ──
+  // Textos e checkboxes
+  TEXT_FIELDS.forEach(fieldId => {
+    const el = document.getElementById(fieldId);
+    if (el) el.value = '';
+  });
+  CHECKBOX_FIELDS.forEach(fieldId => {
+    const el = document.getElementById(fieldId);
+    if (el) el.checked = false;
+  });
+
+  // Imagens
+  ['fluxograma', 'kanban'].forEach(key => renderImagePreview(key, null));
+
+  // Containers dinâmicos D4
+  const containers = ['pipesContainer','sipocBody','pendenciasContainer','raciBody'];
+  containers.forEach(cid => { const el = document.getElementById(cid); if (el) el.innerHTML = ''; });
+
+  // Gantt
+  const ganttVis = document.getElementById('ganttVisualContainer');
+  if (ganttVis) ganttVis.innerHTML = '';
+  const ganttBody = document.getElementById('ganttBody');
+  if (ganttBody) ganttBody.innerHTML = '';
+
+  // Log
+  const logC = document.getElementById('logContainer');
+  if (logC) logC.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:16px 0;text-align:center">Nenhuma mudança registrada.</div>';
+
+  // Complexidade
+  const cd = document.getElementById('complexityDisplay');
+  if (cd) cd.classList.remove('visible');
+  const badge = document.getElementById('complexityNavBadge');
+  if (badge) badge.style.display = 'none';
+
+  // Report e diário
+  const rc = document.getElementById('reportContent');
+  if (rc) rc.textContent = 'Clique em "Gerar" para atualizar.';
+
+  // Aceite status reset
+  const aceiteEl = document.getElementById('aceiteStatus');
+  if (aceiteEl) {
+    aceiteEl.style.cssText = 'margin-top:12px;padding:10px 14px;border-radius:var(--radius);background:var(--surface2);font-size:12px;color:var(--text2)';
+    aceiteEl.textContent = 'Aceite pendente — complete o checklist acima.';
+  }
+
+  // Progress bar
+  const prog = document.getElementById('discoveryProgress');
+  if (prog) prog.style.width = '0%';
+
+  // ── Sem projeto selecionado ──
   if (!id) {
     state.currentProjectId = null;
     document.getElementById('noProjectMsg').style.display = 'flex';
@@ -2028,17 +2090,43 @@ function selectProject(id, silent) {
     document.getElementById('disc-proj-name').textContent = 'Sem projeto ativo';
     return;
   }
+
+  // ── Carregar projeto ──
   state.currentProjectId = id;
   const proj = getProject();
   if (!proj) return;
+
   document.getElementById('noProjectMsg').style.display = 'none';
   document.getElementById('discoveryContent').style.display = 'block';
   document.getElementById('disc-proj-name').textContent = proj.empresa + ' — ' + proj.processo;
   document.getElementById('projectSelect').value = id;
-  loadAnswers();
-  loadImages();
+
+  // ── Carregar todos os dados ──
+  loadAnswers();       // P1–P21, obs, docs, checkboxes
+  loadImages();        // Fluxograma e kanban
+
+  // D4 — rerender dinâmicos (só se estiver na fase d4 ativa)
+  const phaseD4 = document.getElementById('phase-d4');
+  if (phaseD4 && phaseD4.style.display !== 'none') {
+    renderPipes();
+    renderSipoc();
+    renderPendencias();
+  }
+
+  // Marcar que D4 precisa ser renderizado quando abrir
+  state._d4Dirty = true;
+
+  checkAceite();
   checkCronogramaGate();
   updateComplexity();
+  renderLog();
+
+  // Calculadora — atualizar badges se visível
+  const calcPage = document.getElementById('page-calculadora');
+  if (calcPage && calcPage.classList.contains('active')) {
+    loadCalcFromProject();
+  }
+
   if (!silent) saveState();
 }
 
