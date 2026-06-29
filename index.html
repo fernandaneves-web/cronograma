@@ -3186,14 +3186,16 @@ function recalculate() {
   let totalComPeso4 = total;
   if (peso4) { totalComPeso4 = total * 1.3; }
 
-  const dedicado = totalComPeso4 / simultaneos;
-  const diasUteis = Math.ceil(dedicado / 6);
+  // Capacidade diária = 6h ÷ projetos simultâneos
+  // Com 2 projetos: 3h/dia → mais dias, não menos
+  const horasPorDia = 6 / simultaneos;
+  const diasUteis = Math.ceil(totalComPeso4 / horasPorDia);
 
-  // Fast Feedback Loop: 0.5h por semana
+  // Fast Feedback Loop: 0.5h por semana (conta como tempo do projeto)
   const semanas = Math.ceil(diasUteis / 5);
   const ffhoras = semanas * 0.5;
-  const totalFinal = dedicado + ffhoras;
-  const diasFinal = Math.ceil(totalFinal / 6);
+  const totalFinal = totalComPeso4 + ffhoras;
+  const diasFinal = Math.ceil(totalFinal / horasPorDia);
 
   const complexLabels = { low: 'BAIXA', mid: 'MÉDIA', high: 'ALTA' };
 
@@ -3224,8 +3226,8 @@ function recalculate() {
       <span class="val">${Math.round(totalComPeso4)}h</span>
     </div>
     <div class="calc-result-row">
-      <span class="label">Dedicação (÷ ${simultaneos} projeto${simultaneos>1?'s':''})</span>
-      <span class="val">${Math.round(dedicado)}h</span>
+      <span class="label">Capacidade diária (${simultaneos} projeto${simultaneos>1?'s':''} simultâneo${simultaneos>1?'s':''})</span>
+      <span class="val">${horasPorDia}h/dia</span>
     </div>
     <div class="calc-result-row">
       <span class="label">Fast Feedback Loop (${semanas} semanas × 0,5h)</span>
@@ -3238,7 +3240,7 @@ function recalculate() {
   `;
 
   // Guardar para aplicar ao gantt
-  window._calcResult = { totalFinal, diasFinal, breakdown, seniority, comp, pipes, integracoes, simultaneos };
+  window._calcResult = { totalFinal, diasFinal, breakdown, seniority, comp, pipes, integracoes, simultaneos, horasPorDia };
 }
 
 function applyToGantt() {
@@ -3273,6 +3275,10 @@ function confirmApplyToGantt() {
   const pipes = projPipes;
   const integracoes = projIntegracoes; // sempre dos pipes do projeto
 
+  // Capacidade diária correta: 6h ÷ projetos simultâneos
+  const simultaneos = calc.simultaneos || 1;
+  const horasPorDia = calc.horasPorDia || (6 / simultaneos);
+
   function nextWorkDay(d) {
     let next = new Date(d);
     next.setDate(next.getDate() + 1);
@@ -3291,14 +3297,14 @@ function confirmApplyToGantt() {
   }
 
   function makeMarco(title, tipo, horasTotal, start, subs) {
-    const days = Math.max(1, Math.ceil(horasTotal / 6));
+    const days = Math.max(1, Math.ceil(horasTotal / horasPorDia));
     const end = addWorkDays(start, days);
     const id = 'marco_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     gantt.push({ id, title, tipo, responsavel: '', planned_start: start.toISOString().split('T')[0], planned_end: end.toISOString().split('T')[0], done: false });
     if (subs) {
       let subStart = new Date(start);
       subs.forEach(sub => {
-        const subDays = Math.max(1, Math.ceil(sub.h / 6));
+        const subDays = Math.max(1, Math.ceil(sub.h / horasPorDia));
         const subEnd = addWorkDays(subStart, subDays);
         const subId = 'sub_' + Date.now() + '_' + Math.random().toString(36).slice(2);
         gantt.push({ id: subId, parentId: id, title: sub.label, tipo, responsavel: '', planned_start: subStart.toISOString().split('T')[0], planned_end: subEnd.toISOString().split('T')[0], done: false });
@@ -3382,6 +3388,58 @@ function confirmApplyToGantt() {
   }
 
   proj.gantt = gantt;
+
+  // ── Reuniões semanais de alinhamento (toda segunda, 30min) ──
+  if (proj.gantt.length > 0) {
+    // Pegar intervalo total do projeto
+    const allStarts = proj.gantt.map(i => i.planned_start).filter(Boolean).sort();
+    const allEnds   = proj.gantt.map(i => i.planned_end).filter(Boolean).sort();
+    const projStart = new Date(allStarts[0]);
+    const projEnd   = new Date(allEnds[allEnds.length - 1]);
+
+    // Marco pai para reuniões
+    const meetingMarcoId = 'marco_meetings_' + Date.now();
+    const meetingSubs = [];
+
+    // Iterar todas as segundas-feiras entre início e fim do projeto
+    let cur2 = new Date(projStart);
+    // Avançar para a próxima segunda (ou manter se já for segunda)
+    while (cur2.getDay() !== 1) cur2.setDate(cur2.getDate() + 1);
+
+    let weekNum = 1;
+    while (cur2 <= projEnd) {
+      const dateStr = cur2.toISOString().split('T')[0];
+      const subId = 'sub_meet_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      proj.gantt.push({
+        id: subId,
+        parentId: meetingMarcoId,
+        title: 'Alinhamento Semana ' + weekNum + ' (30min)',
+        tipo: 'discovery',
+        responsavel: '',
+        planned_start: dateStr,
+        planned_end:   dateStr,
+        done: false
+      });
+      meetingSubs.push(subId);
+      weekNum++;
+      cur2.setDate(cur2.getDate() + 7); // próxima segunda
+    }
+
+    if (meetingSubs.length > 0) {
+      // Inserir o marco pai logo antes dos sub-marcos
+      const marcoIdx = proj.gantt.findIndex(i => i.id === meetingSubs[0]);
+      proj.gantt.splice(marcoIdx, 0, {
+        id: meetingMarcoId,
+        title: '📅 Reuniões Semanais de Alinhamento',
+        tipo: 'discovery',
+        responsavel: '',
+        planned_start: proj.gantt.find(i => i.id === meetingSubs[0])?.planned_start || allStarts[0],
+        planned_end:   proj.gantt.find(i => i.id === meetingSubs[meetingSubs.length-1])?.planned_start || allEnds[allEnds.length-1],
+        done: false
+      });
+    }
+  }
+
   saveState();
   addLog('Calculadora aplicada ao Gantt — ' + gantt.filter(i=>!i.parentId).length + ' marcos gerados');
   showPage('cronograma');
