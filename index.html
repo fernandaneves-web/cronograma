@@ -1564,7 +1564,8 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
       <button class="btn btn-secondary" onclick="addMarcoManual()">＋ Marco Manual</button>
       <button class="btn btn-secondary" onclick="addFeriado()">📅 Feriado Regional</button>
       <div style="margin-left:auto;display:flex;gap:6px">
-        <button class="btn btn-green" onclick="exportGanttExcel()" title="Exportar cronograma como planilha Excel">📥 Exportar Excel</button>
+        <button class="btn btn-green" onclick="exportGanttExcel()" title="Exportar cronograma técnico (uso interno)">📥 Excel Interno</button>
+        <button class="btn btn-primary" onclick="exportGanttExcelCliente()" title="Exportar cronograma visual para o cliente">📊 Excel Cliente</button>
         <button class="btn btn-secondary" onclick="document.getElementById('importGanttFile').click()" title="Importar cronograma de planilha Excel">📤 Importar Excel</button>
         <input type="file" id="importGanttFile" accept=".xlsx,.xls" style="display:none" onchange="importGanttExcel(event)">
       </div>
@@ -4707,6 +4708,450 @@ function exportGanttExcel() {
   const fname = 'Cronograma_' + (proj.empresa || 'Projeto').replace(/[^a-zA-Z0-9]/g,'_') + '_' + new Date().toISOString().split('T')[0] + '.xlsx';
   XLSX.writeFile(wb, fname);
   addLog('Cronograma exportado para Excel: ' + fname);
+}
+
+// ──────────────────────────────────────────
+// EXCEL CLIENTE — visual comercial com Gantt
+// ──────────────────────────────────────────
+function exportGanttExcelCliente() {
+  const proj = getProject();
+  if (!proj) { alert('Selecione um projeto primeiro.'); return; }
+  if (!proj.gantt || proj.gantt.length === 0) { alert('Nenhum marco no cronograma para exportar.'); return; }
+  if (typeof XLSX === 'undefined') { alert('Biblioteca Excel ainda carregando. Tente em alguns segundos.'); return; }
+
+  // ── helpers ──────────────────────────────
+  function dateToSerial(dateStr) {
+    if (!dateStr) return null;
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d)) return null;
+    // Excel serial: days since 1899-12-30
+    return Math.round((d - new Date(Date.UTC(1899,11,30))) / 86400000);
+  }
+  function addCell(ws, addr, value, style) {
+    ws[addr] = Object.assign({ v: value }, style);
+    if (typeof value === 'number') ws[addr].t = 'n';
+    else if (typeof value === 'boolean') ws[addr].t = 'b';
+    else ws[addr].t = 's';
+  }
+  function cellAddr(r, c) {
+    // r=0-based row, c=0-based col → "A1" style
+    let col = '';
+    let cc = c;
+    do { col = String.fromCharCode(65 + (cc % 26)) + col; cc = Math.floor(cc / 26) - 1; } while (cc >= 0);
+    return col + (r + 1);
+  }
+
+  // ── colours ──────────────────────────────
+  const C = {
+    headerBg:   'FF6600FF', // laranja título
+    headerFg:   'FFFFFFFF',
+    colHdr:     'FF33CC99', // verde cabeçalho colunas
+    colHdrFg:   'FFFFFFFF',
+    marcoBg:    'FFDAC4FB', // roxo claro — marco pai
+    objetivoBg: 'FFC0ECDD', // verde claro — objetivo
+    subAlt:     'FFF9F9F9', // quase branco
+    subBg:      'FFFFFFFF',
+    barDisc:    'FF4FA3F7', // azul — discovery
+    barDev:     'FF7C5CFC', // roxo — dev
+    barTest:    'FF3DD68C', // verde — testes
+    barTrain:   'FFF5A623', // âmbar — treinamento
+    barSupp:    'FFF0545A', // vermelho — suporte
+    barMeet:    'FF4FA3F7', // azul — reuniões
+    barNone:    'FFE5E5E5', // cinza — sem categoria
+    wkend:      'FFF2F2F2', // fim de semana
+    today:      'FFFFF3CD', // hoje
+    doneFg:     'FF059669', // verde check
+    openFg:     'FF6B7280', // cinza aberto
+    progressBg: 'FFE2E8F0',
+    progressFg: 'FF7C5CFC',
+  };
+
+  // ── date range ────────────────────────────
+  const gantt = proj.gantt;
+  let minSerial = Infinity, maxSerial = -Infinity;
+  gantt.forEach(item => {
+    const s = dateToSerial(item.planned_start);
+    const e = dateToSerial(item.planned_end);
+    if (s && s < minSerial) minSerial = s;
+    if (e && e > maxSerial) maxSerial = e;
+  });
+  if (minSerial === Infinity) { minSerial = dateToSerial(new Date().toISOString().split('T')[0]); maxSerial = minSerial + 30; }
+  const ganttStart = minSerial - 2;  // 2 dias de padding
+  const ganttEnd   = maxSerial + 5;
+  const totalDays  = ganttEnd - ganttStart + 1;
+  const todaySerial = dateToSerial(new Date().toISOString().split('T')[0]);
+
+  // ── layout constants ──────────────────────
+  const ROW_HEADER = 0;  // row 1 — título projeto
+  const ROW_META   = 2;  // row 3 — cliente/processo
+  const ROW_LEGEND = 4;  // row 5 — legenda
+  const ROW_MONTHS = 6;  // row 7 — nomes dos meses
+  const ROW_DATES  = 7;  // row 8 — seriais de datas
+  const ROW_DAYS   = 8;  // row 9 — letras dos dias
+  const ROW_DATA   = 9;  // row 10 — início dos dados
+  const COL_DESC   = 0;  // A — descrição
+  const COL_PIPE   = 1;  // B — pipe
+  const COL_RESP   = 2;  // C — responsável
+  const COL_PROG   = 3;  // D — progresso
+  const COL_START  = 4;  // E — início
+  const COL_DAYS   = 5;  // F — dias
+  const COL_GANTT  = 6;  // G em diante — Gantt
+
+  const ws = {};
+  const merges = [];
+
+  // ── helper: styled cell shorthand ─────────
+  function sc(r, c, v, bold, bgRgb, fgRgb, numFmt, hAlign, italic) {
+    const addr = cellAddr(r, c);
+    const cell = { v, s: {} };
+    cell.t = (typeof v === 'number') ? 'n' : (typeof v === 'boolean') ? 'b' : 's';
+    if (numFmt) { cell.z = numFmt; }
+    cell.s = {
+      font: { name: 'Arial', sz: 10, bold: !!bold, color: { rgb: fgRgb || '000000' }, italic: !!italic },
+      fill: bgRgb ? { patternType: 'solid', fgColor: { rgb: bgRgb } } : { patternType: 'none' },
+      alignment: { horizontal: hAlign || 'left', vertical: 'center', wrapText: false },
+      border: {
+        bottom: { style: 'thin', color: { rgb: 'FFE2E8F0' } },
+        right:  { style: 'thin', color: { rgb: 'FFE2E8F0' } },
+      }
+    };
+    ws[addr] = cell;
+  }
+
+  // ── ROW 1: título ─────────────────────────
+  sc(ROW_HEADER, COL_DESC, 'Projeto de Implementação Pipefy | ProfixLab', true, C.headerBg, C.headerFg);
+  merges.push({ s:{r:ROW_HEADER,c:COL_DESC}, e:{r:ROW_HEADER,c:COL_GANTT+Math.min(totalDays-1,60)} });
+
+  // ── ROW 3: meta ───────────────────────────
+  sc(ROW_META, COL_DESC, 'Cliente:', true, null, '444444');
+  sc(ROW_META, COL_PIPE, proj.empresa || '—', false, null, '000000');
+  sc(ROW_META, COL_RESP, 'Processo:', true, null, '444444');
+  sc(ROW_META, COL_PROG, proj.processo || '—', false, null, '000000');
+  sc(ROW_META, COL_START, 'Início:', true, null, '444444');
+  sc(ROW_META, COL_DAYS, ganttStart, false, null, '000000', 'DD/MM/YYYY');
+
+  // ── ROW 5: legenda ────────────────────────
+  const legendItems = [
+    ['Discovery', C.barDisc],
+    ['Desenvolvimento', C.barDev],
+    ['Testes', C.barTest],
+    ['Treinamento / Go-live', C.barTrain],
+    ['Suporte', C.barSupp],
+    ['Reuniões', C.barMeet],
+    ['✓ Concluído', C.doneFg],
+  ];
+  sc(ROW_LEGEND, COL_DESC, 'Legenda:', true, null, '444444');
+  legendItems.forEach((item, i) => {
+    const c = COL_PIPE + i * 2;
+    // color swatch
+    sc(ROW_LEGEND, c, '  ', false, item[1], 'FFFFFFFF');
+    sc(ROW_LEGEND, c + 1, item[0], false, null, '444444');
+  });
+
+  // ── ROW 7-9: date headers ─────────────────
+  let lastMonth = -1;
+  for (let d = 0; d < totalDays; d++) {
+    const serial = ganttStart + d;
+    const dateObj = new Date(Date.UTC(1899, 11, 30) + serial * 86400000);
+    const dow = dateObj.getUTCDay(); // 0=Sun,6=Sat
+    const isWE = dow === 0 || dow === 6;
+    const isToday = serial === todaySerial;
+    const month = dateObj.getUTCMonth();
+    const dayLetter = ['D','S','T','Q','Q','S','S'][dow];
+    const col = COL_GANTT + d;
+
+    // Month header (row 7) — only on month change
+    if (month !== lastMonth) {
+      const monthNames = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      sc(ROW_MONTHS, col, monthNames[month], true, 'FFE8F5E9', '1B5E20');
+      lastMonth = month;
+    }
+
+    // Date serial (row 8, hidden/numeric)
+    const dateBg = isToday ? C.today : isWE ? C.wkend : 'FFF0FFF4';
+    sc(ROW_DATES, col, serial, false, dateBg, '666666', 'DD', 'center');
+
+    // Day letter (row 9)
+    sc(ROW_DAYS, col, dayLetter, false, isToday ? C.today : isWE ? C.wkend : 'FFF0FFF4', isWE ? 'FFAAAAAA' : '555555', null, 'center');
+  }
+
+  // ── Column headers (row 9 left side) ──────
+  const hdrs = ['Descrição do Marco', 'Pipe', 'Responsável', 'Progresso', 'Início', 'Dias'];
+  hdrs.forEach((h, i) => sc(ROW_DAYS, i, h, true, C.colHdr, C.colHdrFg, null, 'center'));
+
+  // ── DATA ROWS ─────────────────────────────
+  // Group items
+  const marcoMap = {};
+  gantt.forEach(item => { if (!item.parentId) marcoMap[item.id] = item; });
+
+  // Identify pipe from marco title
+  function getPipeLabel(item) {
+    const t = item.title || '';
+    const m = t.match(/pipe\s*(\d+)/i);
+    return m ? 'Pipe ' + m[1] : '';
+  }
+
+  // Calculate marco progress
+  function marcoProgress(marcoId) {
+    const children = gantt.filter(i => i.parentId === marcoId);
+    if (!children.length) return null;
+    const done = children.filter(c => c.done).length;
+    return done / children.length;
+  }
+
+  const tipoBarColor = {
+    discovery: C.barDisc,
+    dev:       C.barDev,
+    test:      C.barTest,
+    train:     C.barTrain,
+    support:   C.barSupp,
+    default:   C.barNone,
+  };
+  function barColor(tipo) { return tipoBarColor[tipo] || tipoBarColor.default; }
+
+  // Collect all pipes found in project
+  const pipesData = proj.pipes || [];
+
+  let dataRow = ROW_DATA;
+
+  gantt.forEach(item => {
+    const isMarco = !item.parentId;
+    const rowBg = isMarco ? C.marcoBg : (dataRow % 2 === 0 ? C.subBg : C.subAlt);
+    const bold  = isMarco;
+    const descIndent = isMarco ? item.title : '    ' + item.title;
+
+    // Description
+    sc(dataRow, COL_DESC, descIndent, bold, rowBg, '111111');
+
+    // Pipe
+    const pipeLabel = isMarco ? getPipeLabel(item) : '';
+    sc(dataRow, COL_PIPE, pipeLabel, false, rowBg, '555555', null, 'center');
+
+    // Responsável
+    sc(dataRow, COL_RESP, item.responsavel || '—', false, rowBg, '555555', null, 'center');
+
+    // Progresso — % para marcos, ✓/Aberto para sub-marcos
+    if (isMarco) {
+      const pct = marcoProgress(item.id);
+      if (pct !== null) {
+        sc(dataRow, COL_PROG, (pct * 100).toFixed(0) + '%', bold, rowBg, pct === 1 ? C.doneFg : C.progressFg, null, 'center');
+      } else {
+        sc(dataRow, COL_PROG, item.done ? '100%' : '0%', bold, rowBg, C.progressFg, null, 'center');
+      }
+    } else {
+      sc(dataRow, COL_PROG, item.done ? '✓ Feito' : 'Aberto', false, rowBg, item.done ? C.doneFg : C.openFg, null, 'center');
+    }
+
+    // Início (date serial)
+    const startSerial = dateToSerial(item.planned_start);
+    sc(dataRow, COL_START, startSerial || '', false, rowBg, '555555', startSerial ? 'DD/MM/YY' : null, 'center');
+
+    // Dias
+    const dias = (startSerial && dateToSerial(item.planned_end))
+      ? dateToSerial(item.planned_end) - startSerial + 1 : '';
+    sc(dataRow, COL_DAYS, dias, false, rowBg, '555555', null, 'center');
+
+    // Gantt bars
+    const s = dateToSerial(item.planned_start);
+    const e = dateToSerial(item.planned_end);
+    const bc = barColor(item.tipo);
+    const barBg = item.done ? C.objetivoBg : bc;
+
+    for (let d = 0; d < totalDays; d++) {
+      const serial = ganttStart + d;
+      const col    = COL_GANTT + d;
+      const isWE   = (() => { const dow = new Date(Date.UTC(1899,11,30)+serial*86400000).getUTCDay(); return dow===0||dow===6; })();
+      const isToday2 = serial === todaySerial;
+
+      let cellBg = isToday2 ? C.today : isWE ? C.wkend : null;
+      let cellFg = 'CCCCCC';
+      let cellVal = '';
+      let cellBold = false;
+
+      if (s && e && serial >= s && serial <= e) {
+        cellBg  = barBg;
+        cellFg  = 'FFFFFFFF';
+        cellBold = true;
+        // First cell of bar: show label
+        if (serial === s) {
+          cellVal = isMarco ? item.title : (item.done ? '✓' : '●');
+        } else {
+          cellVal = ' ';
+        }
+      }
+
+      const addr = cellAddr(dataRow, col);
+      ws[addr] = {
+        v: cellVal,
+        t: 's',
+        s: {
+          font:  { name: 'Arial', sz: 8, bold: cellBold, color: { rgb: cellFg } },
+          fill:  cellBg ? { patternType:'solid', fgColor:{ rgb: cellBg } } : { patternType:'none' },
+          alignment: { horizontal: 'left', vertical: 'center' },
+          border: {
+            bottom: { style:'thin', color:{ rgb:'FFE2E8F0' } },
+            right:  { style:'thin', color:{ rgb:'FFE2E8F0' } },
+          }
+        }
+      };
+    }
+
+    dataRow++;
+  });
+
+  // ── Aba de Pipes ──────────────────────────
+  const wsPipes = {};
+  const pipesMerges = [];
+
+  // Header
+  const phRow0 = 0;
+  wsPipes[cellAddr(0,0)] = { v:'Detalhamento dos Pipes — ' + (proj.empresa||''), t:'s',
+    s:{ font:{name:'Arial',sz:12,bold:true,color:{rgb:'FFFFFFFF'}},
+        fill:{patternType:'solid',fgColor:{rgb:C.headerBg}},
+        alignment:{horizontal:'left',vertical:'center'} }};
+  pipesMerges.push({s:{r:0,c:0},e:{r:0,c:15}});
+
+  let pr = 2; // current pipe row
+
+  if (pipesData.length === 0) {
+    wsPipes[cellAddr(pr,0)] = { v:'Nenhum pipe cadastrado no Discovery.', t:'s',
+      s:{ font:{name:'Arial',sz:10,color:{rgb:'888888'}}, alignment:{horizontal:'left',vertical:'center'} }};
+  }
+
+  pipesData.forEach((pipe, pi) => {
+    // Pipe title bar
+    const pTitleBg = C.marcoBg;
+    wsPipes[cellAddr(pr,0)] = { v:'PIPE ' + (pi+1) + ' — ' + (pipe.nome||''), t:'s',
+      s:{ font:{name:'Arial',sz:11,bold:true,color:{rgb:'111111'}},
+          fill:{patternType:'solid',fgColor:{rgb:pTitleBg}},
+          alignment:{horizontal:'left',vertical:'center'} }};
+    pipesMerges.push({s:{r:pr,c:0},e:{r:pr,c:15}});
+    pr++;
+
+    // Métricas do pipe
+    const metaItems = [
+      ['Automações', pipe.automacoes||0],
+      ['Templates de E-mail', pipe.templates||0],
+      ['Bancos de Dados', pipe.bancos||0],
+      ['Integrações Externas', pipe.int_externas||0],
+      ['Portal Externo', pipe.portal?'Sim':'Não'],
+      ['Nova Integração', pipe.nova_integracao?'Sim':'Não'],
+    ];
+    metaItems.forEach((m, mi) => {
+      const col = mi * 2;
+      wsPipes[cellAddr(pr, col)] = { v:m[0], t:'s',
+        s:{ font:{name:'Arial',sz:9,bold:true,color:{rgb:'555555'}},
+            fill:{patternType:'solid',fgColor:{rgb:C.objetivoBg}},
+            alignment:{horizontal:'left',vertical:'center'} }};
+      wsPipes[cellAddr(pr, col+1)] = { v: typeof m[1]==='number'?m[1]:m[1], t: typeof m[1]==='number'?'n':'s',
+        s:{ font:{name:'Arial',sz:9,bold:false,color:{rgb:'111111'}},
+            fill:{patternType:'solid',fgColor:{rgb:C.objetivoBg}},
+            alignment:{horizontal:'center',vertical:'center'} }};
+    });
+    pr++;
+
+    // Campos por fase — header
+    if (pipe.campos && pipe.campos.length > 0) {
+      const camposHdr = ['Fase','Nome do Campo','Tipo','Obrigatório','Condicional'];
+      camposHdr.forEach((h, hi) => {
+        wsPipes[cellAddr(pr, hi)] = { v:h, t:'s',
+          s:{ font:{name:'Arial',sz:9,bold:true,color:{rgb:'FFFFFFFF'}},
+              fill:{patternType:'solid',fgColor:{rgb:C.colHdr}},
+              alignment:{horizontal:'center',vertical:'center'} }};
+      });
+      pr++;
+
+      pipe.campos.forEach((campo, ci) => {
+        const rowBg = ci%2===0?'FFFAFAFA':'FFFFFFFF';
+        const vals = [campo.fase||'—', campo.nome||'—', campo.tipo||'—', campo.obrigatorio||'—', campo.condicional||'—'];
+        vals.forEach((v,vi)=>{
+          wsPipes[cellAddr(pr,vi)]={ v, t:'s',
+            s:{ font:{name:'Arial',sz:9,color:{rgb:'222222'}},
+                fill:{patternType:'solid',fgColor:{rgb:rowBg}},
+                alignment:{horizontal:'left',vertical:'center'},
+                border:{ bottom:{style:'thin',color:{rgb:'FFE2E8F0'}}, right:{style:'thin',color:{rgb:'FFE2E8F0'}} }
+            }};
+        });
+        pr++;
+      });
+    } else {
+      wsPipes[cellAddr(pr,0)] = { v:'Nenhum campo cadastrado para este pipe.', t:'s',
+        s:{ font:{name:'Arial',sz:9,italic:true,color:{rgb:'888888'}}, alignment:{horizontal:'left',vertical:'center'} }};
+      pr++;
+    }
+
+    // RACI — header
+    if (pipe.raci && pipe.raci.length > 0) {
+      pr++; // blank row
+      const raciHdr = ['Fase','R — Responsável','A — Aprovador','C — Consultado','I — Informado'];
+      raciHdr.forEach((h, hi) => {
+        wsPipes[cellAddr(pr, hi)] = { v:h, t:'s',
+          s:{ font:{name:'Arial',sz:9,bold:true,color:{rgb:'FFFFFFFF'}},
+              fill:{patternType:'solid',fgColor:{rgb:'FF5C6BC0'}},
+              alignment:{horizontal:'center',vertical:'center'} }};
+      });
+      pr++;
+      pipe.raci.forEach((r, ri) => {
+        const rowBg = ri%2===0?'FFFAFAFA':'FFFFFFFF';
+        const vals = [r.fase||'—', r.r||'—', r.a||'—', r.c||'—', r.i||'—'];
+        vals.forEach((v,vi)=>{
+          wsPipes[cellAddr(pr,vi)]={ v, t:'s',
+            s:{ font:{name:'Arial',sz:9,color:{rgb:'222222'}},
+                fill:{patternType:'solid',fgColor:{rgb:rowBg}},
+                alignment:{horizontal:'left',vertical:'center'},
+                border:{ bottom:{style:'thin',color:{rgb:'FFE2E8F0'}}, right:{style:'thin',color:{rgb:'FFE2E8F0'}} }
+            }};
+        });
+        pr++;
+      });
+    }
+
+    pr += 2; // blank rows between pipes
+  });
+
+  wsPipes['!cols'] = [
+    {wch:20},{wch:24},{wch:18},{wch:14},{wch:24},
+    {wch:18},{wch:18},{wch:18},{wch:18},{wch:18},
+  ];
+  wsPipes['!merges'] = pipesMerges;
+  wsPipes['!rows'] = [];
+
+  // ── Sheet dimensions ──────────────────────
+  ws['!ref'] = cellAddr(0,0) + ':' + cellAddr(dataRow-1, COL_GANTT+totalDays-1);
+  ws['!merges'] = merges;
+  ws['!cols'] = [
+    {wch:36}, // A — descrição
+    {wch:10}, // B — pipe
+    {wch:16}, // C — responsável
+    {wch:11}, // D — progresso
+    {wch:11}, // E — início
+    {wch:6},  // F — dias
+    ...Array(totalDays).fill({wch:2.2}), // Gantt cols
+  ];
+  // Freeze panes: freeze left 6 cols + top 9 rows
+  ws['!freeze'] = { xSplit: COL_GANTT, ySplit: ROW_DATA, topLeftCell: cellAddr(ROW_DATA, COL_GANTT) };
+
+  // Row heights
+  const rowHeights = {};
+  rowHeights[ROW_HEADER] = { hpt: 28 };
+  rowHeights[ROW_META]   = { hpt: 18 };
+  rowHeights[ROW_LEGEND] = { hpt: 18 };
+  rowHeights[ROW_MONTHS] = { hpt: 16 };
+  rowHeights[ROW_DATES]  = { hpt: 16 };
+  rowHeights[ROW_DAYS]   = { hpt: 20 };
+  ws['!rows'] = Array.from({ length: dataRow }, (_, i) => rowHeights[i] || { hpt: 18 });
+
+  wsPipes['!ref'] = cellAddr(0,0) + ':' + cellAddr(Math.max(pr,2), 15);
+
+  // ── Build workbook ────────────────────────
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Cronograma');
+  XLSX.utils.book_append_sheet(wb, wsPipes, 'Pipes e Campos');
+
+  const empresa = (proj.empresa || 'Projeto').replace(/[^a-zA-Z0-9]/g,'_');
+  const fname = 'Cronograma_Cliente_' + empresa + '_' + new Date().toISOString().split('T')[0] + '.xlsx';
+  XLSX.writeFile(wb, fname);
+  addLog('Cronograma cliente exportado: ' + fname);
 }
 
 function importGanttExcel(event) {
