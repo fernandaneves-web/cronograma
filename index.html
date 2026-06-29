@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ProfixLab</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /* ── TOKENS ── */
 :root {
@@ -1562,6 +1563,11 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
       <button class="btn btn-secondary" onclick="openModal('modalCalcApply')">🧮 Aplicar Calculadora</button>
       <button class="btn btn-secondary" onclick="addMarcoManual()">＋ Marco Manual</button>
       <button class="btn btn-secondary" onclick="addFeriado()">📅 Feriado Regional</button>
+      <div style="margin-left:auto;display:flex;gap:6px">
+        <button class="btn btn-green" onclick="exportGanttExcel()" title="Exportar cronograma como planilha Excel">📥 Exportar Excel</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('importGanttFile').click()" title="Importar cronograma de planilha Excel">📤 Importar Excel</button>
+        <input type="file" id="importGanttFile" accept=".xlsx,.xls" style="display:none" onchange="importGanttExcel(event)">
+      </div>
     </div>
     <div class="view-toggle">
       <button class="view-btn active" onclick="setGanttView('visual')" id="btn-view-visual">📊 Gantt Visual</button>
@@ -4570,6 +4576,177 @@ function generateWordPhase(phase) {
 
 
 
+
+
+// ══════════════════════════════════════════
+// GANTT EXCEL EXPORT / IMPORT
+// ══════════════════════════════════════════
+
+function exportGanttExcel() {
+  const proj = getProject();
+  if (!proj) { alert('Selecione um projeto primeiro.'); return; }
+  if (!proj.gantt || proj.gantt.length === 0) { alert('Nenhum marco no cronograma para exportar.'); return; }
+
+  if (typeof XLSX === 'undefined') {
+    alert('Biblioteca Excel ainda carregando. Tente em alguns segundos.');
+    return;
+  }
+
+  const tipoLabels = { discovery:'Discovery', dev:'Desenvolvimento', test:'Testes', train:'Treinamento / Go-live', support:'Suporte' };
+
+  // Build rows
+  const rows = proj.gantt.map(item => ({
+    'Tipo (Marco/Sub-marco)': item.parentId ? 'Sub-marco' : 'Marco',
+    'ID':                     item.id,
+    'ID do Marco Pai':        item.parentId || '',
+    'Título':                 item.title,
+    'Categoria':              tipoLabels[item.tipo] || item.tipo || '',
+    'Responsável':            item.responsavel || '',
+    'Início Planejado':       item.planned_start || '',
+    'Fim Planejado':          item.planned_end   || '',
+    'Início Executado':       item.executed_start || '',
+    'Fim Executado':          item.executed_end   || '',
+    'Concluído':              item.done ? 'Sim' : 'Não',
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+
+  // Column widths
+  ws['!cols'] = [
+    { wch: 16 }, // Tipo
+    { wch: 20 }, // ID
+    { wch: 20 }, // ID Pai
+    { wch: 36 }, // Título
+    { wch: 22 }, // Categoria
+    { wch: 20 }, // Responsável
+    { wch: 16 }, // Início Planejado
+    { wch: 16 }, // Fim Planejado
+    { wch: 16 }, // Início Executado
+    { wch: 16 }, // Fim Executado
+    { wch: 12 }, // Concluído
+  ];
+
+  // Instructions sheet
+  const instrRows = [
+    ['INSTRUÇÕES PARA IMPORTAÇÃO'],
+    [''],
+    ['• Edite apenas as colunas: Título, Categoria, Responsável, Início Planejado, Fim Planejado, Início Executado, Fim Executado, Concluído'],
+    ['• NÃO altere as colunas ID e ID do Marco Pai — elas identificam a hierarquia'],
+    ['• Datas devem estar no formato: AAAA-MM-DD (ex: 2025-03-15)'],
+    ['• Coluna Concluído: escreva "Sim" ou "Não"'],
+    ['• Categorias válidas: Discovery, Desenvolvimento, Testes, Treinamento / Go-live, Suporte'],
+    ['• Para adicionar um NOVO Marco: deixe o ID e o ID do Marco Pai em branco, e coloque "Marco" em Tipo'],
+    ['• Para adicionar um NOVO Sub-marco: deixe o ID em branco, coloque o ID do marco pai em "ID do Marco Pai", e "Sub-marco" em Tipo'],
+    ['• Salve o arquivo como .xlsx antes de importar'],
+  ];
+  const wsInstr = XLSX.utils.aoa_to_sheet(instrRows);
+  wsInstr['!cols'] = [{ wch: 90 }];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Cronograma');
+  XLSX.utils.book_append_sheet(wb, wsInstr, 'Instruções');
+
+  const fname = 'Cronograma_' + (proj.empresa || 'Projeto').replace(/[^a-zA-Z0-9]/g,'_') + '_' + new Date().toISOString().split('T')[0] + '.xlsx';
+  XLSX.writeFile(wb, fname);
+  addLog('Cronograma exportado para Excel: ' + fname);
+}
+
+function importGanttExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+
+  const proj = getProject();
+  if (!proj) { alert('Selecione um projeto primeiro.'); return; }
+
+  if (typeof XLSX === 'undefined') {
+    alert('Biblioteca Excel ainda carregando. Tente em alguns segundos.');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary' });
+      const ws = wb.Sheets['Cronograma'];
+      if (!ws) { alert('Aba "Cronograma" não encontrada. Exporte primeiro para obter o modelo correto.'); return; }
+
+      const rows = XLSX.utils.sheet_to_json(ws);
+      if (!rows || rows.length === 0) { alert('Nenhum dado encontrado na planilha.'); return; }
+
+      const tipoMap = {
+        'discovery': 'discovery', 'Discovery': 'discovery',
+        'desenvolvimento': 'dev', 'Desenvolvimento': 'dev',
+        'testes': 'test', 'Testes': 'test',
+        'treinamento / go-live': 'train', 'Treinamento / Go-live': 'train', 'treinamento': 'train',
+        'suporte': 'support', 'Suporte': 'support',
+      };
+
+      // Build map of existing items by ID for partial updates
+      const existingById = {};
+      (proj.gantt || []).forEach(item => { existingById[item.id] = item; });
+
+      const newGantt = [];
+      const idRemap = {}; // map blank-id new rows to generated ids
+
+      rows.forEach(row => {
+        const rawId       = String(row['ID'] || '').trim();
+        const rawParentId = String(row['ID do Marco Pai'] || '').trim();
+        const title       = String(row['Título'] || '').trim();
+        const tipo        = tipoMap[String(row['Categoria'] || '').trim()] || 'dev';
+        const responsavel = String(row['Responsável'] || '').trim();
+        const ps          = String(row['Início Planejado'] || '').trim();
+        const pe          = String(row['Fim Planejado']    || '').trim();
+        const es          = String(row['Início Executado'] || '').trim();
+        const ee          = String(row['Fim Executado']    || '').trim();
+        const done        = String(row['Concluído'] || '').toLowerCase() === 'sim';
+
+        if (!title) return; // skip empty rows
+
+        let id = rawId;
+        if (!id) {
+          // New item — generate ID
+          id = (rawParentId ? 'sub_' : 'marco_') + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+        }
+
+        // Resolve parent id (might be remapped)
+        let parentId = rawParentId ? (idRemap[rawParentId] || rawParentId) : undefined;
+
+        const item = {
+          id,
+          title,
+          tipo,
+          responsavel,
+          planned_start:  ps || undefined,
+          planned_end:    pe || undefined,
+          executed_start: es || undefined,
+          executed_end:   ee || undefined,
+          done,
+        };
+        if (parentId) item.parentId = parentId;
+
+        newGantt.push(item);
+      });
+
+      if (newGantt.length === 0) { alert('Nenhum item válido encontrado na planilha (verifique se a coluna "Título" está preenchida).'); return; }
+
+      const confirmed = confirm(
+        'Importar planilha substituirá o cronograma atual (' + (proj.gantt||[]).length + ' itens) por ' + newGantt.length + ' itens.\n\nContinuar?'
+      );
+      if (!confirmed) return;
+
+      proj.gantt = newGantt;
+      saveState();
+      renderGantt();
+      addLog('Cronograma importado do Excel: ' + newGantt.length + ' itens');
+      alert('✅ Cronograma importado com sucesso! ' + newGantt.length + ' itens carregados.');
+    } catch(err) {
+      console.error(err);
+      alert('Erro ao ler o arquivo Excel: ' + err.message);
+    }
+  };
+  reader.readAsBinaryString(file);
+}
 
 
 // ══════════════════════════════════════════
